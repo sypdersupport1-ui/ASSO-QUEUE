@@ -5240,3 +5240,7 @@ $$;
 -- 3. PERMISSIONS: LEAST PRIVILEGE (service_role only, server-authenticated via qtoken)
 REVOKE ALL ON FUNCTION public.respond_to_call_atomic(UUID, TEXT, TEXT, INT) FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.respond_to_call_atomic(UUID, TEXT, TEXT, INT) TO service_role;
+-- Migration: Add missing no_show columns to queue_entries
+ALTER TABLE public.queue_entries 
+  ADD COLUMN IF NOT EXISTS no_show_at TIMESTAMPTZ,
+  ADD COLUMN IF NOT EXISTS no_show_reason TEXT;
