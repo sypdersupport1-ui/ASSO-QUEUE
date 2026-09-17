@@ -4018,9 +4018,6 @@ REVOKE ALL ON FUNCTION public.recover_stale_outbox_events(INT) FROM PUBLIC, anon
 GRANT EXECUTE ON FUNCTION public.recover_stale_outbox_events(INT) TO service_role;
 
 -- Inventory ledger (server-only callers; anon-accessible stock drain closed).
-REVOKE ALL ON FUNCTION public.deduct_inventory_atomic(UUID, UUID, NUMERIC, UUID) FROM PUBLIC, anon, authenticated;
-GRANT EXECUTE ON FUNCTION public.deduct_inventory_atomic(UUID, UUID, NUMERIC, UUID) TO service_role;
-
 REVOKE ALL ON FUNCTION public.deduct_inventory_atomic(UUID, UUID, NUMERIC, TEXT, UUID, TEXT, UUID) FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.deduct_inventory_atomic(UUID, UUID, NUMERIC, TEXT, UUID, TEXT, UUID) TO service_role;
 
