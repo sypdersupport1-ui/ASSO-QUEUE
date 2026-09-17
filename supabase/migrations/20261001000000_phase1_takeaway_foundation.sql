@@ -257,182 +257,205 @@ SECURITY DEFINER
 SET search_path = public
 AS $$
 DECLARE
-  v_queue_entry public.queue_entries%ROWTYPE;
-  v_table public.restaurant_tables%ROWTYPE;
+  v_entry public.queue_entries%ROWTYPE;
+  v_primary_table public.restaurant_tables%ROWTYPE;
   v_now TIMESTAMPTZ := NOW();
   v_seating_count INT;
+  v_total_capacity INT := 0;
+  v_all_table_ids UUID[];
+  v_cur_table_id UUID;
+  v_cur_table public.restaurant_tables%ROWTYPE;
+  v_remaining_guests INT;
+  v_alloc INT;
+  v_combined_numbers TEXT := '';
+  v_restaurant public.restaurants%ROWTYPE;
 BEGIN
-  SELECT * INTO v_queue_entry FROM public.queue_entries WHERE id = p_queue_entry_id FOR UPDATE;
+  -- 1. Lock Queue Entry
+  SELECT * INTO v_entry FROM public.queue_entries WHERE id = p_queue_entry_id FOR UPDATE;
   IF NOT FOUND THEN RAISE EXCEPTION 'QUEUE_ENTRY_NOT_FOUND'; END IF;
 
   -- === TAKEAWAY SEATING GUARD (Phase 1) ===
-  -- This is the authoritative server-side rejection. The front end may hide
-  -- the seating button, but this guard makes it impossible to seat a Takeaway
-  -- entry regardless of how the request is constructed.
-  IF v_queue_entry.queue_type = 'TAKEAWAY' THEN
+  -- Takeaway entries cannot be seated at dining tables.
+  IF v_entry.queue_type = 'TAKEAWAY' THEN
     RAISE EXCEPTION 'TAKEAWAY_CANNOT_BE_SEATED: Takeaway orders do not receive table assignments. Use complete_takeaway_atomic instead.';
   END IF;
 
-  IF v_queue_entry.status NOT IN ('WAITING', 'NOTIFIED', 'CALLED') THEN
-    RAISE EXCEPTION 'QUEUE_ENTRY_NOT_SEATABLE: status % cannot be seated', v_queue_entry.status;
+  IF v_entry.status = 'SEATED' THEN RAISE EXCEPTION 'QUEUE_ENTRY_ALREADY_SEATED'; END IF;
+  IF v_entry.status NOT IN ('WAITING','NOTIFIED','CALLED') THEN
+    RAISE EXCEPTION 'QUEUE_ENTRY_NOT_SEATABLE: status % cannot be seated', v_entry.status;
   END IF;
 
-  -- Load table
-  SELECT * INTO v_table FROM public.restaurant_tables WHERE id = p_table_id FOR UPDATE;
-  IF NOT FOUND THEN RAISE EXCEPTION 'TABLE_NOT_FOUND'; END IF;
-  IF v_table.restaurant_id != v_queue_entry.restaurant_id THEN RAISE EXCEPTION 'TENANT_MISMATCH'; END IF;
-  IF COALESCE((v_table AS public.restaurant_tables).is_archived::boolean, false) THEN RAISE EXCEPTION 'TABLE_ARCHIVED'; END IF;
-  IF v_table.status NOT IN ('AVAILABLE', 'OCCUPIED') THEN RAISE EXCEPTION 'TABLE_NOT_AVAILABLE'; END IF;
+  -- Get restaurant configuration
+  SELECT * INTO v_restaurant FROM public.restaurants WHERE id = v_entry.restaurant_id;
+  IF NOT FOUND THEN RAISE EXCEPTION 'RESTAURANT_NOT_FOUND'; END IF;
 
-  v_seating_count := COALESCE(p_actual_guests, v_queue_entry.party_size);
-
-  -- Validate combined table capacity if additional tables provided
-  DECLARE
-    v_total_capacity INT := v_table.free_seats;
-    v_add_table_id UUID;
-    v_add_table public.restaurant_tables%ROWTYPE;
-  BEGIN
-    IF p_additional_table_ids IS NOT NULL AND array_length(p_additional_table_ids, 1) > 0 THEN
-      FOREACH v_add_table_id IN ARRAY p_additional_table_ids LOOP
-        SELECT * INTO v_add_table FROM public.restaurant_tables WHERE id = v_add_table_id FOR UPDATE;
-        IF NOT FOUND THEN RAISE EXCEPTION 'TABLE_NOT_FOUND: additional table %', v_add_table_id; END IF;
-        IF v_add_table.restaurant_id != v_queue_entry.restaurant_id THEN RAISE EXCEPTION 'TENANT_MISMATCH'; END IF;
-        IF v_add_table.status NOT IN ('AVAILABLE', 'OCCUPIED') THEN RAISE EXCEPTION 'TABLE_NOT_AVAILABLE: additional table %', v_add_table_id; END IF;
-        v_total_capacity := v_total_capacity + v_add_table.free_seats;
-      END LOOP;
-
-      IF v_total_capacity < v_seating_count THEN
-        RAISE EXCEPTION 'INSUFFICIENT_TABLE_CAPACITY: combined capacity % < guests %', v_total_capacity, v_seating_count;
+  -- Check actor permission if provided
+  IF p_actor_user_id IS NOT NULL THEN
+    IF NOT public.has_restaurant_role(p_actor_user_id, v_entry.restaurant_id, ARRAY['RESTAURANT_ADMIN','STAFF']) THEN
+      IF NOT public.is_super_admin(p_actor_user_id) THEN
+        RAISE EXCEPTION 'UNAUTHORIZED';
       END IF;
-
-      -- Seat across multiple tables proportionally
-      DECLARE
-        v_remaining INT := v_seating_count;
-        v_primary_alloc INT;
-        v_add_alloc INT;
-      BEGIN
-        v_primary_alloc := LEAST(v_remaining, v_table.free_seats);
-        v_remaining := v_remaining - v_primary_alloc;
-
-        -- Update primary table
-        UPDATE public.restaurant_tables SET
-          status = 'OCCUPIED',
-          occupied_seats = occupied_seats + v_primary_alloc,
-          free_seats = GREATEST(0, free_seats - v_primary_alloc),
-          updated_at = v_now
-        WHERE id = p_table_id;
-
-        -- Primary assignment
-        INSERT INTO public.active_seating_assignments
-          (restaurant_id, queue_entry_id, table_id, guests_allocated, is_primary)
-        VALUES
-          (v_queue_entry.restaurant_id, p_queue_entry_id, p_table_id, v_primary_alloc, true)
-        ON CONFLICT (queue_entry_id, table_id) DO UPDATE
-          SET guests_allocated = EXCLUDED.guests_allocated, updated_at = v_now;
-
-        FOREACH v_add_table_id IN ARRAY p_additional_table_ids LOOP
-          SELECT * INTO v_add_table FROM public.restaurant_tables WHERE id = v_add_table_id;
-          v_add_alloc := LEAST(v_remaining, v_add_table.free_seats);
-          IF v_add_alloc > 0 THEN
-            UPDATE public.restaurant_tables SET
-              status = 'OCCUPIED',
-              occupied_seats = occupied_seats + v_add_alloc,
-              free_seats = GREATEST(0, free_seats - v_add_alloc),
-              updated_at = v_now
-            WHERE id = v_add_table_id;
-
-            INSERT INTO public.active_seating_assignments
-              (restaurant_id, queue_entry_id, table_id, guests_allocated, is_primary)
-            VALUES
-              (v_queue_entry.restaurant_id, p_queue_entry_id, v_add_table_id, v_add_alloc, false)
-            ON CONFLICT (queue_entry_id, table_id) DO UPDATE
-              SET guests_allocated = EXCLUDED.guests_allocated, updated_at = v_now;
-
-            v_remaining := v_remaining - v_add_alloc;
-          END IF;
-        END LOOP;
-      END;
-    ELSE
-      -- Single table seating
-      IF v_table.free_seats < v_seating_count THEN
-        RAISE EXCEPTION 'INSUFFICIENT_TABLE_CAPACITY: table free_seats=% < guests=%', v_table.free_seats, v_seating_count;
-      END IF;
-
-      UPDATE public.restaurant_tables SET
-        status = 'OCCUPIED',
-        occupied_seats = occupied_seats + v_seating_count,
-        free_seats = GREATEST(0, free_seats - v_seating_count),
-        updated_at = v_now
-      WHERE id = p_table_id;
-
-      INSERT INTO public.active_seating_assignments
-        (restaurant_id, queue_entry_id, table_id, guests_allocated, is_primary)
-      VALUES
-        (v_queue_entry.restaurant_id, p_queue_entry_id, p_table_id, v_seating_count, true)
-      ON CONFLICT (queue_entry_id, table_id) DO UPDATE
-        SET guests_allocated = EXCLUDED.guests_allocated, updated_at = v_now;
     END IF;
-  END;
+  END IF;
 
-  -- Transition queue entry to SEATED
-  UPDATE public.queue_entries SET
-    status = 'SEATED',
-    seated_table_id = p_table_id,
-    seated_at = v_now,
-    actual_guests = v_seating_count,
-    updated_at = v_now
+  -- Determine confirmed headcount
+  IF p_actual_guests IS NOT NULL THEN
+    IF p_actual_guests <= 0 THEN RAISE EXCEPTION 'INVALID_ACTUAL_GUESTS'; END IF;
+    v_seating_count := p_actual_guests;
+  ELSE
+    v_seating_count := v_entry.party_size;
+  END IF;
+
+  -- 2. Build list of table IDs (primary + additional)
+  v_all_table_ids := ARRAY[p_table_id];
+  IF p_additional_table_ids IS NOT NULL AND array_length(p_additional_table_ids, 1) > 0 THEN
+    FOREACH v_cur_table_id IN ARRAY p_additional_table_ids LOOP
+      IF v_cur_table_id IS NOT NULL AND NOT (v_cur_table_id = ANY(v_all_table_ids)) THEN
+        v_all_table_ids := array_append(v_all_table_ids, v_cur_table_id);
+      END IF;
+    END LOOP;
+  END IF;
+
+  -- 3. Lock and validate all tables
+  v_remaining_guests := v_seating_count;
+
+  FOREACH v_cur_table_id IN ARRAY v_all_table_ids LOOP
+    SELECT * INTO v_cur_table FROM public.restaurant_tables WHERE id = v_cur_table_id FOR UPDATE;
+    IF NOT FOUND THEN RAISE EXCEPTION 'TABLE_NOT_FOUND: %', v_cur_table_id; END IF;
+    IF v_cur_table.restaurant_id != v_entry.restaurant_id THEN RAISE EXCEPTION 'TENANT_MISMATCH'; END IF;
+    IF v_cur_table.is_archived THEN RAISE EXCEPTION 'TABLE_ARCHIVED'; END IF;
+
+    -- Validate table availability according to mode:
+    IF v_restaurant.seating_mode = 'SIMPLE' THEN
+      IF v_cur_table.status != 'AVAILABLE' THEN
+        RAISE EXCEPTION 'TABLE_NOT_AVAILABLE';
+      END IF;
+      v_total_capacity := v_total_capacity + v_cur_table.capacity;
+    ELSE
+      -- In STRICT mode, table can be AVAILABLE or OCCUPIED if it has free_seats
+      IF v_cur_table.status NOT IN ('AVAILABLE', 'OCCUPIED') THEN
+        RAISE EXCEPTION 'TABLE_NOT_AVAILABLE';
+      END IF;
+      IF v_cur_table.free_seats <= 0 THEN
+        RAISE EXCEPTION 'INSUFFICIENT_TABLE_CAPACITY: Table % has no free seats', v_cur_table.table_number;
+      END IF;
+      v_total_capacity := v_total_capacity + v_cur_table.free_seats;
+    END IF;
+
+    IF v_cur_table_id = p_table_id THEN
+      v_primary_table := v_cur_table;
+    END IF;
+
+    IF v_combined_numbers = '' THEN
+      v_combined_numbers := v_cur_table.table_number;
+    ELSE
+      v_combined_numbers := v_combined_numbers || ' + ' || v_cur_table.table_number;
+    END IF;
+  END LOOP;
+
+  IF v_total_capacity < v_seating_count THEN
+    RAISE EXCEPTION 'INSUFFICIENT_TABLE_CAPACITY';
+  END IF;
+
+  -- 4. Create Active Seating Assignments & update table occupancy
+  FOREACH v_cur_table_id IN ARRAY v_all_table_ids LOOP
+    SELECT * INTO v_cur_table FROM public.restaurant_tables WHERE id = v_cur_table_id;
+    
+    -- Calculate allocated seats for this table
+    IF v_restaurant.seating_mode = 'SIMPLE' THEN
+      v_alloc := LEAST(v_cur_table.capacity, v_remaining_guests);
+    ELSE
+      v_alloc := LEAST(v_cur_table.free_seats, v_remaining_guests);
+    END IF;
+    IF v_alloc <= 0 THEN v_alloc := 1; END IF;
+
+    -- Record assignment in junction table
+    INSERT INTO public.active_seating_assignments (
+      restaurant_id, queue_entry_id, table_id, guests_allocated, is_primary, created_at, updated_at
+    ) VALUES (
+      v_entry.restaurant_id, p_queue_entry_id, v_cur_table_id, v_alloc, (v_cur_table_id = p_table_id), v_now, v_now
+    )
+    ON CONFLICT (queue_entry_id, table_id) DO UPDATE
+    SET guests_allocated = EXCLUDED.guests_allocated, updated_at = v_now;
+
+    -- Update table occupied and free seats
+    UPDATE public.restaurant_tables
+    SET
+      status = 'OCCUPIED',
+      occupied_seats = occupied_seats + v_alloc,
+      free_seats = GREATEST(0, capacity - (occupied_seats + v_alloc)),
+      updated_at = v_now
+    WHERE id = v_cur_table_id;
+
+    v_remaining_guests := GREATEST(0, v_remaining_guests - v_alloc);
+  END LOOP;
+
+  -- 5. Update Queue Entry status -> SEATED
+  UPDATE public.queue_entries
+  SET status = 'SEATED',
+      seated_table_id = p_table_id,
+      seated_at = v_now,
+      actual_guests = v_seating_count,
+      updated_at = v_now
   WHERE id = p_queue_entry_id
-  RETURNING * INTO v_queue_entry;
+  RETURNING * INTO v_entry;
 
-  -- Queue event
+  -- 6. Insert events & audit logs
   INSERT INTO public.queue_events (restaurant_id, queue_entry_id, event_type, actor_user_id, metadata)
   VALUES (
-    v_queue_entry.restaurant_id,
+    v_entry.restaurant_id,
     p_queue_entry_id,
     'QUEUE_SEATED',
     p_actor_user_id,
     jsonb_build_object(
       'table_id', p_table_id,
-      'actual_guests', v_seating_count,
-      'additional_tables', p_additional_table_ids,
-      'seated_at', v_now
+      'table_number', v_primary_table.table_number,
+      'combined_table_numbers', v_combined_numbers,
+      'all_table_ids', v_all_table_ids,
+      'party_size', v_entry.party_size,
+      'actual_guests', v_entry.actual_guests,
+      'previous_status', v_entry.status,
+      'seating_mode', v_restaurant.seating_mode
     )
   );
 
-  -- Outbox
   INSERT INTO public.outbox_events (restaurant_id, event_type, aggregate_type, aggregate_id, payload, status)
   VALUES (
-    v_queue_entry.restaurant_id,
+    v_entry.restaurant_id,
     'QUEUE_SEATED',
     'QUEUE',
     p_queue_entry_id::text,
     jsonb_build_object(
-      'queueEntryId', p_queue_entry_id,
+      'previousStatus', v_entry.status,
+      'newStatus', 'SEATED',
+      'customerName', v_entry.customer_name,
+      'displayNumber', v_entry.display_number,
       'tableId', p_table_id,
-      'actualGuests', v_seating_count,
-      'seatedAt', v_now
+      'allTableIds', v_all_table_ids,
+      'combinedTableNumbers', v_combined_numbers,
+      'actualGuests', v_entry.actual_guests
     ),
     'PENDING'
   );
 
-  PERFORM pg_notify('queue_entry_update', json_build_object(
-    'restaurant_id', v_queue_entry.restaurant_id,
-    'entry_id', p_queue_entry_id,
-    'event', 'QUEUE_SEATED'
-  )::text);
-
   RETURN jsonb_build_object(
     'success', true,
-    'queueEntryId', p_queue_entry_id,
+    'queue_entry_id', v_entry.id,
+    'queueEntryId', v_entry.id,
+    'primary_table_id', p_table_id,
     'tableId', p_table_id,
-    'status', 'SEATED',
-    'seatedAt', v_now
+    'all_table_ids', v_all_table_ids,
+    'combined_table_numbers', v_combined_numbers,
+    'status', v_entry.status,
+    'party_size', v_entry.party_size,
+    'actual_guests', v_entry.actual_guests,
+    'seated_at', v_entry.seated_at
   );
 END;
 $$;
 
+REVOKE ALL ON FUNCTION public.seat_queue_entry_atomic(UUID, UUID, UUID, INT, UUID[]) FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.seat_queue_entry_atomic(UUID, UUID, UUID, INT, UUID[]) TO service_role;
-REVOKE EXECUTE ON FUNCTION public.seat_queue_entry_atomic(UUID, UUID, UUID, INT, UUID[]) FROM anon, authenticated;
 
 -- ============================================================================
 -- 7. complete_takeaway_atomic — TAKEAWAY PICKUP COMPLETION RPC
