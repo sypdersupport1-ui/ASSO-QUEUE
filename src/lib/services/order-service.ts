@@ -494,13 +494,15 @@ export class OrderService {
 
     const { data: order, error } = await supabase
       .from('orders')
-      .select('*, order_items(*), restaurants(name, slug, currency)')
+      .select('*, order_items(*), restaurants(name, slug, currency), queue_entries(queue_type)')
       .eq('order_token_hash', tokenHash)
       .maybeSingle();
 
     if (error || !order) {
       return null;
     }
+
+    const qe = (order as unknown as { queue_entries?: { queue_type?: 'DINE_IN' | 'TAKEAWAY' } | null })?.queue_entries;
 
     const rawItems = (order.order_items || []) as Array<{
       id: string;
@@ -517,6 +519,7 @@ export class OrderService {
       restaurantName: (order.restaurants as unknown as { name: string })?.name || 'Restaurant',
       restaurantSlug: (order.restaurants as unknown as { slug: string })?.slug || '',
       restaurantCurrency: (order.restaurants as unknown as { currency?: string })?.currency || 'INR',
+      queueType: qe?.queue_type || null,
       orderNumber: order.order_number,
       status: order.status as OrderStatus,
       paymentStatus: order.payment_status as PaymentStatus,

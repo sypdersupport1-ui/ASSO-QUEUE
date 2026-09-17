@@ -130,6 +130,7 @@ export default async function CustomerOrderStatusPage({
   const currentStep = getStepIndex(orderDetails.status);
   const isCancelled = orderDetails.status === 'CANCELLED';
   const isPaid = orderDetails.paymentStatus === 'PAID';
+  const isTakeaway = orderDetails.queueType === 'TAKEAWAY';
 
   return (
     <main className="qf-bg flex min-h-[100dvh] flex-col justify-between px-4 py-6 text-slate-100 selection:bg-orange-500 selection:text-white sm:py-8">
@@ -147,8 +148,12 @@ export default async function CustomerOrderStatusPage({
               <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-sky-400" />
             </span>
             <span className="min-w-0 flex-1">
-              <span className="block text-sm font-bold text-white">Your turn is here — please return 📢</span>
-              <span className="block text-xs text-sky-200/80">Your order is safe · tap to open your ticket</span>
+              <span className="block text-sm font-bold text-white">
+                {isTakeaway ? 'Your takeaway order is ready! 📢' : 'Your turn is here — please return 📢'}
+              </span>
+              <span className="block text-xs text-sky-200/80">
+                {isTakeaway ? 'Please proceed to the takeaway counter' : 'Your order is safe · tap to open your ticket'}
+              </span>
             </span>
             <span aria-hidden="true" className="shrink-0 text-sky-300 font-bold">→</span>
           </Link>
@@ -174,7 +179,7 @@ export default async function CustomerOrderStatusPage({
                 }`}
               >
                 <span>{isCancelled ? '✕' : '✓'}</span>
-                <span>{isCancelled ? 'Order cancelled' : 'Order placed'}</span>
+                <span>{isCancelled ? 'Order cancelled' : isTakeaway ? 'Takeaway order placed' : 'Order placed'}</span>
               </span>
             </div>
 
@@ -292,12 +297,26 @@ export default async function CustomerOrderStatusPage({
                     <p className="text-[11px] text-emerald-200/70">Payment confirmed by restaurant</p>
                   </div>
                 </div>
-                <a
-                  href={qtoken ? `/q/${slug}/payment/${token}?qtoken=${encodeURIComponent(qtoken)}` : `/q/${slug}/payment/${token}`}
-                  className="text-xs font-semibold text-emerald-400 hover:text-emerald-300 transition-colors"
-                >
-                  Receipt →
-                </a>
+                {!isTakeaway && (
+                  <a
+                    href={qtoken ? `/q/${slug}/payment/${token}?qtoken=${encodeURIComponent(qtoken)}` : `/q/${slug}/payment/${token}`}
+                    className="text-xs font-semibold text-emerald-400 hover:text-emerald-300 transition-colors"
+                  >
+                    Receipt →
+                  </a>
+                )}
+              </div>
+            ) : isTakeaway ? (
+              <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-4 text-center space-y-1.5">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-black tracking-wide uppercase">
+                  💵 PAY AT COUNTER
+                </span>
+                <p className="text-xs font-bold text-slate-200">
+                  You can pay when collecting your order.
+                </p>
+                <p className="text-[11px] text-slate-400 leading-relaxed">
+                  Please show your takeaway ticket to the staff when your order is called.
+                </p>
               </div>
             ) : (
               <div className="space-y-2">
@@ -320,7 +339,9 @@ export default async function CustomerOrderStatusPage({
         <div className="flex items-center gap-2.5 rounded-2xl border border-white/5 bg-white/[0.02] p-3 text-left">
           <span className="text-base shrink-0" aria-hidden="true">🎟️</span>
           <p className="text-[11px] text-slate-400 leading-relaxed">
-            Ordering food does not affect your queue spot — your place in line remains active!
+            {isTakeaway
+              ? 'Your takeaway order is in the queue — you will be notified when it is ready to collect!'
+              : 'Ordering food does not affect your queue spot — your place in line remains active!'}
           </p>
         </div>
 

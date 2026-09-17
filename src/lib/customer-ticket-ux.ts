@@ -133,6 +133,20 @@ export function formatTicketNumber(
 }
 
 /**
+ * Authoritative display number in Takeaway customer-friendly form (`T-08`).
+ * Presentation-only: never invents, never exposes DB ids or tokens.
+ */
+export function formatTakeawayTicketNumber(
+  displayNumber: string | null,
+  entryIdFallback: string
+): string {
+  const raw = (displayNumber || '').trim().replace(/^#+/, '').replace(/^[QqTt]-*/i, '');
+  if (raw) return `T-${raw}`;
+  const short = (entryIdFallback || '').replace(/[^a-zA-Z0-9]/g, '').slice(0, 4).toUpperCase();
+  return short ? `T-${short}` : 'T-—';
+}
+
+/**
  * "Position #7" — or "You're next" at the front — or "Your turn is here" when CALLED.
  * Returns null when waiting metrics should not be shown.
  */

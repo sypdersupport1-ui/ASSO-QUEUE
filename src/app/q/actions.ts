@@ -1,6 +1,7 @@
 'use server';
 
 import { QueueService } from '@/lib/services/queue-service';
+import { OrderService } from '@/lib/services/order-service';
 import { PublicRestaurantService } from '@/lib/services/public-restaurant-service';
 import {
   setTicketCookie,
@@ -355,4 +356,84 @@ export async function quitPreviousQueueAction(restaurantSlug: string): Promise<v
   revalidatePath('/dashboard');
   redirect(`/q/${restaurantSlug}?new_entry=1`);
 }
+
+/**
+ * Phase 2 Takeaway: Order-First flow.
+ * Atomically joins the Takeaway queue AND creates the linked multi-item order in one action.
+ * Sets the HttpOnly ticket cookie and returns tokens for seamless redirection to the Takeaway ticket.
+ */
+export async function createTakeawayOrderAndQueueAction(input: {
+  restaurantId: string;
+  restaurantSlug: string;
+  customerName: string;
+  customerPhone?: string | null;
+  items: { menuItemId: string; quantity: number; notes?: string | null }[];
+  idempotencyKey?: string | null;
+}) {
+  const { restaurantId, restaurantSlug, customerName, customerPhone, items, idempotencyKey } = input;
+
+  if (!restaurantId || !restaurantSlug) {
+    throw new Error('Invalid restaurant context.');
+  }
+  const cleanName = (customerName || '').trim();
+  if (!cleanName) {
+    throw new Error('Please enter your name to place your takeaway order.');
+  }
+  if (!items || items.length === 0) {
+    throw new Error('Please add at least one item to your cart.');
+  }
+
+  // Rate limit
+  const joinLimited = await limitJoinAttempt(restaurantId);
+  if (joinLimited) {
+    throw new Error(joinLimited);
+  }
+
+  // Authoritative restaurant check
+  const restaurant = await PublicRestaurantService.getPublicRestaurantBySlug(restaurantSlug);
+  if (!restaurant || restaurant.id !== restaurantId) {
+    throw new Error('Invalid restaurant context.');
+  }
+  if (!restaurant.takeawayEnabled) {
+    throw new Error('Takeaway ordering is currently disabled for this restaurant.');
+  }
+
+  // 1. Atomically join takeaway queue
+  const queueResult = await QueueService.joinQueue({
+    restaurantId: restaurant.id,
+    customerName: cleanName,
+    customerPhone: customerPhone ? customerPhone.trim() : undefined,
+    partySize: 1,
+    queueType: 'TAKEAWAY',
+  });
+
+  // 2. Create authoritative order linked to the newly created takeaway queue entry
+  const orderResult = await OrderService.createCustomerOrder({
+    restaurantId: restaurant.id,
+    customerName: cleanName,
+    customerPhone: customerPhone ? customerPhone.trim() : undefined,
+    queueEntryId: queueResult.entry.id,
+    idempotencyKey: idempotencyKey || null,
+    items,
+  });
+
+  // 3. Set customer ticket cookie so returning to /q/[slug] resumes the ticket
+  try {
+    await setTicketCookie(restaurantSlug, queueResult.rawToken);
+  } catch (err) {
+    logger.warn('Failed to set ticket cookie in createTakeawayOrderAndQueueAction', {
+      operation: 'createTakeawayOrderAndQueueAction',
+      metadata: { error: err instanceof Error ? err.message : String(err) },
+    });
+  }
+
+  return {
+    success: true,
+    queueToken: queueResult.rawToken,
+    orderToken: orderResult.rawToken,
+    queueEntryId: queueResult.entry.id,
+    orderId: orderResult.order.id,
+  };
+}
+
 

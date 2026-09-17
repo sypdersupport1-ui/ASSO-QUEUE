@@ -5,6 +5,7 @@ import { PublicRestaurantService } from '@/lib/services/public-restaurant-servic
 import { QueueService } from '@/lib/services/queue-service';
 import { NotificationService } from '@/lib/services/notification-service';
 import { QueueTicketCard } from '@/components/customer/QueueTicketCard';
+import { TakeawayTicketCard } from '@/components/customer/TakeawayTicketCard';
 import { TicketNotificationBanner, type TicketNotification } from '@/components/customer/TicketNotificationBanner';
 import { KitchenPreOrderCard } from '@/components/customer/KitchenPreOrderCard';
 import { CustomerOrdersCard } from '@/components/customer/CustomerOrdersCard';
@@ -183,16 +184,27 @@ export default async function CustomerQueueStatusPage({
 
         {/* Hero ticket */}
         <TicketNotificationBanner notification={ticketNotification} />
-        <QueueTicketCard
-          status={status}
-          token={token}
-          restaurantSlug={slug}
-          restaurantName={restaurant.name}
-          queueEnabled={restaurant.queueEnabled}
-          operatingState={restaurant.queueOperatingState || 'OPEN'}
-        />
+        {status.queueType === 'TAKEAWAY' ? (
+          <TakeawayTicketCard
+            status={status}
+            token={token}
+            restaurantSlug={slug}
+            restaurantName={restaurant.name}
+            orders={myOrders}
+            currency={restaurant.currency || 'INR'}
+          />
+        ) : (
+          <QueueTicketCard
+            status={status}
+            token={token}
+            restaurantSlug={slug}
+            restaurantName={restaurant.name}
+            queueEnabled={restaurant.queueEnabled}
+            operatingState={restaurant.queueOperatingState || 'OPEN'}
+          />
+        )}
 
-        {!isTerminal && (
+        {!isTerminal && status.queueType !== 'TAKEAWAY' && (
           <div className="space-y-3 pt-1">
             <CustomerOrdersCard
               orders={myOrders}

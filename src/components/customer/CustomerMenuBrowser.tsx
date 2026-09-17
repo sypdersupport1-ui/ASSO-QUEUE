@@ -2,6 +2,8 @@
 
 import React, { useState, useTransition, useEffect } from 'react';
 import { createCustomerOrderAction } from '@/app/dashboard/actions';
+import { createTakeawayOrderAndQueueAction } from '@/app/q/actions';
+import { ShoppingBag, User, Phone } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 export interface CustomerMenuItem {
@@ -43,6 +45,8 @@ interface CustomerMenuBrowserProps {
   queueToken?: string | null;
   /** Server-resolved queue status for CALLED-aware browsing cues (4H). */
   queueStatus?: string | null;
+  /** Phase 2: Service type (Dine-In vs Takeaway). */
+  serviceType?: 'DINE_IN' | 'TAKEAWAY';
 }
 
 export function CustomerMenuBrowser({
@@ -56,8 +60,12 @@ export function CustomerMenuBrowser({
   currency = 'INR',
   queueToken,
   queueStatus,
+  serviceType = 'DINE_IN',
 }: CustomerMenuBrowserProps) {
   const router = useRouter();
+  const isTakeaway = serviceType === 'TAKEAWAY';
+  const [takeawayCustomerName, setTakeawayCustomerName] = useState(customerName || '');
+  const [takeawayCustomerPhone, setTakeawayCustomerPhone] = useState(customerPhone || '');
   // Phase 4G: cart survives menu ↔ ticket navigation via sessionStorage.
   // Stored: ONLY non-sensitive cart lines (ids, display names/prices,
   // quantities, notes). NEVER queue/order tokens, cookies, or secrets —
@@ -199,12 +207,43 @@ export function CustomerMenuBrowser({
     if (cart.length === 0 || isPending) return;
     setErrorMessage(null);
 
+    // If Takeaway order-first (no existing queue entry), validate customer name
+    if (isTakeaway && !queueEntryId && !queueToken) {
+      if (!takeawayCustomerName.trim()) {
+        setErrorMessage('Please enter your name to place your takeaway order.');
+        return;
+      }
+    }
+
     startTransition(async () => {
       try {
+        if (isTakeaway && !queueEntryId && !queueToken) {
+          // Primary Takeaway Flow: atomically joins takeaway queue & creates order
+          const result = await createTakeawayOrderAndQueueAction({
+            restaurantId,
+            restaurantSlug,
+            customerName: takeawayCustomerName.trim(),
+            customerPhone: takeawayCustomerPhone.trim() || undefined,
+            idempotencyKey,
+            items: cart.map((i) => ({
+              menuItemId: i.menuItemId,
+              quantity: i.quantity,
+              notes: i.notes || null,
+            })),
+          });
+
+          if (result && result.queueToken) {
+            try { window.sessionStorage.removeItem(cartKey); } catch {}
+            router.push(`/q/${restaurantSlug}/status/${result.queueToken}`);
+            return;
+          }
+        }
+
+        // Standard or existing queue order creation
         const result = await createCustomerOrderAction({
           restaurantId,
-          customerName: customerName || 'Guest Customer',
-          customerPhone,
+          customerName: customerName || takeawayCustomerName || 'Guest Customer',
+          customerPhone: customerPhone || takeawayCustomerPhone || undefined,
           queueEntryId,
           tableId,
           idempotencyKey,
@@ -217,16 +256,16 @@ export function CustomerMenuBrowser({
         });
 
         if (result && result.rawToken) {
-          // Preserve the queue ticket across the order-confirmation page so
-          // "Back to My Ticket" never strands the customer on the join form.
-          const suffix = queueToken ? `?qtoken=${encodeURIComponent(queueToken)}` : '';
-          // Order placed: drop the persisted cart (fresh lines only, no tokens stored).
           try { window.sessionStorage.removeItem(cartKey); } catch {}
-          router.push(`/q/${restaurantSlug}/order/${result.rawToken}${suffix}`);
+          if (isTakeaway && queueToken) {
+            // Takeaway customers return directly to their ticket
+            router.push(`/q/${restaurantSlug}/status/${queueToken}`);
+          } else {
+            const suffix = queueToken ? `?qtoken=${encodeURIComponent(queueToken)}` : '';
+            router.push(`/q/${restaurantSlug}/order/${result.rawToken}${suffix}`);
+          }
         } else if (result && result.order && queueToken) {
-          // Idempotent replay: the order token is not recoverable from
-          // storage (raw tokens are never persisted), so return to the
-          // queue ticket instead of stranding the customer.
+          try { window.sessionStorage.removeItem(cartKey); } catch {}
           router.push(`/q/${restaurantSlug}/status/${queueToken}`);
         } else {
           setErrorMessage('Could not place order. Please try again.');
@@ -630,9 +669,59 @@ export function CustomerMenuBrowser({
                 </div>
               </div>
 
-              <div className="rounded-xl border border-white/5 bg-white/[0.03] p-3 text-[11px] text-slate-400 leading-relaxed">
-                Placing an order sends your food request to the kitchen. You remain in your current queue position.
-              </div>
+              {isTakeaway ? (
+                <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3 text-xs space-y-1">
+                  <div className="flex items-center gap-1.5 font-bold text-emerald-400">
+                    <ShoppingBag className="h-4 w-4 shrink-0" />
+                    <span>Takeaway Order · Pay at Counter</span>
+                  </div>
+                  <p className="text-[11px] text-slate-300 leading-relaxed">
+                    You can pay when collecting your order at the takeaway counter.
+                  </p>
+                </div>
+              ) : (
+                <div className="rounded-xl border border-white/5 bg-white/[0.03] p-3 text-[11px] text-slate-400 leading-relaxed">
+                  Placing an order sends your food request to the kitchen. You remain in your current queue position.
+                </div>
+              )}
+
+              {isTakeaway && !queueEntryId && !queueToken && (
+                <div className="space-y-2 pt-2 border-t border-white/10 text-left">
+                  <div>
+                    <label htmlFor="cart-takeaway-name" className="block text-[11px] font-bold uppercase tracking-wider text-slate-300 mb-1">
+                      Your Name <span className="text-emerald-400">*</span>
+                    </label>
+                    <div className="relative">
+                      <User className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-500" />
+                      <input
+                        id="cart-takeaway-name"
+                        type="text"
+                        required
+                        placeholder="e.g. Rahul Sharma"
+                        value={takeawayCustomerName}
+                        onChange={(e) => setTakeawayCustomerName(e.target.value)}
+                        className="w-full rounded-xl border border-slate-700 bg-slate-950 py-2 pl-9 pr-3 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-emerald-500"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label htmlFor="cart-takeaway-phone" className="block text-[11px] font-bold uppercase tracking-wider text-slate-300 mb-1">
+                      Mobile <span className="font-normal text-slate-500">(optional)</span>
+                    </label>
+                    <div className="relative">
+                      <Phone className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-500" />
+                      <input
+                        id="cart-takeaway-phone"
+                        type="tel"
+                        placeholder="98765 43210"
+                        value={takeawayCustomerPhone}
+                        onChange={(e) => setTakeawayCustomerPhone(e.target.value)}
+                        className="w-full rounded-xl border border-slate-700 bg-slate-950 py-2 pl-9 pr-3 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-emerald-500"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
 
               <button
                 type="button"
@@ -645,6 +734,11 @@ export function CustomerMenuBrowser({
                     <div className="w-4 h-4 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />
                     Placing Order...
                   </span>
+                ) : isTakeaway ? (
+                  <>
+                    <ShoppingBag className="h-4 w-4" />
+                    <span>Place Takeaway Order (Pay at Counter)</span>
+                  </>
                 ) : (
                   <>
                     <span>Confirm &amp; Place Order</span>

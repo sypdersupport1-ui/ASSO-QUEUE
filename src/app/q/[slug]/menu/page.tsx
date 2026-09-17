@@ -29,10 +29,10 @@ export default async function CustomerMenuPage({
   searchParams,
 }: {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ qtoken?: string; tableId?: string }>;
+  searchParams: Promise<{ qtoken?: string; tableId?: string; service?: string }>;
 }) {
   const { slug } = await params;
-  const { tableId, qtoken } = await searchParams;
+  const { tableId, qtoken, service } = await searchParams;
 
   const restaurant = await PublicRestaurantService.getPublicRestaurantBySlug(slug);
   if (!restaurant) {
@@ -55,14 +55,19 @@ export default async function CustomerMenuPage({
   // no second state system).
   let queueEntryId = null;
   let queueStatus: string | null = null;
+  let queueType: 'DINE_IN' | 'TAKEAWAY' | null = null;
   if (qtoken) {
     const { QueueService } = await import('@/lib/services/queue-service');
     const status = await QueueService.getQueueStatusByToken(qtoken);
     if (status && status.restaurantId === restaurant.id) {
       queueEntryId = status.entryId;
       queueStatus = status.status;
+      queueType = status.queueType || null;
     }
   }
+
+  const isTakeaway = (queueType === 'TAKEAWAY') || (service === 'takeaway' && Boolean(restaurant.takeawayEnabled));
+  const serviceType: 'DINE_IN' | 'TAKEAWAY' = isTakeaway ? 'TAKEAWAY' : 'DINE_IN';
 
   const menuCategories = await PublicRestaurantService.getPublicMenuPreview(restaurant.id);
   const currency = (restaurant as unknown as { currency?: string })?.currency || 'INR';
@@ -90,7 +95,9 @@ export default async function CustomerMenuPage({
               My Ticket
             </a>
           ) : (
-            <span className="text-xs font-medium text-slate-500">Browse &amp; order</span>
+            <span className="text-xs font-medium text-slate-500">
+              {isTakeaway ? 'Takeaway order' : 'Browse & order'}
+            </span>
           )}
         </div>
 
@@ -103,6 +110,7 @@ export default async function CustomerMenuPage({
           currency={currency}
           queueToken={qtoken || null}
           queueStatus={queueStatus}
+          serviceType={serviceType}
         />
       </div>
 

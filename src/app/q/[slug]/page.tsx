@@ -8,6 +8,7 @@ import { QueueScheduleService } from '@/lib/services/queue-schedule-service';
 import { RestaurantHeader } from '@/components/customer/RestaurantHeader';
 import { QueueStatusCard } from '@/components/customer/QueueStatusCard';
 import { QueueJoinForm } from '@/components/customer/QueueJoinForm';
+import { CustomerJoinFlow } from '@/components/customer/CustomerJoinFlow';
 import { MenuPreviewSection } from '@/components/customer/MenuPreviewSection';
 import { TicketResumeBanner } from '@/components/customer/TicketResumeBanner';
 import { LandingAutoRefresh } from '@/components/customer/LandingAutoRefresh';
@@ -51,12 +52,13 @@ export default async function PublicRestaurantQueuePage({
   searchParams,
 }: {
   params: Promise<{ slug: string }>;
-  searchParams?: Promise<{ left_queue?: string; new_entry?: string; fresh?: string }>;
+  searchParams?: Promise<{ left_queue?: string; new_entry?: string; fresh?: string; service?: string }>;
 }) {
   const { slug } = await params;
   const search = searchParams ? await searchParams : {};
   const leftQueueParam = Boolean(search?.left_queue);
   const freshParam = Boolean(search?.new_entry || search?.fresh);
+  const initialService = search?.service === 'takeaway' ? 'TAKEAWAY' : 'DINE_IN';
 
   if (leftQueueParam || freshParam) {
     try {
@@ -275,7 +277,11 @@ export default async function PublicRestaurantQueuePage({
             </div>
           </section>
         ) : canJoin ? (
-          <QueueJoinForm restaurant={restaurant} />
+          !restaurant.takeawayEnabled ? (
+            <QueueJoinForm restaurant={restaurant} />
+          ) : (
+            <CustomerJoinFlow restaurant={restaurant} initialService={initialService} />
+          )
         ) : (
           <p className="px-2 text-center text-[11px] text-slate-500">
             {landingState === 'FULL'
