@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { QRCodeSVG, QRCodeCanvas } from 'qrcode.react';
 
 export function QRManagerClient({
@@ -13,16 +13,32 @@ export function QRManagerClient({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [copied, setCopied] = useState(false);
   const [size, setSize] = useState<'sm' | 'md' | 'lg'>('md');
+  const [effectiveQrUrl, setEffectiveQrUrl] = useState(qrUrl);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.location.origin) {
+      try {
+        const parsed = new URL(qrUrl, window.location.origin);
+        // If current origin is available and qrUrl points to localhost or preview hash,
+        // sync to current window origin so scanned QR matches active host
+        if (window.location.origin.includes('vercel.app') || window.location.origin.includes('localhost') === false) {
+          setEffectiveQrUrl(`${window.location.origin}${parsed.pathname}${parsed.search}`);
+        }
+      } catch {
+        setEffectiveQrUrl(qrUrl);
+      }
+    }
+  }, [qrUrl]);
 
   const qrSize = size === 'sm' ? 180 : size === 'lg' ? 260 : 220;
 
   const handleCopy = async () => {
     try {
-      await navigator.clipboard.writeText(qrUrl);
+      await navigator.clipboard.writeText(effectiveQrUrl);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      alert(qrUrl);
+      alert(effectiveQrUrl);
     }
   };
 
@@ -80,7 +96,7 @@ export function QRManagerClient({
             <div id="qr-svg-wrap" className="bg-white rounded-xl overflow-hidden">
               <QRCodeSVG
                 id="qr-svg"
-                value={qrUrl}
+                value={effectiveQrUrl}
                 size={qrSize}
                 level="H"
                 includeMargin={false}
@@ -91,7 +107,7 @@ export function QRManagerClient({
                 <QRCodeCanvas
                   id="qr-canvas"
                   ref={canvasRef as unknown as React.Ref<HTMLCanvasElement>}
-                  value={qrUrl}
+                  value={effectiveQrUrl}
                   size={1024}
                   level="H"
                   bgColor="#ffffff"
@@ -103,7 +119,7 @@ export function QRManagerClient({
 
           <div className="mt-5 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-white font-mono text-[11px] max-w-full truncate relative z-10">
             <span className="material-symbols-outlined text-[14px] text-emerald-400">link</span>
-            <span className="truncate">{qrUrl.replace(/^https?:\/\//, '')}</span>
+            <span className="truncate">{effectiveQrUrl.replace(/^https?:\/\//, '')}</span>
           </div>
 
           <div className="mt-6 flex items-center gap-5 relative z-10">
