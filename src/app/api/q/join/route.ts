@@ -14,6 +14,9 @@ export async function POST(request: Request) {
     const customerName = (formData.get('customerName') as string || '').trim();
     const customerPhone = (formData.get('customerPhone') as string || '').trim();
     const partySize = parseInt(formData.get('partySize') as string || '1', 10);
+    // Phase 1 Takeaway: read service type from request; server-validates in RPC.
+    const rawQueueType = (formData.get('queueType') as string) || 'DINE_IN';
+    const queueType: 'DINE_IN' | 'TAKEAWAY' = rawQueueType === 'TAKEAWAY' ? 'TAKEAWAY' : 'DINE_IN';
 
     if (!restaurantId || !restaurantSlug) {
       return customerJson({ error: 'Invalid restaurant context.' }, 400);
@@ -63,6 +66,7 @@ export async function POST(request: Request) {
         customerName,
         customerPhone: customerPhone || undefined,
         partySize,
+        queueType,
       });
 
       // Success — return token for UI redirect

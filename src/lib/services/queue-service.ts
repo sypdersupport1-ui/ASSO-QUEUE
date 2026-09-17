@@ -37,9 +37,11 @@ export const JoinQueueSchema = z.object({
   customerName: z.string().min(1, 'Customer name is required').max(100),
   customerPhone: z.string().optional().nullable(),
   partySize: z.number().int().min(1, 'Party size must be at least 1').max(50),
+  /** Phase 1 Takeaway: service type for this queue entry. Server-validated. */
+  queueType: z.enum(['DINE_IN', 'TAKEAWAY']).optional().default('DINE_IN'),
 });
 
-export type JoinQueueInput = z.infer<typeof JoinQueueSchema>;
+export type JoinQueueInput = z.input<typeof JoinQueueSchema>;
 
 export const UpdateQueueStatusSchema = z.object({
   entryId: z.string().uuid(),
@@ -113,6 +115,8 @@ export interface PublicQueueStatusResponse {
   callRespondedAt?: string | null;
   callDelayMinutes?: number | null;
   callTimeoutMinutes?: number;
+  /** Phase 1 Takeaway: the service type of this queue entry. */
+  queueType?: 'DINE_IN' | 'TAKEAWAY';
 }
 
 export class QueueService {
@@ -127,12 +131,14 @@ export class QueueService {
     const tokenHash = hashQueueToken(rawToken);
 
     // Call atomic PostgreSQL function for capacity & duplicate concurrency protection
+    // p_queue_type is validated server-side in the RPC itself — we do not trust the client value blindly.
     const { data: entry, error } = await supabase.rpc('join_queue_atomic', {
       p_restaurant_id: validated.restaurantId,
       p_customer_name: validated.customerName.trim(),
       p_customer_phone: validated.customerPhone ? validated.customerPhone.trim() : null,
       p_party_size: validated.partySize,
       p_token_hash: tokenHash,
+      p_queue_type: validated.queueType ?? 'DINE_IN',
     });
 
     if (error) {
@@ -153,6 +159,12 @@ export class QueueService {
       }
       if (error.message.includes('DUPLICATE_ACTIVE_ENTRY') || error.code === '23505') {
         throw new Error('DUPLICATE_ACTIVE_ENTRY');
+      }
+      if (error.message.includes('TAKEAWAY_DISABLED')) {
+        throw new Error('TAKEAWAY_DISABLED');
+      }
+      if (error.message.includes('INVALID_QUEUE_TYPE')) {
+        throw new Error('INVALID_QUEUE_TYPE');
       }
       throw new Error(`Queue join failed: ${error.message}`);
     }
@@ -207,11 +219,14 @@ export class QueueService {
       position = 1;
       peopleAhead = 0;
     } else if (['WAITING', 'NOTIFIED'].includes(entry.status)) {
-      // Position counts all active (WAITING/NOTIFIED/CALLED) ahead deterministically by joined_at + id
+      // Position counts all active (WAITING/NOTIFIED/CALLED) ahead of this entry
+      // for the SAME queue_type — Dine-In and Takeaway positions are isolated.
+      const entryQueueType = (entry as unknown as { queue_type?: string }).queue_type || 'DINE_IN';
       let countQuery = supabase
         .from('queue_entries')
         .select('*', { count: 'exact', head: true })
         .eq('restaurant_id', entry.restaurant_id)
+        .eq('queue_type', entryQueueType)
         .in('status', ['WAITING', 'NOTIFIED', 'CALLED'])
         .or(`joined_at.lt.${entry.joined_at},and(joined_at.eq.${entry.joined_at},id.lt.${entry.id})`);
 
@@ -396,6 +411,7 @@ export class QueueService {
       callRespondedAt: (entry as unknown as { call_responded_at?: string | null }).call_responded_at || eventCallRespondedAt || null,
       callDelayMinutes: (entry as unknown as { call_delay_minutes?: number | null }).call_delay_minutes || eventCallDelayMinutes || null,
       callTimeoutMinutes: restaurantObj?.call_timeout_minutes ?? 15,
+      queueType: ((entry as unknown as { queue_type?: 'DINE_IN' | 'TAKEAWAY' }).queue_type || 'DINE_IN') as 'DINE_IN' | 'TAKEAWAY',
     };
   }
 
@@ -623,8 +639,13 @@ export class QueueService {
   /**
    * Returns active queue entries for a restaurant with real-time positions.
    * Filters out entries from before the daily 5 AM reset boundary.
+   *
+   * @param queueType - Optional service type filter. When provided, only returns
+   *   entries of that type, ensuring Dine-In and Takeaway positions are isolated.
+   *   The existing dashboard calls omit this to receive DINE_IN entries only
+   *   (default behaviour preserved for backward compatibility).
    */
-  static async getActiveQueue(restaurantId: string) {
+  static async getActiveQueue(restaurantId: string, queueType?: 'DINE_IN' | 'TAKEAWAY') {
     const supabase = createAdminClient();
 
     // Get timezone
@@ -645,7 +666,12 @@ export class QueueService {
       .in('status', ['WAITING', 'NOTIFIED', 'CALLED'])
       .order('joined_at', { ascending: true })
       .order('id', { ascending: true });
-      
+
+    // Phase 1 Takeaway: isolate queue positions by service type.
+    // When queueType is provided, filter to only that type.
+    // Defaults to DINE_IN when not specified (preserving existing dashboard behavior).
+    query = query.eq('queue_type', queueType ?? 'DINE_IN');
+
     if (!cutoffError && cutoffData) {
       query = query.gte('joined_at', cutoffData);
     }
@@ -1011,6 +1037,63 @@ export class QueueService {
   }
 
   /**
+   * Phase 1 Takeaway: marks a Takeaway order as collected by the customer.
+   * Transitions WAITING/CALLED/NOTIFIED → COMPLETED via the authoritative
+   * complete_takeaway_atomic RPC. Only works on TAKEAWAY entries; DINE_IN
+   * entries must go through the seating flow.
+   *
+   * @param entryId - UUID of the takeaway queue entry
+   * @param actorUserId - UUID of the staff member marking the order collected
+   */
+  static async completeTakeaway(entryId: string, actorUserId: string) {
+    const supabase = createAdminClient();
+
+    // Step 1: Verify entry exists and is TAKEAWAY before RPC call
+    const { data: entry, error: fetchErr } = await supabase
+      .from('queue_entries')
+      .select('restaurant_id, status, queue_type')
+      .eq('id', entryId)
+      .single();
+
+    if (fetchErr || !entry) {
+      throw new Error('QUEUE_ENTRY_NOT_FOUND');
+    }
+
+    const entryQueueType = (entry as unknown as { queue_type?: string }).queue_type;
+    if (entryQueueType !== 'TAKEAWAY') {
+      throw new Error('NOT_TAKEAWAY_ENTRY: This operation is only valid for Takeaway queue entries');
+    }
+
+    // Step 2: Authorize — requires takeaway.complete permission
+    await AuthorizationService.requirePermission({
+      userId: actorUserId,
+      restaurantId: entry.restaurant_id,
+      permission: PERMISSIONS.TAKEAWAY_COMPLETE,
+    });
+
+    // Step 3: Atomic RPC — all state transitions happen inside the DB
+    const { data, error } = await supabase.rpc('complete_takeaway_atomic', {
+      p_queue_entry_id: entryId,
+      p_actor_user_id: actorUserId,
+    });
+
+    if (error) {
+      if (error.message.includes('QUEUE_ENTRY_NOT_FOUND')) throw new Error('QUEUE_ENTRY_NOT_FOUND');
+      if (error.message.includes('NOT_TAKEAWAY_ENTRY')) throw new Error('NOT_TAKEAWAY_ENTRY');
+      if (error.message.includes('TAKEAWAY_ENTRY_NOT_COMPLETABLE')) throw new Error('TAKEAWAY_ENTRY_NOT_COMPLETABLE');
+      throw new Error(`Failed to complete takeaway: ${error.message}`);
+    }
+
+    return data as unknown as {
+      success: boolean;
+      queueEntryId: string;
+      displayNumber: string | null;
+      status: string;
+      completedAt: string;
+    };
+  }
+
+  /**
    * Returns queue entries filtered by status and optional search term.
    */
   static async getAllQueueEntries(restaurantId: string, filterStatus?: string, search?: string) {
@@ -1285,6 +1368,11 @@ export class QueueService {
 
     if (fetchErr || !entry) throw new Error('QUEUE_ENTRY_NOT_FOUND');
     if (!['WAITING', 'NOTIFIED', 'CALLED'].includes(entry.status)) throw new Error('QUEUE_ENTRY_NOT_SEATABLE');
+    // Phase 1 Takeaway: table recommendation is only valid for DINE_IN entries
+    const entryQueueType = (entry as unknown as { queue_type?: string }).queue_type || 'DINE_IN';
+    if (entryQueueType === 'TAKEAWAY') {
+      throw new Error('TAKEAWAY_NO_TABLE_RECOMMENDATION: Takeaway entries do not receive table assignments or recommendations');
+    }
     
     // Permission check if actor provided
     if (actorUserId) {

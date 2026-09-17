@@ -80,6 +80,10 @@ export const PERMISSIONS = {
 
   // AUDIT DOMAIN
   AUDIT_VIEW: 'audit.view',
+
+  // TAKEAWAY DOMAIN (Phase 1)
+  TAKEAWAY_MANAGE: 'takeaway.manage',
+  TAKEAWAY_COMPLETE: 'takeaway.complete',
 } as const;
 
 export type PermissionKey = typeof PERMISSIONS[keyof typeof PERMISSIONS];
@@ -97,7 +101,8 @@ export type PermissionDomain =
   | 'PAYMENTS'
   | 'NOTIFICATIONS'
   | 'ANALYTICS'
-  | 'AUDIT';
+  | 'AUDIT'
+  | 'TAKEAWAY';
 
 export interface PermissionDefinition {
   key: PermissionKey;
@@ -157,6 +162,8 @@ export const ROLE_DEFAULT_PERMISSIONS: Record<'SUPER_ADMIN' | 'RESTAURANT_ADMIN'
     PERMISSIONS.ANALYTICS_VIEW,
     PERMISSIONS.ANALYTICS_EXPORT,
     PERMISSIONS.AUDIT_VIEW,
+    PERMISSIONS.TAKEAWAY_MANAGE,
+    PERMISSIONS.TAKEAWAY_COMPLETE,
   ],
   STAFF: [
     PERMISSIONS.RESTAURANT_VIEW,
@@ -173,5 +180,7 @@ export const ROLE_DEFAULT_PERMISSIONS: Record<'SUPER_ADMIN' | 'RESTAURANT_ADMIN'
     PERMISSIONS.KITCHEN_VIEW,
     PERMISSIONS.KITCHEN_MANAGE,
     PERMISSIONS.NOTIFICATIONS_VIEW,
+    PERMISSIONS.TAKEAWAY_MANAGE,
+    PERMISSIONS.TAKEAWAY_COMPLETE,
   ],
 };

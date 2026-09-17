@@ -15,18 +15,36 @@ export type TableShape = 'ROUND' | 'SQUARE' | 'RECTANGLE' | 'BAR';
 export type SeatingMode = 'SIMPLE' | 'STRICT';
 
 /**
+ * Phase 1 Takeaway: authoritative service type on queue_entries.
+ * DINE_IN: classic seating-based queue (existing behavior).
+ * TAKEAWAY: order/pickup queue — no table assignment, no seating semantics.
+ * Immutable after queue entry creation.
+ */
+export type QueueType = 'DINE_IN' | 'TAKEAWAY';
+
+/**
  * Authoritative QueueFlow queue entry FSM states.
  *
- * Active states (can be transitioned from):
+ * DINE_IN active states (can be transitioned from):
  *   WAITING  → NOTIFIED, CALLED, CANCELLED, EXPIRED
  *   NOTIFIED → CALLED, SEATED, CANCELLED, EXPIRED
  *   CALLED   → SEATED, NO_SHOW, CANCELLED, EXPIRED
  *
- * Terminal states (no further transitions allowed):
+ * TAKEAWAY active states:
+ *   WAITING  → CALLED, CANCELLED, EXPIRED
+ *   CALLED   → COMPLETED (pickup confirmed), CANCELLED, EXPIRED
+ *
+ * DINE_IN terminal states:
  *   SEATED, CANCELLED, NO_SHOW, EXPIRED
  *
- * Legacy states (exist in historical records only — not producible by current code):
- *   COMPLETED, REMOVED, SKIPPED
+ * TAKEAWAY terminal states:
+ *   COMPLETED (pickup confirmed), CANCELLED, NO_SHOW, EXPIRED
+ *
+ * Note: COMPLETED is used as the Takeaway pickup terminal state.
+ * It also exists as a legacy alias in DINE_IN historical records.
+ *
+ * Legacy states (DINE_IN historical records only — not producible by new code for DINE_IN):
+ *   REMOVED, SKIPPED
  *
  * Removed (fully deprecated — never use):
  *   CONFIRMED, ARRIVED  (Phase 2 legacy, superseded by Phase 8 constraint)
@@ -36,7 +54,7 @@ export type QueueStatus =
   | 'CALLED'
   | 'NOTIFIED'
   | 'SEATED'
-  | 'COMPLETED'   // legacy historical only
+  | 'COMPLETED'   // Takeaway: pickup terminal state; DINE_IN: legacy historical only
   | 'CANCELLED'
   | 'REMOVED'     // legacy historical only
   | 'SKIPPED'     // legacy historical only
@@ -164,6 +182,8 @@ export interface Database {
           archived_at: string | null;
           seating_mode: SeatingMode;
           auto_expire_called: boolean;
+          /** Phase 1 Takeaway: enables Takeaway queue creation for this restaurant. Default false. */
+          takeaway_enabled: boolean;
         };
         Insert: Omit<Database['public']['Tables']['restaurants']['Row'], 'id' | 'created_at' | 'updated_at'> & {
           id?: string;
@@ -171,6 +191,7 @@ export interface Database {
           updated_at?: string;
           seating_mode?: SeatingMode;
           auto_expire_called?: boolean;
+          takeaway_enabled?: boolean;
         };
         Update: Partial<Database['public']['Tables']['restaurants']['Insert']>;
       };
@@ -291,6 +312,8 @@ export interface Database {
           call_response: 'ACCEPTED' | 'DELAY_REQUESTED' | 'DECLINED' | null;
           call_responded_at: string | null;
           call_delay_minutes: number | null;
+          /** Phase 1 Takeaway: immutable service type. DINE_IN (default) or TAKEAWAY. */
+          queue_type: QueueType;
           joined_at: string;
           created_at: string;
           updated_at: string;
@@ -299,6 +322,7 @@ export interface Database {
           id?: string;
           created_at?: string;
           updated_at?: string;
+          queue_type?: QueueType;
         };
         Update: Partial<Database['public']['Tables']['queue_entries']['Insert']>;
       };

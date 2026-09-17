@@ -25,6 +25,8 @@ export interface PublicRestaurantInfo {
   avgServiceTimeMins: number;
   serviceCapacityUnits: number;
   etaBufferMins: number;
+  /** Phase 1 Takeaway: whether Takeaway queue is enabled for this restaurant. */
+  takeawayEnabled: boolean;
 }
 
 export class PublicRestaurantService {
@@ -41,7 +43,7 @@ export class PublicRestaurantService {
 
         const { data: restaurant, error } = await supabase
           .from('restaurants')
-          .select('id, name, slug, description, phone, address, city, logo_url, queue_enabled, queue_operating_state, max_queue_capacity, min_party_size, max_party_size, call_timeout_minutes, status, currency, avg_service_time_mins, service_capacity_units, eta_buffer_mins')
+          .select('id, name, slug, description, phone, address, city, logo_url, queue_enabled, queue_operating_state, max_queue_capacity, min_party_size, max_party_size, call_timeout_minutes, status, currency, avg_service_time_mins, service_capacity_units, eta_buffer_mins, takeaway_enabled')
           .eq('slug', slug.trim().toLowerCase())
           .eq('status', 'ACTIVE')
           .maybeSingle();
@@ -70,6 +72,7 @@ export class PublicRestaurantService {
           avgServiceTimeMins: restaurant.avg_service_time_mins ?? 15,
           serviceCapacityUnits: restaurant.service_capacity_units ?? 3,
           etaBufferMins: restaurant.eta_buffer_mins ?? 5,
+          takeawayEnabled: (restaurant as unknown as { takeaway_enabled?: boolean }).takeaway_enabled ?? false,
         };
       },
       300 // 5 minutes TTL

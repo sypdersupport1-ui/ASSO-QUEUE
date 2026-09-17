@@ -74,6 +74,10 @@ export async function joinQueuePublicAction(
   const customerName = (formData.get('customerName') as string || '').trim();
   const customerPhone = (formData.get('customerPhone') as string || '').trim();
   const partySize = parseInt((formData.get('partySize') as string) || '1', 10);
+  // Phase 1 Takeaway: read service type from form. Server validates against takeaway_enabled.
+  // Defaults to DINE_IN — existing Dine-In flows are unaffected.
+  const rawQueueType = (formData.get('queueType') as string) || 'DINE_IN';
+  const queueType: 'DINE_IN' | 'TAKEAWAY' = rawQueueType === 'TAKEAWAY' ? 'TAKEAWAY' : 'DINE_IN';
 
   if (!restaurantId || !restaurantSlug) {
     return { error: 'Invalid restaurant context.' };
@@ -102,6 +106,7 @@ export async function joinQueuePublicAction(
       customerName,
       customerPhone: customerPhone || undefined,
       partySize,
+      queueType,
     });
 
     redirect(`/q/${restaurantSlug}/status/${result.rawToken}`);
@@ -131,6 +136,12 @@ export async function joinQueuePublicAction(
     }
     if (message.includes('INVALID_PARTY_SIZE')) {
       return { error: 'The selected party size is not accepted by this restaurant.' };
+    }
+    if (message.includes('TAKEAWAY_DISABLED')) {
+      return { error: 'Takeaway is not currently available at this restaurant.' };
+    }
+    if (message.includes('INVALID_QUEUE_TYPE')) {
+      return { error: 'Invalid service type requested.' };
     }
 
     // Generic fallback — raw service/DB errors must never reach customers.

@@ -244,6 +244,9 @@ export async function adminAddQueueGuestAction(formData: FormData): Promise<void
       customerName,
       customerPhone,
       partySize,
+      // Staff-added guests default to DINE_IN. TAKEAWAY can be specified via form
+      // field and is validated server-side against takeaway_enabled.
+      queueType: (formData.get('queueType') as 'DINE_IN' | 'TAKEAWAY') || 'DINE_IN',
     });
   } catch (error: unknown) {
     if (error && typeof error === 'object' && 'digest' in error && String((error as { digest?: string }).digest).startsWith('NEXT_REDIRECT')) {
@@ -787,4 +790,65 @@ export async function passTableToNextAction(queueEntryId: string) {
 
 export async function getQueueChatHistoryAction(queueEntryId: string) {
   return await QueueService.getQueueChatHistory(queueEntryId);
+}
+
+// ============================================================================
+// Phase 1 Takeaway Actions
+// ============================================================================
+
+/**
+ * Staff action: mark a Takeaway order as collected by the customer.
+ * Calls complete_takeaway_atomic via QueueService.completeTakeaway.
+ * Requires takeaway.complete permission; actor is always resolved from the session.
+ */
+export async function completeTakeawayAction(queueEntryId: string) {
+  try {
+    const actorUserId = await requireActionActor();
+    const result = await QueueService.completeTakeaway(queueEntryId, actorUserId);
+    revalidatePath('/dashboard/queue');
+    revalidatePath('/dashboard');
+    return { success: true, data: result };
+  } catch (error: unknown) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to complete takeaway order.',
+    };
+  }
+}
+
+/**
+ * Restaurant admin action: toggle Takeaway enabled/disabled for the restaurant.
+ * Requires restaurant.update permission. When disabled, Takeaway queue creation
+ * is rejected at the RPC layer (not just UI-hidden).
+ */
+export async function updateTakeawayEnabledFormAction(_prevState: unknown, formData: FormData) {
+  try {
+    const takeawayEnabled = formData.get('takeaway_enabled') === 'true';
+    const ctx = await AuthorizationService.requirePermission({ permission: PERMISSIONS.RESTAURANT_UPDATE });
+    if (!ctx.restaurantId) throw new Error('NO_RESTAURANT_ASSIGNED');
+
+    const supabase = createAdminClient();
+    const { error } = await supabase
+      .from('restaurants')
+      .update({ takeaway_enabled: takeawayEnabled, updated_at: new Date().toISOString() })
+      .eq('id', ctx.restaurantId);
+
+    if (error) throw new Error(`Failed to update takeaway setting: ${error.message}`);
+
+    // Invalidate public restaurant cache so QR page reflects change
+    try {
+      const { CacheService, CacheKeys } = await import('@/lib/cache');
+      const { data: rest } = await supabase.from('restaurants').select('slug').eq('id', ctx.restaurantId).single();
+      if (rest) await CacheService.invalidate(CacheKeys.publicRestaurant(rest.slug));
+    } catch { /* non-blocking */ }
+
+    revalidatePath('/dashboard/settings');
+    revalidatePath('/dashboard');
+    return { success: true, takeawayEnabled };
+  } catch (error: unknown) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to update takeaway settings.',
+    };
+  }
 }
