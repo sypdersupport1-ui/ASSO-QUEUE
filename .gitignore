@@ -1,0 +1,14 @@
+node_modules/
+.next/
+.env
+.env.local
+.env.*.local
+.DS_Store
+*.tsbuildinfo
+.vercel/
+apply_migration.js
+scratch_*.js
+take_screenshot.js
+screenshot.png
+.temp/
+.gemini/

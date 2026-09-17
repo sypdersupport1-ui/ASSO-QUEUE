@@ -1,0 +1,295 @@
+@import "tailwindcss";
+
+@theme {
+  --color-on-surface-variant: #434655;
+  --color-surface-dim: #d2d9f4;
+  --color-inverse-surface: #283044;
+  --color-secondary-fixed: #e2dfff;
+  --color-on-tertiary: #ffffff;
+  --color-on-secondary-container: #fffbff;
+  --color-on-secondary-fixed: #0f0069;
+  --color-surface-variant: #dae2fd;
+  --color-on-primary-container: #eeefff;
+  --color-on-error: #ffffff;
+  --color-on-tertiary-container: #bdffdb;
+  --color-error-container: #ffdad6;
+  --color-primary-fixed-dim: #b4c5ff;
+  --color-surface-container-lowest: #ffffff;
+  --color-tertiary: #006242;
+  --color-inverse-on-surface: #eef0ff;
+  --color-on-background: #131b2e;
+  --color-outline-variant: #c3c6d7;
+  --color-surface-tint: #0053db;
+  --color-on-error-container: #93000a;
+  --color-on-primary-fixed: #00174b;
+  --color-tertiary-fixed: #6ffbbe;
+  --color-on-primary: #ffffff;
+  --color-tertiary-fixed-dim: #4edea3;
+  --color-primary-container: #2563eb;
+  --color-on-secondary: #ffffff;
+  --color-on-tertiary-fixed-variant: #005236;
+  --color-on-secondary-fixed-variant: #3323cc;
+  --color-inverse-primary: #b4c5ff;
+  --color-primary-fixed: #dbe1ff;
+  --color-on-tertiary-fixed: #002113;
+  --color-secondary-container: #645efb;
+  --color-secondary-fixed-dim: #c3c0ff;
+  --color-on-surface: #131b2e;
+  --color-outline: #737686;
+  --color-surface-container-highest: #dae2fd;
+  --color-tertiary-container: #007d55;
+  --color-background: #faf8ff;
+  --color-secondary: #4b41e1;
+  --color-surface: #faf8ff;
+  --color-error: #ba1a1a;
+  --color-surface-container: #eaedff;
+  --color-surface-bright: #faf8ff;
+  --color-surface-container-high: #e2e7ff;
+  --color-surface-container-low: #f2f3ff;
+  --color-primary: #004ac6;
+  --color-on-primary-fixed-variant: #003ea8;
+
+  --spacing-space-xs: 0.25rem;
+  --spacing-space-sm: 0.5rem;
+  --spacing-space-md: 1rem;
+  --spacing-space-lg: 1.5rem;
+  --spacing-space-xl: 2.5rem;
+  --spacing-margin: 2rem;
+  --spacing-gutter: 1.5rem;
+
+  --font-headline-md: "Plus Jakarta Sans", sans-serif;
+  --font-headline-xl: "Plus Jakarta Sans", sans-serif;
+  --font-label-md: "JetBrains Mono", monospace;
+  --font-label-sm: "JetBrains Mono", monospace;
+  --font-body-lg: "Inter", sans-serif;
+  --font-ticket-display: "JetBrains Mono", monospace;
+  --font-body-md: "Inter", sans-serif;
+  --font-body-sm: "Inter", sans-serif;
+  --font-headline-sm: "Plus Jakarta Sans", sans-serif;
+  --font-headline-lg: "Plus Jakarta Sans", sans-serif;
+  --font-headline-lg-mobile: "Plus Jakarta Sans", sans-serif;
+  --font-headline-xl-mobile: "Plus Jakarta Sans", sans-serif;
+
+  --text-headline-md: 22px;
+  --text-headline-md--line-height: 28px;
+  --text-headline-md--letter-spacing: -0.015em;
+  --text-headline-md--font-weight: 600;
+
+  --text-headline-xl: 40px;
+  --text-headline-xl--line-height: 48px;
+  --text-headline-xl--letter-spacing: -0.03em;
+  --text-headline-xl--font-weight: 800;
+
+  --text-label-md: 12px;
+  --text-label-md--line-height: 16px;
+  --text-label-md--letter-spacing: 0.06em;
+  --text-label-md--font-weight: 600;
+
+  --text-label-sm: 10px;
+  --text-label-sm--line-height: 12px;
+  --text-label-sm--letter-spacing: 0.08em;
+  --text-label-sm--font-weight: 500;
+
+  --text-body-lg: 16px;
+  --text-body-lg--line-height: 24px;
+  --text-body-lg--letter-spacing: -0.01em;
+  --text-body-lg--font-weight: 400;
+
+  --text-ticket-display: 28px;
+  --text-ticket-display--line-height: 32px;
+  --text-ticket-display--letter-spacing: -0.04em;
+  --text-ticket-display--font-weight: 700;
+
+  --text-body-md: 14px;
+  --text-body-md--line-height: 20px;
+  --text-body-md--letter-spacing: 0em;
+  --text-body-md--font-weight: 400;
+
+  --text-body-sm: 12px;
+  --text-body-sm--line-height: 16px;
+  --text-body-sm--letter-spacing: 0em;
+  --text-body-sm--font-weight: 400;
+
+  --text-headline-sm: 18px;
+  --text-headline-sm--line-height: 24px;
+  --text-headline-sm--letter-spacing: -0.01em;
+  --text-headline-sm--font-weight: 600;
+
+  --text-headline-lg: 32px;
+  --text-headline-lg--line-height: 40px;
+  --text-headline-lg--letter-spacing: -0.025em;
+  --text-headline-lg--font-weight: 700;
+}
+
+@layer base {
+  html,body{margin:0;padding:0;}
+  html{scroll-behavior:smooth;-webkit-text-size-adjust:100%;}
+  body{overscroll-behavior:none;-webkit-tap-highlight-color:transparent;text-rendering:optimizeLegibility;}
+  main>:first-child{margin-top:0!important;}
+  main>:last-child{margin-bottom:0!important;}
+  /* Improve tap targets on mobile - Apple recommends 44px */
+  button,a,input,select{ -webkit-tap-highlight-color: rgba(37,99,235,0.15); }
+  /* Prevent iOS zoom on focus for inputs <16px */
+  input,select,textarea{font-size:max(16px, 0.875rem);}
+  @media(min-width:768px){
+    input,select,textarea{font-size:0.875rem;}
+  }
+}
+
+::-webkit-scrollbar{display:none;}
+*{scrollbar-width:none;-ms-overflow-style:none;}
+.hide-scrollbar{scrollbar-width:none;-ms-overflow-style:none;}
+.hide-scrollbar::-webkit-scrollbar{display:none;}
+/* Safe area helpers */
+.safe-pb{padding-bottom: env(safe-area-inset-bottom);}
+.safe-pt{padding-top: env(safe-area-inset-top);}
+/* Mobile thumb-friendly */
+@media(max-width:767px){
+  button{ min-height: 44px; }
+  /* Cards breathe more on phone */
+  .card-tap{transition: transform 0.15s ease, box-shadow 0.15s ease;}
+  .card-tap:active{transform: scale(0.98);}
+}
+
+/* ========== LIGHT MODE - colorful, depth, not sucked ========== */
+html.light body{ background: #f1f5f9; color: #0f172a; background-image: radial-gradient(at 20% 0%, rgba(16,185,129,0.06) 0px, transparent 50%), radial-gradient(at 90% 0%, rgba(37,99,235,0.07) 0px, transparent 50%), radial-gradient(at 50% 100%, rgba(168,85,247,0.04) 0px, transparent 60%); }
+html.light .bg-\[\#0A0E17\]{ background-color: #ffffff !important; border-color: #e2e8f0 !important; box-shadow: 0 1px 8px rgba(15,23,42,0.06) !important; }
+html.light .bg-\[\#0A0E17\]\/80{ background-color: rgba(255,255,255,0.88) !important; backdrop-filter: blur(16px); border-color: #e2e8f0 !important; }
+html.light .bg-\[\#0A0E17\]\/90{ background-color: rgba(255,255,255,0.94) !important; border-color: #e2e8f0 !important; }
+html.light .bg-\[\#111827\]{ background-color: #ffffff !important; border-color: #e2e8f0 !important; box-shadow: 0 4px 16px rgba(15,23,42,0.08), 0 1px 4px rgba(15,23,42,0.06) !important; }
+html.light .bg-\[\#111827\]\/80{ background-color: #ffffff !important; border-color: #e2e8f0 !important; }
+html.light .bg-\[\#111827\]\/90{ background-color: #ffffff !important; border-color: #e2e8f0 !important; }
+html.light .bg-\[\#1A2333\]{ background-color: #ffffff !important; border-color: #e2e8f0 !important; box-shadow: 0 2px 8px rgba(15,23,42,0.05) !important; }
+html.light .bg-\[\#1A2333\]\/80{ background-color: #f8fafc !important; }
+html.light .bg-slate-950{ background-color: #f1f5f9 !important; }
+html.light .bg-slate-900{ background-color: #ffffff !important; border-color: #e2e8f0 !important; box-shadow: 0 2px 10px rgba(15,23,42,0.06) !important; }
+html.light .bg-slate-900\/60{ background-color: #ffffff !important; border-color: #e2e8f0 !important; }
+html.light .bg-slate-900\/80{ background-color: #ffffff !important; }
+html.light .bg-slate-800{ background-color: #f1f5f9 !important; border-color: #e2e8f0 !important; }
+html.light .bg-slate-900\/90{ background-color: #ffffff !important; }
+/* Text - scoped so colored buttons keep white */
+html.light .bg-\[\#111827\] .text-white,
+html.light .bg-\[\#0A0E17\] .text-white,
+html.light .bg-white .text-white,
+html.light .bg-slate-900 .text-white,
+html.light h1.text-white, html.light h2.text-white, html.light h3.text-white { color: #0f172a !important; }
+html.light .text-slate-100{ color: #1e293b !important; }
+html.light .text-slate-200{ color: #334155 !important; }
+html.light .text-slate-300{ color: #475569 !important; }
+html.light .text-slate-400{ color: #64748b !important; }
+html.light .text-slate-500{ color: #64748b !important; }
+html.light .border-white\/5{ border-color: #e2e8f0 !important; }
+html.light .border-white\/10{ border-color: #e2e8f0 !important; }
+html.light .border-white\/20{ border-color: #cbd5e1 !important; }
+html.light .bg-white\/5{ background-color: #f8fafc !important; border-color: #e2e8f0 !important; }
+html.light .bg-white\/10{ background-color: #f1f5f9 !important; }
+html.light .bg-white{ background-color: #ffffff !important; }
+/* Keep QR white */
+html.light #qr-svg-wrap{ background: #ffffff !important; }
+/* Preserve white text on colored buttons */
+html.light .bg-primary .text-white,
+html.light .bg-blue-600 .text-white,
+html.light .bg-emerald-500 .text-white,
+html.light .bg-emerald-600 .text-white,
+html.light .bg-purple-600 .text-white,
+html.light .bg-rose-500 .text-white,
+html.light .bg-amber-500 .text-white,
+html.light [class*="bg-blue-500"] .text-white,
+html.light [class*="bg-emerald"] .text-white { color: #ffffff !important; }
+/* Light colorful tints - make translucent badges vivid */
+html.light .bg-emerald-500\/10{ background-color: #ecfdf5 !important; border-color: #a7f3d0 !important; }
+html.light .bg-blue-500\/10{ background-color: #eff6ff !important; border-color: #bfdbfe !important; }
+html.light .bg-amber-500\/10{ background-color: #fffbeb !important; border-color: #fde68a !important; }
+html.light .bg-purple-500\/10{ background-color: #faf5ff !important; border-color: #e9d5ff !important; }
+html.light .bg-indigo-500\/10{ background-color: #eef2ff !important; border-color: #c7d2fe !important; }
+html.light .text-emerald-400{ color: #059669 !important; }
+html.light .text-blue-400{ color: #2563eb !important; }
+html.light .text-amber-400{ color: #d97706 !important; }
+html.light .text-purple-400{ color: #9333ea !important; }
+html.light .text-indigo-400{ color: #4f46e5 !important; }
+html.light .shadow-2xl{ box-shadow: 0 8px 28px rgba(15,23,42,0.10) !important; }
+
+/* ========== WOW ANIMATIONS - customer pages ========== */
+@keyframes scaleIn { 0%{transform:scale(0.8);opacity:0} 100%{transform:scale(1);opacity:1} }
+@keyframes shimmer { 0%{transform:translateX(-100%)} 100%{transform:translateX(100%)} }
+@keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }
+@keyframes ringSpin { 0%{transform:rotate(0deg)} 100%{transform:rotate(360deg)} }
+@keyframes glowPulse { 0%,100%{opacity:0.4;transform:scale(1)} 50%{opacity:0.7;transform:scale(1.05)} }
+@keyframes numberPop { 0%{transform:scale(0.9)} 50%{transform:scale(1.08)} 100%{transform:scale(1)} }
+@keyframes staggerIn { 0%{opacity:0;transform:translateY(12px)} 100%{opacity:1;transform:translateY(0)} }
+.animate-float{ animation: float 3s ease-in-out infinite; }
+.animate-glowPulse{ animation: glowPulse 2.5s ease-in-out infinite; }
+.animate-numberPop{ animation: numberPop 0.5s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+.animate-staggerIn{ animation: staggerIn 0.5s ease forwards; }
+.animate-ringSpin{ animation: ringSpin 8s linear infinite; }
+.shimmer{ position:relative; overflow:hidden; }
+.shimmer::after{ content:""; position:absolute; inset:0; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.12), transparent); transform:translateX(-100%); animation: shimmer 2.2s infinite; }
+
+/* Phase 4E: customer ticket cards (.qf-card) are dark immersive surfaces in
+   EVERY color scheme. Without this guard, html.light remaps headings and
+   slate/accent text to near-black while the card background stays dark —
+   leaving the CALLED hero ("Your table is being called") unreadable for
+   light-mode phones. Specificity (0,3,0+) beats the generic light rules. */
+html.light .qf-card h1.text-white,
+html.light .qf-card h2.text-white,
+html.light .qf-keep-dark.text-white {
+  color: #ffffff !important;
+}
+html.light .qf-card .text-slate-100 { color: #f1f5f9 !important; }
+html.light .qf-card .text-slate-200 { color: #e2e8f0 !important; }
+html.light .qf-card .text-slate-300 { color: #cbd5e1 !important; }
+html.light .qf-card .text-slate-400 { color: #94a3b8 !important; }
+html.light .qf-card .text-slate-500 { color: #64748b !important; }
+html.light .qf-card .text-emerald-400 { color: #34d399 !important; }
+html.light .qf-card .text-blue-400 { color: #60a5fa !important; }
+html.light .qf-card .text-amber-400 { color: #fbbf24 !important; }
+html.light .qf-card .bg-slate-800 { background-color: #1e293b !important; border-color: #334155 !important; }
+/* Phase 4F: cancel-dialog action buttons keep white text in light mode. The
+   generic `html.light .bg-slate-900 .text-white` remap targets flipped-white
+   cards, but these buttons sit on dark/rose fills by design in both schemes.
+   Scoped to the cancel dialog ONLY — cart/detail dialogs have white cards
+   in light mode and must keep the generic dark-text remap. */
+html.light .qf-cancel-dialog .text-white { color: #ffffff !important; }
+html.light .qf-card .border-white\/5 { border-color: rgba(255,255,255,0.05) !important; }
+html.light .qf-card .border-white\/10 { border-color: rgba(255,255,255,0.1) !important; }
+html.light .qf-card .border-white\/20 { border-color: rgba(255,255,255,0.2) !important; }
+html.light .qf-card .bg-white\/5 { background-color: rgba(255,255,255,0.05) !important; }
+html.light .qf-card .bg-white\/10 { background-color: rgba(255,255,255,0.1) !important; }
+
+/* ========== CUSTOMER THEME — warm, appetizing, easy to read ========== */
+@keyframes fadeUp { 0%{opacity:0;transform:translateY(14px)} 100%{opacity:1;transform:translateY(0)} }
+@keyframes ctaShine { 0%{transform:translateX(-120%) skewX(-18deg)} 100%{transform:translateX(240%) skewX(-18deg)} }
+@keyframes checkPop { 0%{transform:scale(0.4);opacity:0} 60%{transform:scale(1.15)} 100%{transform:scale(1);opacity:1} }
+.animate-fadeUp{ animation: fadeUp 0.55s cubic-bezier(0.22,1,0.36,1) both; }
+.animate-checkPop{ animation: checkPop 0.55s cubic-bezier(0.34,1.56,0.64,1) both; }
+/* Warm mesh backdrop shared by all customer pages */
+.qf-bg{
+  background-color:#0b0f1a;
+  background-image:
+    radial-gradient(at 15% -5%, rgba(249,115,22,0.16) 0px, transparent 55%),
+    radial-gradient(at 85% 0%, rgba(16,185,129,0.14) 0px, transparent 50%),
+    radial-gradient(at 50% 110%, rgba(168,85,247,0.10) 0px, transparent 60%);
+}
+/* Frosted glass card */
+.qf-card{
+  background: linear-gradient(180deg, rgba(30,41,59,0.92), rgba(15,23,42,0.94));
+  border: 1px solid rgba(255,255,255,0.09);
+  box-shadow: 0 18px 50px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.06);
+  backdrop-filter: blur(14px);
+}
+/* Gradient CTA with travelling shine */
+.qf-cta{ position:relative; overflow:hidden; isolation:isolate; }
+.qf-cta::before{
+  content:""; position:absolute; top:0; bottom:0; width:45%; z-index:1;
+  background:linear-gradient(90deg, transparent, rgba(255,255,255,0.35), transparent);
+  transform:translateX(-120%) skewX(-18deg); animation: ctaShine 3.2s ease-in-out infinite;
+}
+/* Gradient display text for ticket numbers */
+.qf-display{
+  background: linear-gradient(180deg, #ffffff 30%, #a7f3d0 75%, #34d399 100%);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+/* Thin progress track */
+.qf-track{ background:rgba(255,255,255,0.08); }
+.qf-step-dot{ transition: all 0.3s ease; }
+

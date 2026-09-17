@@ -1,0 +1,177 @@
+import 'server-only';
+
+export const PERMISSIONS = {
+  // PLATFORM DOMAIN
+  PLATFORM_VIEW: 'platform.view',
+  PLATFORM_RESTAURANTS_VIEW: 'platform.restaurants.view',
+  PLATFORM_RESTAURANTS_CREATE: 'platform.restaurants.create',
+  PLATFORM_RESTAURANTS_UPDATE: 'platform.restaurants.update',
+  PLATFORM_RESTAURANTS_DELETE: 'platform.restaurants.delete',
+  PLATFORM_RESTAURANTS_LIFECYCLE: 'platform.restaurants.lifecycle',
+  PLATFORM_AUDIT_VIEW: 'platform.audit.view',
+  PLATFORM_SETTINGS_VIEW: 'platform.settings.view',
+
+  // RESTAURANT DOMAIN
+  RESTAURANT_VIEW: 'restaurant.view',
+  RESTAURANT_UPDATE: 'restaurant.update',
+
+  // STAFF DOMAIN
+  STAFF_VIEW: 'staff.view',
+  STAFF_CREATE: 'staff.create',
+  STAFF_UPDATE: 'staff.update',
+  STAFF_ACTIVATE: 'staff.activate',
+  STAFF_DEACTIVATE: 'staff.deactivate',
+  STAFF_MANAGE_PERMISSIONS: 'staff.manage_permissions',
+
+  // TABLES DOMAIN
+  TABLES_VIEW: 'tables.view',
+  TABLES_CREATE: 'tables.create',
+  TABLES_UPDATE: 'tables.update',
+  TABLES_DELETE: 'tables.delete',
+  TABLES_MANAGE_STATUS: 'tables.manage_status',
+
+  // QUEUE DOMAIN
+  QUEUE_VIEW: 'queue.view',
+  QUEUE_JOIN: 'queue.join',
+  QUEUE_MANAGE: 'queue.manage',
+  QUEUE_SEAT: 'queue.seat',
+  QUEUE_CANCEL: 'queue.cancel',
+  QUEUE_REORDER: 'queue.reorder',
+
+  // MENU DOMAIN
+  MENU_VIEW: 'menu.view',
+  MENU_CREATE: 'menu.create',
+  MENU_UPDATE: 'menu.update',
+  MENU_DELETE: 'menu.delete',
+
+  // INVENTORY DOMAIN
+  INVENTORY_VIEW: 'inventory.view',
+  INVENTORY_CREATE: 'inventory.create',
+  INVENTORY_UPDATE: 'inventory.update',
+  INVENTORY_ADJUST: 'inventory.adjust',
+
+  // ORDERS DOMAIN
+  ORDERS_VIEW: 'orders.view',
+  ORDERS_CREATE: 'orders.create',
+  ORDERS_UPDATE: 'orders.update',
+  ORDERS_CANCEL: 'orders.cancel',
+  ORDERS_MANAGE: 'orders.manage',
+
+  // KITCHEN DOMAIN
+  KITCHEN_VIEW: 'kitchen.view',
+  KITCHEN_MANAGE: 'kitchen.manage',
+
+  // PAYMENTS DOMAIN
+  PAYMENTS_VIEW: 'payments.view',
+  PAYMENTS_CREATE: 'payments.create',
+  PAYMENTS_UPDATE: 'payments.update',
+  PAYMENTS_REFUND: 'payments.refund',
+  PAYMENTS_MANAGE: 'payments.manage',
+  PAYMENTS_RECONCILE: 'payments.reconcile',
+
+  // NOTIFICATIONS DOMAIN
+  NOTIFICATIONS_VIEW: 'notifications.view',
+  NOTIFICATIONS_SEND: 'notifications.send',
+  NOTIFICATIONS_MANAGE: 'notifications.manage',
+
+  // ANALYTICS DOMAIN
+  ANALYTICS_VIEW: 'analytics.view',
+  ANALYTICS_EXPORT: 'analytics.export',
+
+  // AUDIT DOMAIN
+  AUDIT_VIEW: 'audit.view',
+} as const;
+
+export type PermissionKey = typeof PERMISSIONS[keyof typeof PERMISSIONS];
+
+export type PermissionDomain =
+  | 'PLATFORM'
+  | 'RESTAURANT'
+  | 'STAFF'
+  | 'TABLES'
+  | 'QUEUE'
+  | 'MENU'
+  | 'INVENTORY'
+  | 'ORDERS'
+  | 'KITCHEN'
+  | 'PAYMENTS'
+  | 'NOTIFICATIONS'
+  | 'ANALYTICS'
+  | 'AUDIT';
+
+export interface PermissionDefinition {
+  key: PermissionKey;
+  domain: PermissionDomain;
+  description: string;
+}
+
+/**
+  * Canonical default permission matrix definition.
+  */
+export const ROLE_DEFAULT_PERMISSIONS: Record<'SUPER_ADMIN' | 'RESTAURANT_ADMIN' | 'STAFF', PermissionKey[]> = {
+  SUPER_ADMIN: Object.values(PERMISSIONS),
+  RESTAURANT_ADMIN: [
+    PERMISSIONS.RESTAURANT_VIEW,
+    PERMISSIONS.RESTAURANT_UPDATE,
+    PERMISSIONS.STAFF_VIEW,
+    PERMISSIONS.STAFF_CREATE,
+    PERMISSIONS.STAFF_UPDATE,
+    PERMISSIONS.STAFF_ACTIVATE,
+    PERMISSIONS.STAFF_DEACTIVATE,
+    PERMISSIONS.STAFF_MANAGE_PERMISSIONS,
+    PERMISSIONS.TABLES_VIEW,
+    PERMISSIONS.TABLES_CREATE,
+    PERMISSIONS.TABLES_UPDATE,
+    PERMISSIONS.TABLES_DELETE,
+    PERMISSIONS.TABLES_MANAGE_STATUS,
+    PERMISSIONS.QUEUE_VIEW,
+    PERMISSIONS.QUEUE_JOIN,
+    PERMISSIONS.QUEUE_MANAGE,
+    PERMISSIONS.QUEUE_SEAT,
+    PERMISSIONS.QUEUE_CANCEL,
+    PERMISSIONS.QUEUE_REORDER,
+    PERMISSIONS.MENU_VIEW,
+    PERMISSIONS.MENU_CREATE,
+    PERMISSIONS.MENU_UPDATE,
+    PERMISSIONS.MENU_DELETE,
+    PERMISSIONS.INVENTORY_VIEW,
+    PERMISSIONS.INVENTORY_CREATE,
+    PERMISSIONS.INVENTORY_UPDATE,
+    PERMISSIONS.INVENTORY_ADJUST,
+    PERMISSIONS.ORDERS_VIEW,
+    PERMISSIONS.ORDERS_CREATE,
+    PERMISSIONS.ORDERS_UPDATE,
+    PERMISSIONS.ORDERS_CANCEL,
+    PERMISSIONS.ORDERS_MANAGE,
+    PERMISSIONS.KITCHEN_VIEW,
+    PERMISSIONS.KITCHEN_MANAGE,
+    PERMISSIONS.PAYMENTS_VIEW,
+    PERMISSIONS.PAYMENTS_CREATE,
+    PERMISSIONS.PAYMENTS_UPDATE,
+    PERMISSIONS.PAYMENTS_REFUND,
+    PERMISSIONS.PAYMENTS_MANAGE,
+    PERMISSIONS.PAYMENTS_RECONCILE,
+    PERMISSIONS.NOTIFICATIONS_VIEW,
+    PERMISSIONS.NOTIFICATIONS_SEND,
+    PERMISSIONS.NOTIFICATIONS_MANAGE,
+    PERMISSIONS.ANALYTICS_VIEW,
+    PERMISSIONS.ANALYTICS_EXPORT,
+    PERMISSIONS.AUDIT_VIEW,
+  ],
+  STAFF: [
+    PERMISSIONS.RESTAURANT_VIEW,
+    PERMISSIONS.STAFF_VIEW,
+    PERMISSIONS.QUEUE_VIEW,
+    PERMISSIONS.QUEUE_MANAGE,
+    PERMISSIONS.QUEUE_SEAT,
+    PERMISSIONS.QUEUE_CANCEL,
+    PERMISSIONS.TABLES_VIEW,
+    PERMISSIONS.TABLES_MANAGE_STATUS,
+    PERMISSIONS.ORDERS_VIEW,
+    PERMISSIONS.ORDERS_CREATE,
+    PERMISSIONS.ORDERS_UPDATE,
+    PERMISSIONS.KITCHEN_VIEW,
+    PERMISSIONS.KITCHEN_MANAGE,
+    PERMISSIONS.NOTIFICATIONS_VIEW,
+  ],
+};

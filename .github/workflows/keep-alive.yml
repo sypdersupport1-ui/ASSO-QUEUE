@@ -1,0 +1,55 @@
+name: Keep-Alive Ping (Prevents Supabase Free Tier Cold Starts)
+
+# Runs every 5 minutes (GitHub Actions minimum interval).
+# Hits the /api/health endpoint which queries the DB, keeping the
+# Supabase free-tier database warm so it never pauses.
+#
+# SETUP REQUIRED:
+#   Add these two secrets in GitHub → Settings → Secrets → Actions:
+#   - APP_URL: your deployed app URL, e.g. https://queue-flow.vercel.app
+#
+# If APP_URL secret is not set, the workflow skips gracefully.
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'   # every 5 minutes, 24/7
+  workflow_dispatch:          # also allow manual trigger from GitHub UI
+
+jobs:
+  ping:
+    name: DB Keep-Alive Ping
+    runs-on: ubuntu-latest
+    timeout-minutes: 1
+
+    steps:
+      - name: Ping health endpoint
+        run: |
+          APP_URL="${{ secrets.APP_URL }}"
+
+          if [ -z "$APP_URL" ]; then
+            echo "⏭️  APP_URL secret not set — skipping keep-alive ping."
+            echo "👉 Add APP_URL in GitHub → Settings → Secrets → Actions"
+            exit 0
+          fi
+
+          HEALTH_URL="${APP_URL}/api/health"
+          echo "📡 Pinging: $HEALTH_URL"
+
+          HTTP_STATUS=$(curl -s -o /tmp/health_response.json -w "%{http_code}" \
+            --max-time 30 \
+            --retry 2 \
+            --retry-delay 3 \
+            "$HEALTH_URL")
+
+          echo "📊 Response:"
+          cat /tmp/health_response.json | python3 -m json.tool 2>/dev/null || cat /tmp/health_response.json
+
+          if [ "$HTTP_STATUS" -ge 200 ] && [ "$HTTP_STATUS" -lt 400 ]; then
+            echo ""
+            echo "✅ Database is warm (HTTP $HTTP_STATUS)"
+          else
+            echo ""
+            echo "⚠️  Health check returned HTTP $HTTP_STATUS — DB may be cold or unavailable"
+            # Don't fail the workflow — this is a best-effort ping, not a gate
+            exit 0
+          fi
