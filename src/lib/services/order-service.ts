@@ -183,6 +183,9 @@ export class OrderService {
         restaurantId: validated.restaurantId,
         error: orderErr?.message,
       });
+      if (orderErr?.code === '23505') {
+        throw new DomainError('An active order already exists for this queue ticket.');
+      }
       throw new DomainError('Failed to create order');
     }
 

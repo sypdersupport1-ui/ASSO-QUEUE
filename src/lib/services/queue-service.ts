@@ -552,12 +552,16 @@ export class QueueService {
     // Step 1: Fetch entry to get restaurant_id for permission check
     const { data: entry, error: fetchErr } = await supabase
       .from('queue_entries')
-      .select('restaurant_id, party_size, status')
+      .select('restaurant_id, party_size, status, queue_type')
       .eq('id', entryId)
       .single();
 
     if (fetchErr || !entry) {
       throw new Error('QUEUE_ENTRY_NOT_FOUND');
+    }
+
+    if ((entry as unknown as { queue_type?: string }).queue_type === 'TAKEAWAY') {
+      throw new Error('TAKEAWAY_CANNOT_BE_SEATED: Takeaway orders do not receive table assignments. Use complete_takeaway_atomic instead.');
     }
 
     // Step 2: Enforce authorization — must have queue.seat permission
@@ -584,6 +588,9 @@ export class QueueService {
     if (error) {
       if (error.message.includes('QUEUE_ENTRY_TERMINAL')) {
         throw new Error('QUEUE_ENTRY_TERMINAL: Cannot seat a queue entry in a terminal state');
+      }
+      if (error.message.includes('TAKEAWAY_CANNOT_BE_SEATED')) {
+        throw new Error('TAKEAWAY_CANNOT_BE_SEATED: Takeaway orders do not receive table assignments. Use complete_takeaway_atomic instead.');
       }
       // Phase 3E: surface FSM rejections verbatim before the SEATED-substring
       // fallback below (which would otherwise mislabel them as ALREADY_SEATED).

@@ -3,6 +3,7 @@
 import { QueueService } from '@/lib/services/queue-service';
 import { OrderService } from '@/lib/services/order-service';
 import { PublicRestaurantService } from '@/lib/services/public-restaurant-service';
+import { createAdminClient } from '@/lib/db/supabase/admin';
 import {
   setTicketCookie,
   clearTicketCookie,
@@ -396,6 +397,26 @@ export async function createTakeawayOrderAndQueueAction(input: {
   }
   if (!restaurant.takeawayEnabled) {
     throw new Error('Takeaway ordering is currently disabled for this restaurant.');
+  }
+  // Idempotency pre-check: if a previous request already succeeded with this idempotencyKey, return it
+  if (idempotencyKey) {
+    const supabase = createAdminClient();
+    const { data: existingOrder } = await supabase
+      .from('orders')
+      .select('id, queue_entry_id')
+      .eq('restaurant_id', restaurant.id)
+      .eq('idempotency_key', idempotencyKey)
+      .maybeSingle();
+
+    if (existingOrder && existingOrder.queue_entry_id) {
+      return {
+        success: true,
+        queueToken: '',
+        orderToken: '',
+        queueEntryId: existingOrder.queue_entry_id,
+        orderId: existingOrder.id,
+      };
+    }
   }
 
   // 1. Atomically join takeaway queue

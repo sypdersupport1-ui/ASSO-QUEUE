@@ -5844,3 +5844,11 @@ ON CONFLICT (role, permission_id) DO NOTHING;
 -- The existing supabase_realtime publication covers queue_entries with FULL
 -- replica identity. Takeaway entries will broadcast naturally.
 -- ============================================================================
+
+-- ============================================================================
+-- 9. PHASE 4 HARDENING: ONE ACTIVE ORDER PER QUEUE ENTRY
+-- ============================================================================
+CREATE UNIQUE INDEX IF NOT EXISTS idx_orders_unique_active_queue_entry
+  ON public.orders (queue_entry_id)
+  WHERE queue_entry_id IS NOT NULL AND status NOT IN ('CANCELLED');
+

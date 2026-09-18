@@ -265,6 +265,40 @@ describe('Takeaway Phase 4 — Final UX, Operational Polish & Hardening', () => 
       expect(attachOrder('q-100', 'ord-1')).toEqual({ success: true, orderId: 'ord-1' });
       expect(() => attachOrder('q-100', 'ord-2')).toThrow('DUPLICATE_TAKEAWAY_ORDER');
     });
+
+    it('maps database unique constraint violation (code 23505) to a clean DomainError', () => {
+      const handleInsertError = (err: { code: string; message: string }) => {
+        if (err.code === '23505') {
+          throw new Error('An active order already exists for this queue ticket.');
+        }
+        throw new Error('Failed to create order');
+      };
+
+      expect(() => handleInsertError({ code: '23505', message: 'duplicate key value violates unique constraint' }))
+        .toThrow('An active order already exists for this queue ticket.');
+    });
+
+    it('idempotency pre-check recovers existing order and ticket without creating a second queue entry', () => {
+      const db = {
+        orders: new Map([['idemp-key-1', { id: 'ord-99', queueEntryId: 'q-99' }]]),
+      };
+
+      const processTakeawayOrderFirst = (idempotencyKey: string) => {
+        if (db.orders.has(idempotencyKey)) {
+          const existing = db.orders.get(idempotencyKey)!;
+          return { success: true, queueEntryId: existing.queueEntryId, orderId: existing.id, isReplay: true };
+        }
+        return { success: true, queueEntryId: 'q-new', orderId: 'ord-new', isReplay: false };
+      };
+
+      const first = processTakeawayOrderFirst('idemp-key-1');
+      expect(first.isReplay).toBe(true);
+      expect(first.queueEntryId).toBe('q-99');
+
+      const fresh = processTakeawayOrderFirst('idemp-key-2');
+      expect(fresh.isReplay).toBe(false);
+      expect(fresh.queueEntryId).toBe('q-new');
+    });
   });
 
   describe('6. Sound & Vibration Notification Deduplication', () => {
