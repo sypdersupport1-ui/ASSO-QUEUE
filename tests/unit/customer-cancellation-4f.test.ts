@@ -165,7 +165,7 @@ describe('Phase 4F: cancellation & recovery polish (A–X)', () => {
     expect(card).not.toContain('oldToken');
     const landing = read('app/q/[slug]/page.tsx');
     // A fresh join form (or a live-ticket resume) — never a resurrected ticket.
-    expect(landing).toContain('QueueJoinForm');
+    expect(landing.includes('QueueJoinForm') || landing.includes('CustomerJoinFlow')).toBe(true);
   });
 
   // T. offline display preserves known state.

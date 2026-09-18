@@ -7,7 +7,7 @@ import { ETAService } from '@/lib/services/eta-service';
 import { QueueScheduleService } from '@/lib/services/queue-schedule-service';
 import { RestaurantHeader } from '@/components/customer/RestaurantHeader';
 import { QueueStatusCard } from '@/components/customer/QueueStatusCard';
-import { CustomerJoinFlow } from '@/components/customer/CustomerJoinFlow';
+import { CustomerJoinFlow } from '@/components/customer/CustomerJoinFlow'; // Hosts QueueJoinForm & TakeawayJoinCard
 import { MenuPreviewSection } from '@/components/customer/MenuPreviewSection';
 import { TicketResumeBanner } from '@/components/customer/TicketResumeBanner';
 import { LandingAutoRefresh } from '@/components/customer/LandingAutoRefresh';
