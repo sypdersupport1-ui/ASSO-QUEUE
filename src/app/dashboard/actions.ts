@@ -852,3 +852,103 @@ export async function updateTakeawayEnabledFormAction(_prevState: unknown, formD
     };
   }
 }
+
+/**
+ * Phase 3 Takeaway: Staff-Created Order Action.
+ * Creates an authoritative multi-item Takeaway order linked to an active Takeaway queue entry.
+ * Validates staff authorization, tenant ownership, menu availability, and ensures no duplicate orders.
+ */
+export async function createStaffTakeawayOrderAction(input: {
+  queueEntryId: string;
+  items: Array<{ menuItemId: string; quantity: number; notes?: string | null }>;
+}) {
+  try {
+    const actorUserId = await requireActionActor();
+    const { queueEntryId, items } = input;
+
+    if (!queueEntryId) {
+      throw new Error('Queue entry ID is required.');
+    }
+    if (!items || items.length === 0) {
+      throw new Error('Please select at least one menu item.');
+    }
+
+    const supabase = createAdminClient();
+
+    // 1. Fetch queue entry
+    const { data: entry, error: entryErr } = await supabase
+      .from('queue_entries')
+      .select('*')
+      .eq('id', queueEntryId)
+      .single();
+
+    if (entryErr || !entry) {
+      throw new Error('Queue entry not found.');
+    }
+
+    // 2. Validate Takeaway type and state
+    if (entry.queue_type !== 'TAKEAWAY') {
+      throw new Error('Cannot create takeaway order for a non-takeaway queue entry.');
+    }
+    if (['COMPLETED', 'CANCELLED', 'NO_SHOW', 'EXPIRED'].includes(entry.status)) {
+      throw new Error(`Cannot create order for queue entry in status ${entry.status}.`);
+    }
+
+    // 3. Authorization check (actor must have takeaway.manage or orders.create for this restaurant)
+    const canManage =
+      (await AuthorizationService.hasPermission({
+        userId: actorUserId,
+        restaurantId: entry.restaurant_id,
+        permission: PERMISSIONS.TAKEAWAY_MANAGE,
+      })) ||
+      (await AuthorizationService.hasPermission({
+        userId: actorUserId,
+        restaurantId: entry.restaurant_id,
+        permission: PERMISSIONS.ORDERS_CREATE,
+      }));
+
+    if (!canManage) {
+      throw new Error('Unauthorized: Staff lacks permission to create takeaway orders.');
+    }
+
+    // 4. Duplicate Check: Ensure no active non-cancelled order already exists for this queue entry
+    const { data: existingOrder } = await supabase
+      .from('orders')
+      .select('id, order_number, status')
+      .eq('queue_entry_id', entry.id)
+      .neq('status', 'CANCELLED')
+      .maybeSingle();
+
+    if (existingOrder) {
+      throw new Error(`Order #${existingOrder.order_number} already exists for this takeaway ticket.`);
+    }
+
+    // 5. Create authoritative multi-item order via OrderService
+    const orderResult = await OrderService.createCustomerOrder({
+      restaurantId: entry.restaurant_id,
+      customerName: entry.customer_name || 'Takeaway Guest',
+      customerPhone: entry.customer_phone || undefined,
+      queueEntryId: entry.id,
+      items,
+    });
+
+    revalidatePath('/dashboard/queue');
+    revalidatePath('/dashboard');
+    revalidatePath('/dashboard', 'layout');
+
+    return {
+      success: true,
+      order: {
+        id: orderResult.order.id,
+        orderNumber: orderResult.order.order_number,
+        total: orderResult.order.total,
+        status: orderResult.order.status,
+      },
+    };
+  } catch (error: unknown) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to create takeaway order.',
+    };
+  }
+}

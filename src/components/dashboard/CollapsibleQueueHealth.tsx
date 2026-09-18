@@ -20,6 +20,10 @@ export interface QueueHealthData {
   outOfServiceTables: number;
   operatingState: string;
   queueEnabled: boolean;
+  dineInWaitingCount?: number;
+  takeawayWaitingCount?: number;
+  dineInActiveCount?: number;
+  takeawayActiveCount?: number;
 }
 
 interface CollapsibleQueueHealthProps {
@@ -113,6 +117,11 @@ export function CollapsibleQueueHealth({
           <div className="hidden md:flex items-center gap-2 text-[11px] font-semibold text-slate-300">
             <span className="px-2 py-0.5 rounded-lg bg-black/30 border border-white/5">
               👥 {queueHealth.activeCount}/{maxQueueCapacity} active
+              {typeof queueHealth.dineInActiveCount === 'number' && typeof queueHealth.takeawayActiveCount === 'number' && (
+                <span className="text-slate-400 font-normal ml-1">
+                  ({queueHealth.dineInActiveCount} dine-in · {queueHealth.takeawayActiveCount} takeaway)
+                </span>
+              )}
             </span>
             <span className="px-2 py-0.5 rounded-lg bg-black/30 border border-white/5">
               🪑 {queueHealth.availableTables}/{queueHealth.totalTables} ready
@@ -140,7 +149,7 @@ export function CollapsibleQueueHealth({
       {/* Collapsed view summary bar on mobile */}
       {!isExpanded && (
         <div className="md:hidden px-3.5 pb-3 flex items-center justify-between text-[10px] text-slate-400 border-t border-white/5 pt-2">
-          <span>👥 {queueHealth.activeCount} active · {queueHealth.waitingCount} waiting</span>
+          <span>👥 {queueHealth.activeCount} active ({queueHealth.dineInActiveCount ?? queueHealth.activeCount} dine-in · {queueHealth.takeawayActiveCount ?? 0} takeaway)</span>
           <span>🪑 {queueHealth.availableTables} tables ready</span>
         </div>
       )}
@@ -157,7 +166,9 @@ export function CollapsibleQueueHealth({
                 <span className="text-xs font-normal text-slate-400">/ {maxQueueCapacity} max</span>
               </div>
               <div className="text-[10px] text-slate-400 mt-1">
-                <span className="text-white font-bold">{queueHealth.waitingCount}</span> waiting •{' '}
+                <span className="text-white font-bold">{queueHealth.waitingCount}</span> waiting (
+                <span className="text-cyan-300">{queueHealth.dineInWaitingCount ?? queueHealth.waitingCount}</span> dine-in •{' '}
+                <span className="text-amber-300">{queueHealth.takeawayWaitingCount ?? 0}</span> takeaway) •{' '}
                 <span className="text-purple-300 font-bold">{queueHealth.notifiedCount}</span> notified •{' '}
                 <span className="text-blue-300 font-bold">{queueHealth.calledCount}</span> called
               </div>

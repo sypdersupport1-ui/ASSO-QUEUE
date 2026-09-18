@@ -29,7 +29,9 @@ export default async function RestaurantAdminDashboardPage() {
 
   // --- KPI 1: Active Queue ---
   const activeQueueCount = activeQueue.length;
-  const activeQueueGuests = activeQueue.reduce((acc, q) => acc + q.party_size, 0);
+  const dineInActive = activeQueue.filter(q => (q.queue_type || 'DINE_IN') === 'DINE_IN');
+  const takeawayActive = activeQueue.filter(q => q.queue_type === 'TAKEAWAY');
+  const activeQueueGuests = dineInActive.reduce((acc, q) => acc + q.party_size, 0);
   
   let avgWaitTime = 0;
   if (activeQueue.length > 0) {
@@ -38,6 +40,8 @@ export default async function RestaurantAdminDashboardPage() {
   }
 
   const calledCount = activeQueue.filter(q => q.status === 'CALLED').length;
+  const dineInCalled = dineInActive.filter(q => q.status === 'CALLED').length;
+  const takeawayCalling = takeawayActive.filter(q => q.status === 'CALLED').length;
 
   // --- KPI 2: Floor Occupancy ---
   const tablesTotal = tablesRes.stats.total;
@@ -126,13 +130,15 @@ export default async function RestaurantAdminDashboardPage() {
               </div>
             </div>
             <div className="px-2 py-0.5 rounded-full border border-primary/30 bg-primary/10 text-primary text-[10px] font-bold">
-              {calledCount} Called
+              {calledCount} Called ({dineInCalled} dine-in · {takeawayCalling} takeaway)
             </div>
           </div>
-          <div className="flex items-baseline gap-2 mb-4">
+          <div className="flex items-baseline gap-2 mb-4 flex-wrap">
             <span className="text-4xl font-black text-white font-headline-xl">{activeQueueCount}</span>
-            <span className="text-sm font-bold text-white">Groups</span>
-            <span className="text-[11px] text-slate-500">({activeQueueGuests} Guests)</span>
+            <span className="text-sm font-bold text-white">Active</span>
+            <span className="text-[11px] text-slate-400">
+              ({dineInActive.length} dine-in · {takeawayActive.length} takeaway · {activeQueueGuests} guests)
+            </span>
           </div>
           <div className="flex items-center justify-between text-[11px] font-medium text-slate-400 border-t border-white/5 pt-3">
             <span>Avg Wait Time:</span>

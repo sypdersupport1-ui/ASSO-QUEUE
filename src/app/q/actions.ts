@@ -408,14 +408,33 @@ export async function createTakeawayOrderAndQueueAction(input: {
   });
 
   // 2. Create authoritative order linked to the newly created takeaway queue entry
-  const orderResult = await OrderService.createCustomerOrder({
-    restaurantId: restaurant.id,
-    customerName: cleanName,
-    customerPhone: customerPhone ? customerPhone.trim() : undefined,
-    queueEntryId: queueResult.entry.id,
-    idempotencyKey: idempotencyKey || null,
-    items,
-  });
+  let orderResult;
+  try {
+    orderResult = await OrderService.createCustomerOrder({
+      restaurantId: restaurant.id,
+      customerName: cleanName,
+      customerPhone: customerPhone ? customerPhone.trim() : undefined,
+      queueEntryId: queueResult.entry.id,
+      idempotencyKey: idempotencyKey || null,
+      items,
+    });
+  } catch (orderErr) {
+    // Consistency Rollback: Do not leave an orphaned takeaway queue entry if order creation fails
+    try {
+      await QueueService.updateQueueStatus({
+        entryId: queueResult.entry.id,
+        newStatus: 'CANCELLED',
+        reason: 'ORDER_CREATION_FAILED',
+      });
+    } catch (cleanupErr) {
+      logger.error('Failed to cleanup queue entry after order creation failure', {
+        operation: 'createTakeawayOrderAndQueueAction',
+        queueEntryId: queueResult.entry.id,
+        error: cleanupErr instanceof Error ? cleanupErr.message : String(cleanupErr),
+      });
+    }
+    throw orderErr;
+  }
 
   // 3. Set customer ticket cookie so returning to /q/[slug] resumes the ticket
   try {

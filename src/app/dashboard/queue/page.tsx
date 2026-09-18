@@ -3,6 +3,7 @@ import { createAdminClient } from '@/lib/db/supabase/admin';
 import { RestaurantAdminService } from '@/lib/services/restaurant-admin-service';
 import { QueueService } from '@/lib/services/queue-service';
 import { TableService } from '@/lib/services/table-service';
+import { OrderService } from '@/lib/services/order-service';
 
 function getWaitTimeMins(joinedAt: string) {
   const diffMs = new Date().getTime() - new Date(joinedAt).getTime();
@@ -42,7 +43,7 @@ export default async function QueueManagementPage({
   }
 
   // Parallelize independent fetches for snappy load.
-  const [entries, activeEntries, tablesRes, scheduleInfo] = await Promise.all([
+  const [entriesRaw, activeEntriesRaw, tablesRes, scheduleInfo, dashboardOrders, menuItemsRes] = await Promise.all([
     QueueService.getAllQueueEntries(restaurant.id, statusFilter, searchTerm).catch((err) => {
       logger.warn('Queue page: entries fetch failed, degrading to empty', {
         operation: 'dashboard_queue_page',
@@ -72,7 +73,24 @@ export default async function QueueManagementPage({
         return { schedule, availability };
       } catch { return null; }
     })(),
+    OrderService.listDashboardOrders(restaurant.id, 'ALL').catch(() => []),
+    (async () => {
+      try {
+        return await supabase
+          .from('menu_items')
+          .select('id, name, price, description, available, active, menu_categories(name)')
+          .eq('restaurant_id', restaurant.id)
+          .eq('is_archived', false);
+      } catch {
+        return { data: [] };
+      }
+    })(),
   ]);
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const entries = entriesRaw as any[];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const activeEntries = activeEntriesRaw as any[];
 
   // Queue health aggregation
   let queueHealth: Awaited<ReturnType<typeof QueueService.getQueueHealth>>;
@@ -86,6 +104,13 @@ export default async function QueueManagementPage({
     });
   }
 
+  const dineInActive = activeEntries.filter((e) => e.queue_type !== 'TAKEAWAY');
+  const takeawayActive = activeEntries.filter((e) => e.queue_type === 'TAKEAWAY');
+  const dineInWaiting = dineInActive.filter((e) => e.status === 'WAITING').length;
+  const dineInCalled = dineInActive.filter((e) => e.status === 'CALLED' || e.status === 'NOTIFIED').length;
+  const takeawayWaiting = takeawayActive.filter((e) => e.status === 'WAITING').length;
+  const takeawayCalled = takeawayActive.filter((e) => e.status === 'CALLED' || e.status === 'NOTIFIED').length;
+
   const waitingEntries = activeEntries.filter((e) => e.status === 'WAITING');
   const calledEntries = activeEntries.filter((e) => e.status === 'CALLED' || e.status === 'NOTIFIED');
   const waitingCount = waitingEntries.length;
@@ -93,6 +118,19 @@ export default async function QueueManagementPage({
   const totalGuests = activeEntries.reduce((sum, e) => sum + e.party_size, 0);
   const queueEnabled = restaurant.queue_enabled ?? true;
   const operatingState = (restaurant as unknown as { queue_operating_state: string }).queue_operating_state || 'OPEN';
+
+  // Format menuItems for StaffTakeawayOrderModal
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const rawMenuItems = (menuItemsRes?.data || []) as any[];
+  const formattedMenuItems = rawMenuItems.map((mi) => ({
+    id: mi.id,
+    name: mi.name,
+    price: Number(mi.price),
+    description: mi.description,
+    available: mi.available,
+    active: mi.active,
+    categoryName: mi.menu_categories?.name || null,
+  }));
 
   // Best next guest logic (first waiting)
   const nextUp = waitingEntries.length > 0 ? waitingEntries[0] : null;
@@ -291,7 +329,7 @@ export default async function QueueManagementPage({
               <span className="text-[11px] text-slate-400 font-semibold">parties</span>
             </div>
             <span className="text-[10px] text-blue-300 truncate font-medium">
-              {waitingEntries.reduce((s, e) => s + e.party_size, 0)} guests in line
+              {dineInWaiting} dine-in · {takeawayWaiting} takeaway
             </span>
           </div>
           <div className="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20 flex items-center justify-center shrink-0">
@@ -311,7 +349,7 @@ export default async function QueueManagementPage({
               <span className="text-[11px] text-slate-400 font-semibold">paged</span>
             </div>
             <span className="text-[10px] text-indigo-300 truncate font-medium">
-              Awaiting seating at stand
+              {dineInCalled} dine-in · {takeawayCalled} takeaway
             </span>
           </div>
           <div className="w-10 h-10 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 flex items-center justify-center shrink-0">
@@ -330,7 +368,7 @@ export default async function QueueManagementPage({
               <span className="text-2xl font-black text-amber-300">~{avgWaitTime}m</span>
             </div>
             <span className="text-[10px] text-emerald-400 truncate font-bold">
-              Target &lt; {restaurant.avg_service_time_mins ?? 25}m
+              Oldest: {queueHealth.oldestWaitingAgeMins !== null ? `${queueHealth.oldestWaitingAgeMins}m` : '0m'}
             </span>
           </div>
           <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 flex items-center justify-center shrink-0">
@@ -343,31 +381,31 @@ export default async function QueueManagementPage({
           <div className="flex flex-col min-w-0">
             <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-1">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-              Seated Today
+              Served Today
             </span>
             <div className="flex items-baseline gap-1.5 mt-0.5">
-              <span className="text-2xl font-black text-white">{seatedToday}</span>
+              <span className="text-2xl font-black text-emerald-400">{seatedToday}</span>
               <span className="text-[11px] text-slate-400 font-semibold">parties</span>
             </div>
             <span className="text-[10px] text-emerald-300 truncate font-medium">
-              {guestsSeatedToday} diners hosted
+              {guestsSeatedToday} total guests
             </span>
           </div>
           <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center justify-center shrink-0">
-            <span className="material-symbols-outlined text-[20px]">table_restaurant</span>
+            <span className="material-symbols-outlined text-[20px]">check_circle</span>
           </div>
         </div>
 
-        {/* Metric 5: Floor Readiness */}
-        <div className="bg-[#0E1524] rounded-2xl border border-white/10 p-3 sm:p-3.5 flex items-center justify-between shadow-sm relative overflow-hidden group hover:border-teal-500/30 transition-colors col-span-2 sm:col-span-1">
+        {/* Metric 5: Floor Utilization */}
+        <div className="col-span-2 sm:col-span-1 bg-[#0E1524] rounded-2xl border border-white/10 p-3 sm:p-3.5 flex items-center justify-between shadow-sm relative overflow-hidden group hover:border-teal-500/30 transition-colors">
           <div className="flex flex-col min-w-0">
             <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-1">
               <span className="w-1.5 h-1.5 rounded-full bg-teal-400"></span>
-              Tables Ready
+              Tables
             </span>
             <div className="flex items-baseline gap-1.5 mt-0.5">
               <span className="text-2xl font-black text-white">{tablesReady}</span>
-              <span className="text-[11px] text-slate-400 font-semibold">/ {tablesTotal} open</span>
+              <span className="text-[11px] text-slate-400 font-semibold">/ {tablesTotal} ready</span>
             </div>
             <span className="text-[10px] text-teal-300 truncate font-medium">
               {Math.round(occupiedPct)}% floor occupied
@@ -388,9 +426,13 @@ export default async function QueueManagementPage({
             initialEntries={entries}
             tablesRes={tablesRes}
             userId={userId}
+            restaurantId={restaurant.id}
             callTimeoutMinutes={restaurant.call_timeout_minutes || 15}
             initialStatusFilter={statusFilter}
             initialSearchTerm={searchTerm}
+            initialOrders={dashboardOrders}
+            menuItems={formattedMenuItems}
+            currencySymbol={restaurant.currency === 'INR' ? '₹' : (restaurant.currency === 'USD' ? '$' : '₹')}
           />
         </div>
 

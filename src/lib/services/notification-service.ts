@@ -51,14 +51,30 @@ export class NotificationService {
         });
         break;
 
-      case 'QUEUE_CALLED':
+      case 'QUEUE_CALLED': {
+        const isTakeaway = payload.queueType === 'TAKEAWAY' || payload.queue_type === 'TAKEAWAY' || (payload.displayNumber && String(payload.displayNumber).startsWith('T-'));
         notificationsToDispatch.push({
           restaurantId,
           queueEntryId: event.aggregate_id,
           channel: 'IN_APP',
           notificationType: 'QUEUE_CALLED',
-          title: "Your table is ready!",
-          message: `Ticket ${payload.displayNumber || ''} — ${payload.customerName || 'your table'} is ready. Please come to the host stand now.`,
+          title: isTakeaway ? "Your takeaway order is ready!" : "Your table is ready!",
+          message: isTakeaway
+            ? `Ticket ${payload.displayNumber || ''} — your takeaway order is ready for pickup. Please proceed to the takeaway counter.`
+            : `Ticket ${payload.displayNumber || ''} — ${payload.customerName || 'your table'} is ready. Please come to the host stand now.`,
+          metadata: payload,
+        });
+        break;
+      }
+
+      case 'TAKEAWAY_COMPLETED':
+        notificationsToDispatch.push({
+          restaurantId,
+          queueEntryId: event.aggregate_id,
+          channel: 'IN_APP',
+          notificationType: 'ORDER_SERVED',
+          title: "Order collected!",
+          message: `Ticket ${payload.displayNumber || ''} — your takeaway order has been completed. Enjoy!`,
           metadata: payload,
         });
         break;

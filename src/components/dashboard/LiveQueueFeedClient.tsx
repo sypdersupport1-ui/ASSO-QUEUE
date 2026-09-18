@@ -2,11 +2,13 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { updateQueueStatusAction, markNoShowAction } from '@/app/dashboard/actions';
+import { updateQueueStatusAction, markNoShowAction, completeTakeawayAction } from '@/app/dashboard/actions';
+import { recordManualPaymentAction } from '@/app/dashboard/payments/actions';
 import { broadcastCustomerQueueUpdate } from '@/lib/realtime/useCustomerQueueRealtime';
 import { SeatCustomerModal, SeatableTableItem } from '@/components/dashboard/SeatCustomerModal';
 import { StaffQueueChatModal } from '@/components/dashboard/StaffQueueChatModal';
 import { AddQueueGuestModal } from '@/components/dashboard/AddQueueGuestModal';
+import { StaffTakeawayOrderModal, StaffTakeawayMenuItem } from '@/components/dashboard/StaffTakeawayOrderModal';
 import { chimeEngine } from '@/lib/audio-chime';
 
 interface LiveQueueFeedClientProps {
@@ -15,22 +17,36 @@ interface LiveQueueFeedClientProps {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   tablesRes: { tables: any[]; stats?: any };
   userId: string;
+  restaurantId?: string;
   callTimeoutMinutes?: number;
   initialStatusFilter?: string;
   initialSearchTerm?: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  initialOrders?: any[];
+  menuItems?: StaffTakeawayMenuItem[];
+  currencySymbol?: string;
 }
 
 export function LiveQueueFeedClient({
   initialEntries,
   tablesRes,
   userId,
+  restaurantId,
   callTimeoutMinutes = 15,
   initialStatusFilter = 'ACTIVE',
   initialSearchTerm = '',
+  initialOrders = [],
+  menuItems = [],
+  currencySymbol = '₹',
 }: LiveQueueFeedClientProps) {
   const router = useRouter();
   const [entries, setEntries] = useState(initialEntries);
   const [tables, setTables] = useState(tablesRes.tables || []);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [orders, setOrders] = useState<any[]>(initialOrders || []);
+  const [serviceFilter, setServiceFilter] = useState<'ALL' | 'DINE_IN' | 'TAKEAWAY'>('ALL');
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [orderModalEntry, setOrderModalEntry] = useState<any | null>(null);
   const [isProcessing, setIsProcessing] = useState<string | null>(null);
   const [noShowMenuId, setNoShowMenuId] = useState<string | null>(null);
   const [noShowReason, setNoShowReason] = useState('STAFF_MARKED_NO_SHOW');
@@ -43,6 +59,10 @@ export function LiveQueueFeedClient({
   useEffect(() => {
     setEntries(initialEntries);
   }, [initialEntries]);
+
+  useEffect(() => {
+    if (initialOrders) setOrders(initialOrders);
+  }, [initialOrders]);
 
   useEffect(() => {
     setTables(tablesRes.tables || []);
@@ -70,10 +90,30 @@ export function LiveQueueFeedClient({
       })) as SeatableTableItem[];
   }, [tables]);
 
-  // Filter entries based on active filter tab & search term
+  // Map active orders by queueEntryId
+  const ordersByQueueEntryId = useMemo(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const map = new Map<string, any>();
+    orders.forEach((o) => {
+      if (o.queueEntryId && o.status !== 'CANCELLED') {
+        map.set(o.queueEntryId, o);
+      }
+    });
+    return map;
+  }, [orders]);
+
+  // Filter entries based on active filter tab, service filter & search term
   const filteredEntries = useMemo(() => {
     let result = entries;
 
+    // 1. Service Type Filter
+    if (serviceFilter === 'DINE_IN') {
+      result = result.filter((e) => e.queue_type !== 'TAKEAWAY');
+    } else if (serviceFilter === 'TAKEAWAY') {
+      result = result.filter((e) => e.queue_type === 'TAKEAWAY');
+    }
+
+    // 2. Status Filter
     if (statusFilter === 'ACTIVE') {
       result = result.filter((e) => ['WAITING', 'CALLED', 'NOTIFIED'].includes(e.status));
     } else if (statusFilter === 'WAITING') {
@@ -83,21 +123,64 @@ export function LiveQueueFeedClient({
     } else if (statusFilter === 'SEATED') {
       result = result.filter((e) => e.status === 'SEATED');
     } else if (statusFilter === 'TERMINAL') {
-      result = result.filter((e) => ['SEATED', 'CANCELLED', 'NO_SHOW', 'EXPIRED'].includes(e.status));
+      result = result.filter((e) => ['SEATED', 'CANCELLED', 'NO_SHOW', 'EXPIRED', 'COMPLETED'].includes(e.status));
     }
 
+    // 3. Search Filter
     if (searchTerm.trim()) {
       const q = searchTerm.toLowerCase().trim();
       result = result.filter((e) => {
         const name = (e.customer_name || '').toLowerCase();
         const phone = (e.customer_phone || '').toLowerCase();
         const num = (e.display_number || e.queue_number || '').toString().toLowerCase();
-        return name.includes(q) || phone.includes(q) || num.includes(q);
+        const order = ordersByQueueEntryId.get(e.id);
+        const orderNum = (order?.orderNumber || '').toLowerCase();
+        return name.includes(q) || phone.includes(q) || num.includes(q) || orderNum.includes(q);
       });
     }
 
     return result;
-  }, [entries, statusFilter, searchTerm]);
+  }, [entries, serviceFilter, statusFilter, searchTerm, ordersByQueueEntryId]);
+
+  const handleCompleteTakeaway = async (entryId: string) => {
+    setIsProcessing(entryId);
+    chimeEngine.playSeatChime();
+
+    setEntries((prev) =>
+      prev.map((e) => (e.id === entryId ? { ...e, status: 'COMPLETED', completed_at: new Date().toISOString() } : e))
+    );
+
+    try {
+      const res = await completeTakeawayAction(entryId);
+      if (!res.success) {
+        alert(res.error || 'Failed to complete takeaway pickup.');
+      }
+      await broadcastCustomerQueueUpdate(entryId);
+    } catch (e) {
+      console.error('Failed to complete takeaway order:', e);
+    } finally {
+      setIsProcessing(null);
+      router.refresh();
+    }
+  };
+
+  const handleRecordPayment = async (orderId: string, entryId: string) => {
+    if (!restaurantId) return;
+    setIsProcessing(entryId);
+    try {
+      await recordManualPaymentAction(restaurantId, orderId, 'PAY_AT_RESTAURANT');
+      setOrders((prev) =>
+        prev.map((o) => (o.id === orderId ? { ...o, paymentStatus: 'PAID' } : o))
+      );
+      await broadcastCustomerQueueUpdate(entryId);
+    } catch (e) {
+      console.error('Failed to record payment:', e);
+      alert('Failed to record payment.');
+    } finally {
+      setIsProcessing(null);
+      router.refresh();
+    }
+  };
 
   // Action Handlers with optimistic UI updates and chime sound
   const handleNotify = async (entryId: string) => {
@@ -194,10 +277,21 @@ export function LiveQueueFeedClient({
   };
 
   // Counts for tabs
-  const activeCount = entries.filter((e) => ['WAITING', 'CALLED', 'NOTIFIED'].includes(e.status)).length;
-  const waitingCount = entries.filter((e) => e.status === 'WAITING').length;
-  const calledCount = entries.filter((e) => e.status === 'CALLED' || e.status === 'NOTIFIED').length;
-  const seatedCount = entries.filter((e) => e.status === 'SEATED').length;
+  // Counts for tabs & services
+  const dineInCount = entries.filter((e) => e.queue_type !== 'TAKEAWAY').length;
+  const takeawayCount = entries.filter((e) => e.queue_type === 'TAKEAWAY').length;
+
+  const baseForCounts =
+    serviceFilter === 'ALL'
+      ? entries
+      : serviceFilter === 'DINE_IN'
+      ? entries.filter((e) => e.queue_type !== 'TAKEAWAY')
+      : entries.filter((e) => e.queue_type === 'TAKEAWAY');
+
+  const activeCount = baseForCounts.filter((e) => ['WAITING', 'CALLED', 'NOTIFIED'].includes(e.status)).length;
+  const waitingCount = baseForCounts.filter((e) => e.status === 'WAITING').length;
+  const calledCount = baseForCounts.filter((e) => e.status === 'CALLED' || e.status === 'NOTIFIED').length;
+  const seatedCount = baseForCounts.filter((e) => e.status === 'SEATED').length;
 
   return (
     <div className="flex flex-col gap-4">
@@ -212,7 +306,7 @@ export function LiveQueueFeedClient({
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full pl-10 pr-4 h-11 rounded-xl bg-[#0A0E17]/80 border border-white/10 text-white placeholder:text-slate-500 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 transition-all font-medium"
-            placeholder="Search by customer name, phone number, ticket Q-XX..."
+            placeholder="Search by customer name, phone number, ticket Q-XX/T-XX, order #..."
           />
           {searchTerm && (
             <button
@@ -222,6 +316,46 @@ export function LiveQueueFeedClient({
               Clear
             </button>
           )}
+        </div>
+
+        {/* Service Switcher (All / Dine-In / Takeaway) */}
+        <div className="flex items-center gap-1.5 overflow-x-auto hide-scrollbar pb-1 border-b border-white/5">
+          <span className="text-[10px] font-black uppercase tracking-wider text-slate-500 mr-1 shrink-0">
+            SERVICE:
+          </span>
+          <button
+            type="button"
+            onClick={() => setServiceFilter('ALL')}
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 border cursor-pointer ${
+              serviceFilter === 'ALL'
+                ? 'bg-white/15 text-white border-white/25 shadow-sm'
+                : 'bg-white/[0.03] text-slate-400 border-white/5 hover:bg-white/[0.08]'
+            }`}
+          >
+            All Services ({entries.length})
+          </button>
+          <button
+            type="button"
+            onClick={() => setServiceFilter('DINE_IN')}
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 border cursor-pointer ${
+              serviceFilter === 'DINE_IN'
+                ? 'bg-blue-600/30 text-blue-300 border-blue-500/50 shadow-sm shadow-blue-500/10'
+                : 'bg-white/[0.03] text-slate-400 border-white/5 hover:bg-white/[0.08]'
+            }`}
+          >
+            🍽️ Dine-In ({dineInCount})
+          </button>
+          <button
+            type="button"
+            onClick={() => setServiceFilter('TAKEAWAY')}
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 border cursor-pointer ${
+              serviceFilter === 'TAKEAWAY'
+                ? 'bg-amber-600/30 text-amber-300 border-amber-500/50 shadow-sm shadow-amber-500/10'
+                : 'bg-white/[0.03] text-slate-400 border-white/5 hover:bg-white/[0.08]'
+            }`}
+          >
+            🛍️ Takeaway ({takeawayCount})
+          </button>
         </div>
 
         <div className="flex items-center justify-between gap-2 overflow-x-auto hide-scrollbar pb-0.5">
@@ -313,13 +447,33 @@ export function LiveQueueFeedClient({
 
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const anyEntry = entry as any;
+            const isTakeaway = entry.queue_type === 'TAKEAWAY';
+            const linkedOrder = ordersByQueueEntryId.get(entry.id);
             const isVIP = anyEntry.is_vip || false;
             const hasPreOrder = anyEntry.pre_order_amount && anyEntry.pre_order_amount > 0;
 
             const seatableForParty = availableTables.filter((t) => (t.capacity || 0) >= entry.party_size);
 
             // Theme styling per status
-            const cardTheme = isCalled
+            const cardTheme = isTakeaway
+              ? isCalled
+                ? {
+                    container:
+                      'bg-gradient-to-r from-amber-950/40 via-[#0F172A] to-[#0A0F1D] border-amber-500/35 shadow-[0_0_25px_rgba(245,158,11,0.12)]',
+                    accentLine:
+                      'bg-gradient-to-b from-amber-400 via-orange-500 to-amber-600 shadow-[0_0_10px_rgba(245,158,11,0.8)]',
+                    ticketBox:
+                      'bg-gradient-to-br from-amber-600 to-orange-700 text-white shadow-lg shadow-orange-500/30 border border-orange-400/40',
+                    badge: 'bg-amber-500/20 border-amber-400/40 text-amber-300 font-bold',
+                  }
+                : {
+                    container:
+                      'bg-[#111827] hover:bg-[#141E30] border-amber-500/20 hover:border-amber-500/40 shadow-md',
+                    accentLine: 'bg-amber-600/70',
+                    ticketBox: 'bg-[#1E293B] border border-amber-500/30 text-amber-200 shadow-sm',
+                    badge: 'bg-amber-500/10 border-amber-500/30 text-amber-300',
+                  }
+              : isCalled
               ? {
                   container:
                     'bg-gradient-to-r from-blue-950/40 via-[#0F172A] to-[#0A0F1D] border-blue-500/35 shadow-[0_0_25px_rgba(59,130,246,0.12)]',
@@ -366,7 +520,13 @@ export function LiveQueueFeedClient({
                 };
 
             const rawNum = (entry.display_number || entry.queue_number || '').toString();
-            const cleanNum = rawNum.startsWith('Q-') ? rawNum : `Q-${rawNum.replace(/^#+/, '')}`;
+            const cleanNum = isTakeaway
+              ? rawNum.startsWith('T-')
+                ? rawNum
+                : `T-${rawNum.replace(/^#+/, '')}`
+              : rawNum.startsWith('Q-')
+              ? rawNum
+              : `Q-${rawNum.replace(/^#+/, '')}`;
 
             const joinedTimestamp = new Date(entry.joined_at || entry.created_at).getTime();
             const waitMins = Math.max(0, Math.floor((Date.now() - joinedTimestamp) / 60000));
@@ -376,9 +536,7 @@ export function LiveQueueFeedClient({
                 key={entry.id}
                 className={`relative overflow-hidden rounded-2xl p-3 sm:p-4 transition-all duration-300 group ${
                   cardTheme.container
-                } ${
-                  loading ? 'opacity-50 pointer-events-none' : ''
-                }`}
+                } ${loading ? 'opacity-50 pointer-events-none' : ''}`}
               >
                 {/* Glowing status indicator ribbon on left */}
                 <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${cardTheme.accentLine}`} />
@@ -393,7 +551,11 @@ export function LiveQueueFeedClient({
                         {cleanNum}
                       </span>
                       <span className="text-[8px] uppercase tracking-widest font-black mt-1 px-1 rounded">
-                        {isSeated
+                        {isTakeaway
+                          ? isCalled
+                            ? 'READY'
+                            : 'TAKEAWAY'
+                          : isSeated
                           ? 'DINING'
                           : isCalled
                           ? 'PRIORITY'
@@ -416,30 +578,51 @@ export function LiveQueueFeedClient({
                             <span>⭐</span> VIP
                           </span>
                         )}
-                        {isLargeGroup && (
+                        {!isTakeaway && isLargeGroup && (
                           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-orange-500/15 text-orange-400 text-[10px] font-black border border-orange-500/30 shrink-0">
                             <span>🔥</span> Large Group
                           </span>
                         )}
                       </div>
 
-                      {/* Contact & Party details */}
-                      <div className="flex items-center gap-2 mt-0.5 text-xs sm:text-[13px] text-slate-300 flex-wrap">
-                        <span className="font-semibold text-slate-200">
-                          👥 {entry.party_size} {entry.party_size === 1 ? 'guest' : 'guests'}
-                        </span>
-                        <span className="text-slate-600">•</span>
-                        {entry.customer_phone ? (
-                          <a
-                            href={`tel:${entry.customer_phone}`}
-                            className="font-mono text-xs text-slate-400 hover:text-blue-400 hover:underline flex items-center gap-1"
-                          >
-                            <span>📞</span> {entry.customer_phone}
-                          </a>
-                        ) : (
-                          <span className="text-slate-500 text-xs">No phone</span>
-                        )}
-                      </div>
+                      {/* Contact & Service details */}
+                      {isTakeaway ? (
+                        <div className="flex items-center gap-2 mt-0.5 text-xs sm:text-[13px] text-slate-300 flex-wrap">
+                          <span className="px-2 py-0.5 rounded-md bg-amber-500/15 text-amber-300 border border-amber-500/30 text-[10px] font-black uppercase tracking-wider">
+                            🛍️ TAKEAWAY
+                          </span>
+                          {entry.customer_phone ? (
+                            <>
+                              <span className="text-slate-600">•</span>
+                              <a
+                                href={`tel:${entry.customer_phone}`}
+                                className="font-mono text-xs text-slate-400 hover:text-blue-400 hover:underline flex items-center gap-1"
+                              >
+                                <span>📞</span> {entry.customer_phone}
+                              </a>
+                            </>
+                          ) : (
+                            <span className="text-slate-500 text-xs">• No phone</span>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2 mt-0.5 text-xs sm:text-[13px] text-slate-300 flex-wrap">
+                          <span className="font-semibold text-slate-200">
+                            👥 {entry.party_size} {entry.party_size === 1 ? 'guest' : 'guests'}
+                          </span>
+                          <span className="text-slate-600">•</span>
+                          {entry.customer_phone ? (
+                            <a
+                              href={`tel:${entry.customer_phone}`}
+                              className="font-mono text-xs text-slate-400 hover:text-blue-400 hover:underline flex items-center gap-1"
+                            >
+                              <span>📞</span> {entry.customer_phone}
+                            </a>
+                          ) : (
+                            <span className="text-slate-500 text-xs">No phone</span>
+                          )}
+                        </div>
+                      )}
 
                       {/* Time & State Pills */}
                       <div className="flex items-center gap-2 mt-1.5 flex-wrap text-xs">
@@ -477,8 +660,61 @@ export function LiveQueueFeedClient({
                         </span>
                       </div>
 
-                      {/* Customer Late Alert Banner */}
-                      {entry.lateInfo?.isLate && (
+                      {/* Takeaway Order Breakdown Pill */}
+                      {isTakeaway && (
+                        <div className="mt-2 p-2.5 rounded-xl bg-white/[0.03] border border-white/5 flex flex-col gap-1">
+                          {linkedOrder ? (
+                            <div className="flex flex-col gap-1">
+                              <div className="flex items-center justify-between gap-2 flex-wrap text-xs">
+                                <div className="flex items-center gap-1.5">
+                                  <span className="font-bold text-white">Order #{linkedOrder.orderNumber}</span>
+                                  <span className="text-slate-400 text-[11px]">
+                                    ({linkedOrder.itemCount} {linkedOrder.itemCount === 1 ? 'item' : 'items'})
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-1.5">
+                                  <span className="px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 text-[10px] font-black uppercase tracking-wider">
+                                    💵 PAY AT COUNTER
+                                  </span>
+                                  <span
+                                    className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider border ${
+                                      linkedOrder.paymentStatus === 'PAID'
+                                        ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
+                                        : 'bg-amber-500/20 text-amber-300 border-amber-500/40'
+                                    }`}
+                                  >
+                                    {linkedOrder.paymentStatus}
+                                  </span>
+                                  <span className="font-mono font-black text-amber-400 text-xs">
+                                    {currencySymbol}
+                                    {Number(linkedOrder.total).toFixed(2)}
+                                  </span>
+                                </div>
+                              </div>
+                              {linkedOrder.items && linkedOrder.items.length > 0 && (
+                                <div className="text-[11px] text-slate-400 truncate">
+                                  {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                                  {linkedOrder.items.map((i: any) => `${i.name} × ${i.quantity}`).join(' · ')}
+                                </div>
+                              )}
+                            </div>
+                          ) : (
+                            <div className="flex items-center justify-between gap-2 text-xs">
+                              <span className="text-slate-400 italic text-[11px]">No order attached yet</span>
+                              <button
+                                type="button"
+                                onClick={() => setOrderModalEntry(entry)}
+                                className="px-2.5 py-1 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 text-[11px] font-bold transition-all cursor-pointer flex items-center gap-1"
+                              >
+                                <span>+ Take Order</span>
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Customer Late Alert Banner (Dine-in only) */}
+                      {!isTakeaway && entry.lateInfo?.isLate && (
                         <div className="flex items-center gap-2 mt-2 px-3 py-1.5 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-300 text-xs">
                           <span className="material-symbols-outlined text-[15px] text-amber-400">schedule</span>
                           <span className="font-bold">Running Late (+{entry.lateInfo.delayMinutes || 10}m)</span>
@@ -499,181 +735,242 @@ export function LiveQueueFeedClient({
 
                   {/* Status Highlight on Right */}
                   <div className="flex items-center sm:flex-col sm:items-end justify-between shrink-0">
-                    {isNotified && (
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-500/20 border border-purple-400/40 text-purple-300 text-[10px] tracking-widest uppercase font-black shadow-sm">
-                        <span className="w-2 h-2 rounded-full bg-purple-400 animate-pulse" />
-                        NOTIFIED
-                      </span>
-                    )}
-                    {isCalled && (
-                      (() => {
-                        const response = anyEntry.call_response;
-                        const delayMins = anyEntry.call_delay_minutes || 10;
-                        const age = entry.called_at ? Date.now() - new Date(entry.called_at).getTime() : 0;
-                        const timeoutMs = callTimeoutMinutes * 60 * 1000;
-                        const isOverdue = timeoutMs - age <= 0;
-
-                        if (response === 'ACCEPTED') {
-                          return (
-                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 text-[10px] tracking-widest uppercase font-black shadow-sm">
-                              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                              CALLED · ON THE WAY
-                            </span>
-                          );
-                        }
-                        if (response === 'DELAY_REQUESTED') {
-                          return (
-                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/20 border border-amber-400/40 text-amber-300 text-[10px] tracking-widest uppercase font-black shadow-sm">
-                              <span className="w-2 h-2 rounded-full bg-amber-400" />
-                              CALLED · DELAY (+{delayMins}m)
-                            </span>
-                          );
-                        }
-                        if (isOverdue) {
-                          return (
-                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-500/20 border border-rose-400/40 text-rose-300 text-[10px] tracking-widest uppercase font-black shadow-sm">
-                              <span className="w-2 h-2 rounded-full bg-rose-400 animate-ping" />
-                              CALLED · EXPIRED
-                            </span>
-                          );
-                        }
-                        return (
-                          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-500/20 border border-blue-400/40 text-blue-300 text-[10px] tracking-widest uppercase font-black shadow-sm">
-                            <span className="w-2 h-2 rounded-full bg-blue-400 animate-ping" />
-                            CALLED · AWAITING RESPONSE
+                    {isTakeaway ? (
+                      isCalled ? (
+                        anyEntry.call_response === 'ACCEPTED' ? (
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 text-[10px] tracking-widest uppercase font-black shadow-sm">
+                            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                            ✅ AT COUNTER
                           </span>
-                        );
-                      })()
-                    )}
-                    {isWaiting && (
-                      <span
-                        className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-[10px] tracking-widest uppercase font-bold border ${
-                          isNext
-                            ? 'bg-cyan-500/20 border-cyan-400/40 text-cyan-300 font-black'
-                            : 'bg-white/5 border-white/10 text-slate-400'
-                        }`}
-                      >
-                        {isNext ? '⚡ NEXT TO CALL' : 'WAITING'}
-                      </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/20 border border-amber-400/40 text-amber-300 text-[10px] tracking-widest uppercase font-black shadow-sm">
+                            <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
+                            CALLING FOR PICKUP
+                          </span>
+                        )
+                      ) : isWaiting ? (
+                        <span
+                          className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-[10px] tracking-widest uppercase font-bold border ${
+                            isNext
+                              ? 'bg-amber-500/20 border-amber-400/40 text-amber-300 font-black'
+                              : 'bg-white/5 border-white/10 text-slate-400'
+                          }`}
+                        >
+                          {isNext ? '⚡ NEXT FOR PICKUP' : 'IN QUEUE'}
+                        </span>
+                      ) : null
+                    ) : (
+                      <>
+                        {isNotified && (
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-500/20 border border-purple-400/40 text-purple-300 text-[10px] tracking-widest uppercase font-black shadow-sm">
+                            <span className="w-2 h-2 rounded-full bg-purple-400 animate-pulse" />
+                            NOTIFIED
+                          </span>
+                        )}
+                        {isCalled && (
+                          (() => {
+                            const response = anyEntry.call_response;
+                            const delayMins = anyEntry.call_delay_minutes || 10;
+                            const age = entry.called_at ? Date.now() - new Date(entry.called_at).getTime() : 0;
+                            const timeoutMs = callTimeoutMinutes * 60 * 1000;
+                            const isOverdue = timeoutMs - age <= 0;
+
+                            if (response === 'ACCEPTED') {
+                              return (
+                                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 text-[10px] tracking-widest uppercase font-black shadow-sm">
+                                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                                  CALLED · ON THE WAY
+                                </span>
+                              );
+                            }
+                            if (response === 'DELAY_REQUESTED') {
+                              return (
+                                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/20 border border-amber-400/40 text-amber-300 text-[10px] tracking-widest uppercase font-black shadow-sm">
+                                  <span className="w-2 h-2 rounded-full bg-amber-400" />
+                                  CALLED · DELAY (+{delayMins}m)
+                                </span>
+                              );
+                            }
+                            if (isOverdue) {
+                              return (
+                                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-500/20 border border-rose-400/40 text-rose-300 text-[10px] tracking-widest uppercase font-black shadow-sm">
+                                  <span className="w-2 h-2 rounded-full bg-rose-400 animate-ping" />
+                                  CALLED · EXPIRED
+                                </span>
+                              );
+                            }
+                            return (
+                              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-500/20 border border-blue-400/40 text-blue-300 text-[10px] tracking-widest uppercase font-black shadow-sm">
+                                <span className="w-2 h-2 rounded-full bg-blue-400 animate-ping" />
+                                CALLED · AWAITING RESPONSE
+                              </span>
+                            );
+                          })()
+                        )}
+                        {isWaiting && (
+                          <span
+                            className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-[10px] tracking-widest uppercase font-bold border ${
+                              isNext
+                                ? 'bg-cyan-500/20 border-cyan-400/40 text-cyan-300 font-black'
+                                : 'bg-white/5 border-white/10 text-slate-400'
+                            }`}
+                          >
+                            {isNext ? '⚡ NEXT TO CALL' : 'WAITING'}
+                          </span>
+                        )}
+                      </>
                     )}
                   </div>
                 </div>
 
                 {/* ACTION RIBBON: High-Visibility, Tactile Staff Action Bar */}
                 <div className="flex flex-col gap-2.5 pt-3 border-t border-white/10 -mx-4 -mb-4 px-4 py-3 rounded-b-2xl bg-[#080D1A]/60">
-                  {(isCalled || hasPreOrder || anyEntry.notes) && (
-                    <div className="flex items-center gap-2 text-xs flex-wrap">
-                      {isCalled && (
-                        (() => {
-                          const resp = anyEntry.call_response;
-                          if (resp === 'ACCEPTED') {
-                            return (
-                              <span className="inline-flex items-center gap-1.5 text-emerald-400 font-bold">
-                                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" /> Guest confirmed — on their way
-                              </span>
-                            );
-                          }
-                          if (resp === 'DELAY_REQUESTED') {
-                            return (
-                              <span className="inline-flex items-center gap-1.5 text-amber-400 font-bold">
-                                <span className="w-2 h-2 rounded-full bg-amber-400" /> Delay requested (+{anyEntry.call_delay_minutes || 10}m)
-                              </span>
-                            );
-                          }
-                          return (
-                            <span className="inline-flex items-center gap-1.5 text-blue-400 font-medium">
-                              <span className="w-2 h-2 rounded-full bg-blue-400 animate-ping" /> Awaiting guest response
-                            </span>
-                          );
-                        })()
-                      )}
-                      {hasPreOrder && (
-                        <span className="text-amber-300 font-semibold flex items-center gap-1">
-                          <span>🍽️</span> Dishes Pre-Ordered
-                        </span>
-                      )}
-                      {anyEntry.notes && (
-                        <span className="text-slate-400 truncate">Note: {anyEntry.notes}</span>
-                      )}
-                    </div>
-                  )}
-
-                  <div className="grid grid-cols-2 sm:flex sm:flex-wrap sm:justify-end gap-2 w-full items-center">
-                    {/* Step 1: WAITING -> Notify */}
-                    {isWaiting && (
-                      <button
-                        type="button"
-                        onClick={() => handleNotify(entry.id)}
-                        disabled={loading}
-                        className="col-span-2 sm:col-span-1 px-5 h-11 rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-600 hover:brightness-110 active:scale-95 text-white text-sm font-black shadow-lg shadow-blue-500/25 transition-all disabled:opacity-50 cursor-pointer flex items-center justify-center gap-2"
-                      >
-                        <span>🔔</span>
-                        <span>Notify Guest</span>
-                      </button>
-                    )}
-
-                    {/* Step 2: NOTIFIED -> Call */}
-                    {isNotified && (
-                      <button
-                        type="button"
-                        onClick={() => handleCall(entry.id)}
-                        disabled={loading}
-                        className="col-span-2 sm:col-span-1 px-5 h-11 rounded-xl bg-gradient-to-r from-purple-600 via-pink-600 to-purple-600 hover:brightness-110 active:scale-95 text-white text-sm font-black shadow-lg shadow-purple-500/25 transition-all disabled:opacity-50 cursor-pointer flex items-center justify-center gap-2"
-                      >
-                        <span>📢</span>
-                        <span>Call — Table Ready</span>
-                      </button>
-                    )}
-
-                    {/* Step 3: CALLED -> Assign Table & Seat (Gated on guest acceptance) */}
-                    {isCalled && (
-                      <div className="col-span-2 sm:col-span-1 flex flex-col gap-1">
-                        {anyEntry.call_response === 'ACCEPTED' ? (
-                          <SeatCustomerModal
-                            entryId={entry.id}
-                            customerName={entry.customer_name}
-                            displayNumber={entry.display_number}
-                            partySize={entry.party_size}
-                            userId={userId || ''}
-                            seatableTables={seatableForParty}
-                            allAvailableTables={availableTables}
-                            triggerLabel="Assign Table & Seat"
-                            triggerClassName="w-full h-11 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 text-white text-xs sm:text-sm font-bold shadow-md shadow-emerald-950/40 transition-all cursor-pointer flex items-center justify-center gap-1.5 active:scale-95"
-                            onSeated={async (tableId, additionalIds) => {
-                              chimeEngine.playSeatChime();
-                              setEntries((prev) => prev.filter((e) => e.id !== entry.id));
-                              const allIds = [tableId, ...(additionalIds || [])];
-                              setTables((prev) =>
-                                prev.map((t) => (allIds.includes(t.id) ? { ...t, status: 'OCCUPIED' } : t))
-                              );
-                              await broadcastCustomerQueueUpdate(entry.id);
-                              router.refresh();
-                            }}
-                          />
-                        ) : (
-                          <>
-                            <div
-                              title="Guest must accept the table call on their phone before a table can be assigned."
-                              className="w-full h-11 px-3 rounded-xl bg-slate-800/80 border border-white/10 text-slate-400 text-xs font-bold opacity-80 cursor-not-allowed flex items-center justify-center gap-1.5 select-none"
+                  {isTakeaway ? (
+                    /* TAKEAWAY ACTION BAR: Zero table/seating UI */
+                    <div className="grid grid-cols-2 sm:flex sm:flex-wrap sm:justify-end gap-2 w-full items-center">
+                      {isWaiting && (
+                        <>
+                          {!linkedOrder && (
+                            <button
+                              type="button"
+                              onClick={() => setOrderModalEntry(entry)}
+                              className="col-span-1 px-4 h-11 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 text-xs font-bold transition-all cursor-pointer border border-amber-500/40 flex items-center justify-center gap-1.5"
                             >
-                              {anyEntry.call_response === 'DELAY_REQUESTED' ? (
-                                <>
-                                  <span>⏱</span>
-                                  <span>Guest Delayed (+{anyEntry.call_delay_minutes || 10}m)</span>
-                                </>
-                              ) : anyEntry.call_response === 'DECLINED' ? (
-                                <>
-                                  <span className="text-rose-400">✕</span>
-                                  <span className="text-rose-300">Guest Declined Table</span>
-                                </>
-                              ) : (
-                                <>
-                                  <span className="w-2 h-2 rounded-full bg-blue-400 animate-ping" />
-                                  <span>Awaiting Guest Acceptance</span>
-                                </>
-                              )}
-                            </div>
-                            {anyEntry.call_response !== 'DECLINED' && (
+                              <span>🛍️</span>
+                              <span>Take Order</span>
+                            </button>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => handleCall(entry.id)}
+                            disabled={loading}
+                            className="col-span-2 sm:col-span-1 px-5 h-11 rounded-xl bg-gradient-to-r from-amber-500 via-orange-500 to-amber-500 hover:brightness-110 active:scale-95 text-slate-950 text-sm font-black shadow-lg shadow-orange-500/25 transition-all disabled:opacity-50 cursor-pointer flex items-center justify-center gap-2"
+                          >
+                            <span>📢</span>
+                            <span>Call for Pickup</span>
+                          </button>
+                        </>
+                      )}
+
+                      {isCalled && (
+                        <>
+                          {!linkedOrder && (
+                            <button
+                              type="button"
+                              onClick={() => setOrderModalEntry(entry)}
+                              className="col-span-1 px-4 h-11 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 text-xs font-bold transition-all cursor-pointer border border-amber-500/40 flex items-center justify-center gap-1.5"
+                            >
+                              <span>🛍️</span>
+                              <span>+ Take Order</span>
+                            </button>
+                          )}
+
+                          {linkedOrder && linkedOrder.paymentStatus !== 'PAID' && (
+                            <button
+                              type="button"
+                              onClick={() => handleRecordPayment(linkedOrder.id, entry.id)}
+                              disabled={loading}
+                              className="col-span-1 px-4 h-11 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 text-xs font-bold transition-all cursor-pointer border border-emerald-500/40 flex items-center justify-center gap-1.5"
+                            >
+                              <span>💵</span>
+                              <span>Collect Payment</span>
+                            </button>
+                          )}
+
+                          <button
+                            type="button"
+                            onClick={() => handleCompleteTakeaway(entry.id)}
+                            disabled={loading}
+                            className="col-span-2 sm:col-span-1 px-5 h-11 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-600 hover:brightness-110 active:scale-95 text-white text-sm font-black shadow-lg shadow-emerald-500/25 transition-all disabled:opacity-50 cursor-pointer flex items-center justify-center gap-2"
+                          >
+                            <span>✓</span>
+                            <span>Complete Pickup</span>
+                          </button>
+                        </>
+                      )}
+
+                      {/* Cancel Takeaway button */}
+                      <button
+                        type="button"
+                        onClick={() => handleCancel(entry.id)}
+                        disabled={loading}
+                        className="h-11 w-11 rounded-xl bg-white/[0.04] hover:bg-rose-500/20 text-slate-400 hover:text-rose-400 border border-white/5 hover:border-rose-500/30 flex items-center justify-center transition-all active:scale-95 cursor-pointer shrink-0"
+                        title="Cancel Takeaway Entry"
+                      >
+                        <span className="material-symbols-outlined text-[18px]">close</span>
+                      </button>
+                    </div>
+                  ) : (
+                    /* DINE-IN ACTION BAR: Preserved completely */
+                    <>
+                      {(isCalled || hasPreOrder || anyEntry.notes) && (
+                        <div className="flex items-center gap-2 text-xs flex-wrap">
+                          {isCalled && (
+                            (() => {
+                              const resp = anyEntry.call_response;
+                              if (resp === 'ACCEPTED') {
+                                return (
+                                  <span className="inline-flex items-center gap-1.5 text-emerald-400 font-bold">
+                                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" /> Guest confirmed — on their way
+                                  </span>
+                                );
+                              }
+                              if (resp === 'DELAY_REQUESTED') {
+                                return (
+                                  <span className="inline-flex items-center gap-1.5 text-amber-400 font-bold">
+                                    <span className="w-2 h-2 rounded-full bg-amber-400" /> Delay requested (+{anyEntry.call_delay_minutes || 10}m)
+                                  </span>
+                                );
+                              }
+                              return (
+                                <span className="inline-flex items-center gap-1.5 text-blue-400 font-medium">
+                                  <span className="w-2 h-2 rounded-full bg-blue-400 animate-ping" /> Awaiting guest response
+                                </span>
+                              );
+                            })()
+                          )}
+                          {hasPreOrder && (
+                            <span className="text-amber-300 font-semibold flex items-center gap-1">
+                              <span>🍽️</span> Dishes Pre-Ordered
+                            </span>
+                          )}
+                          {anyEntry.notes && (
+                            <span className="text-slate-400 truncate">Note: {anyEntry.notes}</span>
+                          )}
+                        </div>
+                      )}
+
+                      <div className="grid grid-cols-2 sm:flex sm:flex-wrap sm:justify-end gap-2 w-full items-center">
+                        {/* Step 1: WAITING -> Notify */}
+                        {isWaiting && (
+                          <button
+                            type="button"
+                            onClick={() => handleNotify(entry.id)}
+                            disabled={loading}
+                            className="col-span-2 sm:col-span-1 px-5 h-11 rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-600 hover:brightness-110 active:scale-95 text-white text-sm font-black shadow-lg shadow-blue-500/25 transition-all disabled:opacity-50 cursor-pointer flex items-center justify-center gap-2"
+                          >
+                            <span>🔔</span>
+                            <span>Notify Guest</span>
+                          </button>
+                        )}
+
+                        {/* Step 2: NOTIFIED -> Call */}
+                        {isNotified && (
+                          <button
+                            type="button"
+                            onClick={() => handleCall(entry.id)}
+                            disabled={loading}
+                            className="col-span-2 sm:col-span-1 px-5 h-11 rounded-xl bg-gradient-to-r from-purple-600 via-pink-600 to-purple-600 hover:brightness-110 active:scale-95 text-white text-sm font-black shadow-lg shadow-purple-500/25 transition-all disabled:opacity-50 cursor-pointer flex items-center justify-center gap-2"
+                          >
+                            <span>📢</span>
+                            <span>Call — Table Ready</span>
+                          </button>
+                        )}
+
+                        {/* Step 3: CALLED -> Assign Table & Seat (Gated on guest acceptance) */}
+                        {isCalled && (
+                          <div className="col-span-2 sm:col-span-1 flex flex-col gap-1">
+                            {anyEntry.call_response === 'ACCEPTED' ? (
                               <SeatCustomerModal
                                 entryId={entry.id}
                                 customerName={entry.customer_name}
@@ -682,8 +979,8 @@ export function LiveQueueFeedClient({
                                 userId={userId || ''}
                                 seatableTables={seatableForParty}
                                 allAvailableTables={availableTables}
-                                triggerLabel="⚡ Seat in Person (Override)"
-                                triggerClassName="text-[10px] text-slate-400 hover:text-emerald-300 font-semibold text-center transition-colors cursor-pointer block w-full py-0.5"
+                                triggerLabel="Assign Table & Seat"
+                                triggerClassName="w-full h-11 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 text-white text-xs sm:text-sm font-bold shadow-md shadow-emerald-950/40 transition-all cursor-pointer flex items-center justify-center gap-1.5 active:scale-95"
                                 onSeated={async (tableId, additionalIds) => {
                                   chimeEngine.playSeatChime();
                                   setEntries((prev) => prev.filter((e) => e.id !== entry.id));
@@ -695,98 +992,160 @@ export function LiveQueueFeedClient({
                                   router.refresh();
                                 }}
                               />
+                            ) : (
+                              <>
+                                <div
+                                  title="Guest must accept the table call on their phone before a table can be assigned."
+                                  className="w-full h-11 px-3 rounded-xl bg-slate-800/80 border border-white/10 text-slate-400 text-xs font-bold opacity-80 cursor-not-allowed flex items-center justify-center gap-1.5 select-none"
+                                >
+                                  {anyEntry.call_response === 'DELAY_REQUESTED' ? (
+                                    <>
+                                      <span>⏱</span>
+                                      <span>Guest Delayed (+{anyEntry.call_delay_minutes || 10}m)</span>
+                                    </>
+                                  ) : anyEntry.call_response === 'DECLINED' ? (
+                                    <>
+                                      <span className="text-rose-400">✕</span>
+                                      <span className="text-rose-300">Guest Declined Table</span>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <span className="w-2 h-2 rounded-full bg-blue-400 animate-ping" />
+                                      <span>Awaiting Guest Acceptance</span>
+                                    </>
+                                  )}
+                                </div>
+                                {anyEntry.call_response !== 'DECLINED' && (
+                                  <SeatCustomerModal
+                                    entryId={entry.id}
+                                    customerName={entry.customer_name}
+                                    displayNumber={entry.display_number}
+                                    partySize={entry.party_size}
+                                    userId={userId || ''}
+                                    seatableTables={seatableForParty}
+                                    allAvailableTables={availableTables}
+                                    triggerLabel="⚡ Seat in Person (Override)"
+                                    triggerClassName="text-[10px] text-slate-400 hover:text-emerald-300 font-semibold text-center transition-colors cursor-pointer block w-full py-0.5"
+                                    onSeated={async (tableId, additionalIds) => {
+                                      chimeEngine.playSeatChime();
+                                      setEntries((prev) => prev.filter((e) => e.id !== entry.id));
+                                      const allIds = [tableId, ...(additionalIds || [])];
+                                      setTables((prev) =>
+                                        prev.map((t) => (allIds.includes(t.id) ? { ...t, status: 'OCCUPIED' } : t))
+                                      );
+                                      await broadcastCustomerQueueUpdate(entry.id);
+                                      router.refresh();
+                                    }}
+                                  />
+                                )}
+                              </>
                             )}
-                          </>
-                        )}
-                      </div>
-                    )}
-
-                    {/* Step 3: CALLED -> Remove / No-Show / Cancel */}
-                    {isCalled && (
-                      <div className="col-span-2 sm:col-span-1 flex items-center gap-1 relative">
-                        {noShowMenuId === entry.id ? (
-                          <div className="flex items-center gap-1 w-full animate-in fade-in">
-                            <select
-                              value={noShowReason}
-                              onChange={(e) => setNoShowReason(e.target.value)}
-                              className="flex-1 min-w-0 h-11 rounded-xl bg-[#1A2333] border border-white/10 text-slate-200 text-xs font-bold px-2"
-                            >
-                              <option value="CUSTOMER_DECLINED">Customer Can&apos;t Come / Declined</option>
-                              <option value="STAFF_MARKED_NO_SHOW">Staff marked No-Show</option>
-                              <option value="CUSTOMER_DID_NOT_RETURN">Did not return</option>
-                              <option value="CUSTOMER_DID_NOT_RESPOND">No response</option>
-                              <option value="OTHER">Other</option>
-                            </select>
-                            <button
-                              type="button"
-                              onClick={() => handleNoShow(entry.id, noShowReason)}
-                              className="px-3 h-11 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold shrink-0 transition-colors cursor-pointer"
-                            >
-                              Remove
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => setNoShowMenuId(null)}
-                              className="px-2 h-11 rounded-xl bg-white/5 text-slate-400 hover:text-white text-xs"
-                            >
-                              ✕
-                            </button>
                           </div>
-                        ) : anyEntry.call_response === 'DECLINED' ? (
+                        )}
+
+                        {/* Step 3: CALLED -> Remove / No-Show / Cancel */}
+                        {isCalled && (
+                          <div className="col-span-2 sm:col-span-1 flex items-center gap-1 relative">
+                            {noShowMenuId === entry.id ? (
+                              <div className="flex items-center gap-1 w-full animate-in fade-in">
+                                <select
+                                  value={noShowReason}
+                                  onChange={(e) => setNoShowReason(e.target.value)}
+                                  className="flex-1 min-w-0 h-11 rounded-xl bg-[#1A2333] border border-white/10 text-slate-200 text-xs font-bold px-2"
+                                >
+                                  <option value="CUSTOMER_DECLINED">Customer Can&apos;t Come / Declined</option>
+                                  <option value="STAFF_MARKED_NO_SHOW">Staff marked No-Show</option>
+                                  <option value="CUSTOMER_DID_NOT_RETURN">Did not return</option>
+                                  <option value="CUSTOMER_DID_NOT_RESPOND">No response</option>
+                                  <option value="OTHER">Other</option>
+                                </select>
+                                <button
+                                  type="button"
+                                  onClick={() => handleNoShow(entry.id, noShowReason)}
+                                  className="px-3 h-11 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold shrink-0 transition-colors cursor-pointer"
+                                >
+                                  Remove
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => setNoShowMenuId(null)}
+                                  className="px-2 h-11 rounded-xl bg-white/5 text-slate-400 hover:text-white text-xs"
+                                >
+                                  ✕
+                                </button>
+                              </div>
+                            ) : anyEntry.call_response === 'DECLINED' ? (
+                              <button
+                                type="button"
+                                onClick={() => handleNoShow(entry.id, 'CUSTOMER_DECLINED')}
+                                className="w-full sm:w-auto px-4 h-11 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold transition-all active:scale-95 cursor-pointer flex items-center justify-center gap-1"
+                              >
+                                <span>✕</span> Remove Declined Guest
+                              </button>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => setNoShowMenuId(entry.id)}
+                                className="w-full sm:w-auto px-4 h-11 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 text-xs font-bold transition-colors cursor-pointer"
+                              >
+                                Remove / No-Show
+                              </button>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Chat with Customer button */}
+                        <button
+                          type="button"
+                          onClick={() => setChatEntry(entry)}
+                          className="h-11 px-3 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-slate-300 hover:text-white border border-white/10 flex items-center justify-center gap-1.5 text-xs font-bold transition-colors cursor-pointer"
+                          title="Chat with customer"
+                        >
+                          <span className="material-symbols-outlined text-[17px] text-cyan-400">chat</span>
+                          <span className="hidden sm:inline">Chat</span>
+                          {entry.chatMessages && entry.chatMessages.length > 0 && (
+                            <span className="h-4 min-w-4 px-1 rounded-full bg-cyan-500 text-slate-950 text-[9px] font-black flex items-center justify-center">
+                              {entry.chatMessages.length}
+                            </span>
+                          )}
+                        </button>
+
+                        {/* Cancel Entry button */}
+                        {(isWaiting || isNotified || isCalled) && (
                           <button
                             type="button"
-                            onClick={() => handleNoShow(entry.id, 'CUSTOMER_DECLINED')}
-                            className="w-full sm:w-auto px-4 h-11 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold transition-all active:scale-95 cursor-pointer flex items-center justify-center gap-1"
+                            onClick={() => handleCancel(entry.id)}
+                            disabled={loading}
+                            className="h-11 w-11 rounded-xl bg-white/[0.04] hover:bg-rose-500/20 text-slate-400 hover:text-rose-400 border border-white/5 hover:border-rose-500/30 flex items-center justify-center transition-all active:scale-95 cursor-pointer shrink-0"
+                            title="Cancel Entry"
                           >
-                            <span>✕</span> Remove Declined Guest
-                          </button>
-                        ) : (
-                          <button
-                            type="button"
-                            onClick={() => setNoShowMenuId(entry.id)}
-                            className="w-full sm:w-auto px-4 h-11 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 text-xs font-bold transition-colors cursor-pointer"
-                          >
-                            Remove / No-Show
+                            <span className="material-symbols-outlined text-[18px]">close</span>
                           </button>
                         )}
                       </div>
-                    )}
-
-                    {/* Chat with Customer button */}
-                    <button
-                      type="button"
-                      onClick={() => setChatEntry(entry)}
-                      className="h-11 px-3 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-slate-300 hover:text-white border border-white/10 flex items-center justify-center gap-1.5 text-xs font-bold transition-colors cursor-pointer"
-                      title="Chat with customer"
-                    >
-                      <span className="material-symbols-outlined text-[17px] text-cyan-400">chat</span>
-                      <span className="hidden sm:inline">Chat</span>
-                      {entry.chatMessages && entry.chatMessages.length > 0 && (
-                        <span className="h-4 min-w-4 px-1 rounded-full bg-cyan-500 text-slate-950 text-[9px] font-black flex items-center justify-center">
-                          {entry.chatMessages.length}
-                        </span>
-                      )}
-                    </button>
-
-                    {/* Cancel Entry button */}
-                    {(isWaiting || isNotified || isCalled) && (
-                      <button
-                        type="button"
-                        onClick={() => handleCancel(entry.id)}
-                        disabled={loading}
-                        className="h-11 w-11 rounded-xl bg-white/[0.04] hover:bg-rose-500/20 text-slate-400 hover:text-rose-400 border border-white/5 hover:border-rose-500/30 flex items-center justify-center transition-all active:scale-95 cursor-pointer shrink-0"
-                        title="Cancel Entry"
-                      >
-                        <span className="material-symbols-outlined text-[18px]">close</span>
-                      </button>
-                    )}
-                  </div>
+                    </>
+                  )}
                 </div>
               </div>
             );
           })
         )}
       </div>
+
+      {/* Staff Takeaway Order Modal */}
+      {orderModalEntry && (
+        <StaffTakeawayOrderModal
+          isOpen={!!orderModalEntry}
+          onClose={() => setOrderModalEntry(null)}
+          queueEntry={orderModalEntry}
+          menuItems={menuItems}
+          currencySymbol={currencySymbol}
+          onOrderCreated={(newOrder) => {
+            setOrders((prev) => [...prev, { ...newOrder, queueEntryId: orderModalEntry.id }]);
+            router.refresh();
+          }}
+        />
+      )}
 
       {/* Staff Queue Chat Modal */}
       {chatEntry && (

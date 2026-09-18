@@ -30,6 +30,10 @@ export interface QueueHealth {
   isFull: boolean;
   health: QueueHealthState;
   healthReason: string;
+  dineInWaitingCount?: number;
+  takeawayWaitingCount?: number;
+  dineInActiveCount?: number;
+  takeawayActiveCount?: number;
 }
 
 export const JoinQueueSchema = z.object({
@@ -1559,6 +1563,8 @@ export class QueueService {
     const [
       activeRes,
       waitingRes,
+      takeawayActiveRes,
+      takeawayWaitingRes,
       notifiedRes,
       calledRes,
       seatedRes,
@@ -1568,6 +1574,8 @@ export class QueueService {
     ] = await Promise.all([
       supabase.from('queue_entries').select('id', { count: 'exact', head: true }).eq('restaurant_id', restaurantId).in('status', ['WAITING','NOTIFIED','CALLED']),
       supabase.from('queue_entries').select('id', { count: 'exact', head: true }).eq('restaurant_id', restaurantId).eq('status', 'WAITING'),
+      supabase.from('queue_entries').select('id', { count: 'exact', head: true }).eq('restaurant_id', restaurantId).in('status', ['WAITING','NOTIFIED','CALLED']).eq('queue_type', 'TAKEAWAY'),
+      supabase.from('queue_entries').select('id', { count: 'exact', head: true }).eq('restaurant_id', restaurantId).eq('status', 'WAITING').eq('queue_type', 'TAKEAWAY'),
       supabase.from('queue_entries').select('id', { count: 'exact', head: true }).eq('restaurant_id', restaurantId).eq('status', 'NOTIFIED'),
       supabase.from('queue_entries').select('id', { count: 'exact', head: true }).eq('restaurant_id', restaurantId).eq('status', 'CALLED'),
       supabase.from('queue_entries').select('id', { count: 'exact', head: true }).eq('restaurant_id', restaurantId).eq('status', 'SEATED'),
@@ -1585,6 +1593,10 @@ export class QueueService {
 
     const activeCount = activeRes.count || 0;
     const waitingCount = waitingRes.count || 0;
+    const takeawayActiveCount = takeawayActiveRes.count || 0;
+    const takeawayWaitingCount = takeawayWaitingRes.count || 0;
+    const dineInActiveCount = Math.max(0, activeCount - takeawayActiveCount);
+    const dineInWaitingCount = Math.max(0, waitingCount - takeawayWaitingCount);
     const notifiedCount = notifiedRes.count || 0;
     const calledCount = calledRes.count || 0;
     const seatedCount = seatedRes.count || 0;
@@ -1651,6 +1663,7 @@ export class QueueService {
       avgWaitMins, oldestWaitingAgeMins, overdueCount,
       availableTables, occupiedTables, cleaningTables, reservedTables, outOfServiceTables, totalTables,
       operatingState, queueEnabled, isFull, health, healthReason, scheduledOpen, nextOpening,
+      dineInWaitingCount, takeawayWaitingCount, dineInActiveCount, takeawayActiveCount,
     };
   }
 
@@ -1745,6 +1758,10 @@ export class QueueService {
       const notifiedCount = entries.filter((e) => e.status === 'NOTIFIED').length;
       const calledCount = entries.filter((e) => e.status === 'CALLED').length;
       const activeCount = waitingCount + notifiedCount + calledCount;
+      const takeawayActiveCount = entries.filter((e) => ['WAITING', 'NOTIFIED', 'CALLED'].includes(e.status) && (e as unknown as { queue_type?: string }).queue_type === 'TAKEAWAY').length;
+      const takeawayWaitingCount = entries.filter((e) => e.status === 'WAITING' && (e as unknown as { queue_type?: string }).queue_type === 'TAKEAWAY').length;
+      const dineInActiveCount = Math.max(0, activeCount - takeawayActiveCount);
+      const dineInWaitingCount = Math.max(0, waitingCount - takeawayWaitingCount);
       const seatedCount = entries.filter((e) => e.status === 'SEATED').length;
       const dayAgo = now - 24 * 60 * 60 * 1000;
       const noShowCountToday = entries.filter((e) => {
@@ -1803,6 +1820,7 @@ export class QueueService {
         avgWaitMins, oldestWaitingAgeMins, overdueCount,
         availableTables, occupiedTables, cleaningTables, reservedTables, outOfServiceTables, totalTables,
         operatingState, queueEnabled, isFull, health, healthReason, scheduledOpen: true, nextOpening: null,
+        dineInWaitingCount, takeawayWaitingCount, dineInActiveCount, takeawayActiveCount,
       };
     } catch {
       // Absolute last resort — a health card must never crash the page

@@ -632,6 +632,7 @@ export class OrderService {
         paymentStatus: order.payment_status as PaymentStatus,
         customerName: order.customer_name || 'Guest',
         customerPhone: order.customer_phone,
+        queueEntryId: order.queue_entry_id,
         queueDisplayNumber: q?.display_number || null,
         tableId: order.table_id,
         total: order.total,

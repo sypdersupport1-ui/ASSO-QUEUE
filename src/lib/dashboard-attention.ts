@@ -17,6 +17,8 @@ export interface AttentionEntry {
   joined_at?: string | null;
   created_at?: string | null;
   called_at?: string | null;
+  queue_type?: string | null;
+  order?: unknown | null;
 }
 
 export function isOverdueCalled(

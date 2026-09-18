@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { updateQueueStatusAction, updateTableStatusAction, markNoShowAction, passTableToNextAction } from '@/app/dashboard/actions';
+import { updateQueueStatusAction, updateTableStatusAction, markNoShowAction, passTableToNextAction, completeTakeawayAction } from '@/app/dashboard/actions';
 import { broadcastCustomerQueueUpdate } from '@/lib/realtime/useCustomerQueueRealtime';
 import { SeatCustomerModal, SeatableTableItem } from '@/components/dashboard/SeatCustomerModal';
 import { StaffQueueChatModal } from '@/components/dashboard/StaffQueueChatModal';
@@ -228,12 +228,13 @@ export function DashboardClient({
             </div>
           ) : (
             feed.map((entry, index) => {
+              const isTakeaway = entry.queue_type === 'TAKEAWAY';
               const isWaiting = entry.status === 'WAITING';
               const isCalled = entry.status === 'CALLED';
               const isNotified = entry.status === 'NOTIFIED';
               const isSeated = entry.status === 'SEATED';
               const isNext = isWaiting && index === 0;
-              const isLargeGroup = (entry.party_size || 0) >= 6;
+              const isLargeGroup = !isTakeaway && (entry.party_size || 0) >= 6;
               const loading = isProcessing === entry.id;
 
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -242,7 +243,7 @@ export function DashboardClient({
               const hasPreOrder = anyEntry.pre_order_amount && anyEntry.pre_order_amount > 0;
 
               // Filter tables matching party size directly from current tables state
-              const seatableForParty = availableTables.filter((t) => (t.capacity || 0) >= entry.party_size);
+              const seatableForParty = isTakeaway ? [] : availableTables.filter((t) => (t.capacity || 0) >= entry.party_size);
 
               // Theme styling per status
               const cardTheme = isCalled
@@ -282,7 +283,9 @@ export function DashboardClient({
 
                 // Formatted display number
                 const rawNum = (entry.display_number || entry.queue_number || '').toString();
-                const cleanNum = rawNum.startsWith('Q-') ? rawNum : `Q-${rawNum.replace(/^#+/, '')}`;
+                const cleanNum = isTakeaway
+                  ? (rawNum.startsWith('T-') ? rawNum : `T-${rawNum.replace(/^[#QT-]+/, '')}`)
+                  : (rawNum.startsWith('Q-') ? rawNum : `Q-${rawNum.replace(/^#+/, '')}`);
 
                 // Elapsed wait time
                 const joinedTimestamp = new Date(entry.joined_at || entry.created_at).getTime();
@@ -308,15 +311,17 @@ export function DashboardClient({
                             {cleanNum}
                           </span>
                           <span className="text-[8px] uppercase tracking-widest font-black mt-1 px-1 rounded">
-                            {isSeated
-                              ? 'DINING'
-                              : isCalled
-                              ? 'PRIORITY'
-                              : isNotified
-                              ? 'ARRIVING'
-                              : isNext
-                              ? 'UP NEXT'
-                              : `#${index + 1} IN LINE`}
+                            {isTakeaway
+                              ? (isCalled ? 'PICKUP' : isNext ? 'UP NEXT' : `#${index + 1} IN LINE`)
+                              : (isSeated
+                                ? 'DINING'
+                                : isCalled
+                                ? 'PRIORITY'
+                                : isNotified
+                                ? 'ARRIVING'
+                                : isNext
+                                ? 'UP NEXT'
+                                : `#${index + 1} IN LINE`)}
                           </span>
                         </div>
 
@@ -326,6 +331,11 @@ export function DashboardClient({
                             <span className="text-base sm:text-lg font-black text-white tracking-tight truncate">
                               {entry.customer_name}
                             </span>
+                            {isTakeaway && (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-300 text-[10px] font-black border border-amber-500/30 shrink-0">
+                                🛍️ TAKEAWAY
+                              </span>
+                            )}
                             {isVIP && (
                               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-400 text-[10px] font-black border border-amber-500/30 shrink-0">
                                 <span>⭐</span> VIP
@@ -340,9 +350,15 @@ export function DashboardClient({
 
                           {/* Contact & Party details */}
                           <div className="flex items-center gap-2 mt-0.5 text-xs sm:text-[13px] text-slate-300 flex-wrap">
-                            <span className="font-semibold text-slate-200">
-                              👥 {entry.party_size} {entry.party_size === 1 ? 'guest' : 'guests'}
-                            </span>
+                            {isTakeaway ? (
+                              <span className="font-semibold text-amber-300 flex items-center gap-1">
+                                🛍️ Counter Pickup
+                              </span>
+                            ) : (
+                              <span className="font-semibold text-slate-200">
+                                👥 {entry.party_size} {entry.party_size === 1 ? 'guest' : 'guests'}
+                              </span>
+                            )}
                             <span className="text-slate-600">•</span>
                             {entry.customer_phone ? (
                               <a
@@ -420,7 +436,13 @@ export function DashboardClient({
                             NOTIFIED
                           </span>
                         )}
-                        {isCalled && (
+                        {isCalled && isTakeaway && (
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/20 border border-amber-400/40 text-amber-300 text-[10px] tracking-widest uppercase font-black shadow-sm">
+                            <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+                            {anyEntry.call_response === 'ACCEPTED' ? 'AT COUNTER' : 'CALLING FOR PICKUP'}
+                          </span>
+                        )}
+                        {isCalled && !isTakeaway && (
                           (() => {
                             const response = anyEntry.call_response;
                             const delayMins = anyEntry.call_delay_minutes || 10;
@@ -514,8 +536,58 @@ export function DashboardClient({
                       )}
 
                       <div className="grid grid-cols-2 sm:flex sm:flex-wrap sm:justify-end gap-2 w-full items-center">
-                        {/* Step 1: WAITING -> Notify */}
-                        {isWaiting && (
+                        {/* TAKEAWAY ACTIONS */}
+                        {isTakeaway && isWaiting && (
+                          <button
+                            type="button"
+                            onClick={() => handleCall(entry.id)}
+                            disabled={loading}
+                            className="col-span-2 sm:col-span-1 px-5 h-11 rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-600 hover:brightness-110 active:scale-95 text-white text-sm font-black shadow-lg shadow-blue-500/25 transition-all disabled:opacity-50 cursor-pointer flex items-center justify-center gap-2"
+                          >
+                            <span>📢</span>
+                            <span>Call for Pickup</span>
+                          </button>
+                        )}
+
+                        {isTakeaway && isCalled && (
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              setIsProcessing(entry.id);
+                              chimeEngine.playAlertChime();
+                              setFeed((prev) => prev.filter((e) => e.id !== entry.id));
+                              try {
+                                await completeTakeawayAction(entry.id);
+                                await broadcastCustomerQueueUpdate(entry.id);
+                                router.refresh();
+                              } catch (e) {
+                                console.error('Failed to complete takeaway:', e);
+                                alert('Could not complete takeaway entry.');
+                              } finally {
+                                setIsProcessing(null);
+                              }
+                            }}
+                            disabled={loading}
+                            className="col-span-2 sm:col-span-1 px-5 h-11 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white text-xs sm:text-sm font-bold shadow-md shadow-emerald-950/40 transition-all cursor-pointer flex items-center justify-center gap-1.5 active:scale-95"
+                          >
+                            <span className="material-symbols-outlined text-[16px]">check_circle</span>
+                            <span>Complete Pickup</span>
+                          </button>
+                        )}
+
+                        {isTakeaway && (
+                          <Link
+                            href="/dashboard/queue"
+                            className="h-11 px-3.5 rounded-xl bg-white/[0.04] hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 flex items-center justify-center gap-1.5 text-xs font-bold transition-all active:scale-95 cursor-pointer shrink-0"
+                            title="Manage takeaway order"
+                          >
+                            <span className="material-symbols-outlined text-[17px]">receipt_long</span>
+                            <span className="hidden sm:inline">Order</span>
+                          </Link>
+                        )}
+
+                        {/* DINE-IN Step 1: WAITING -> Notify */}
+                        {!isTakeaway && isWaiting && (
                           <button
                             type="button"
                             onClick={() => handleNotify(entry.id)}
@@ -527,8 +599,8 @@ export function DashboardClient({
                           </button>
                         )}
 
-                        {/* Step 2: NOTIFIED -> Call */}
-                        {isNotified && (
+                        {/* DINE-IN Step 2: NOTIFIED -> Call */}
+                        {!isTakeaway && isNotified && (
                           <button
                             type="button"
                             onClick={() => handleCall(entry.id)}
@@ -540,8 +612,8 @@ export function DashboardClient({
                           </button>
                         )}
 
-                        {/* Step 3: CALLED -> Assign Table & Seat (Gated strictly on customer acceptance) */}
-                        {isCalled && (
+                        {/* DINE-IN Step 3: CALLED -> Assign Table & Seat (Gated strictly on customer acceptance) */}
+                        {!isTakeaway && isCalled && (
                           <div className="col-span-2 sm:col-span-1 flex flex-col gap-1">
                             {anyEntry.call_response === 'ACCEPTED' ? (
                               <SeatCustomerModal
