@@ -7,7 +7,6 @@ import { ETAService } from '@/lib/services/eta-service';
 import { QueueScheduleService } from '@/lib/services/queue-schedule-service';
 import { RestaurantHeader } from '@/components/customer/RestaurantHeader';
 import { QueueStatusCard } from '@/components/customer/QueueStatusCard';
-import { QueueJoinForm } from '@/components/customer/QueueJoinForm';
 import { CustomerJoinFlow } from '@/components/customer/CustomerJoinFlow';
 import { MenuPreviewSection } from '@/components/customer/MenuPreviewSection';
 import { TicketResumeBanner } from '@/components/customer/TicketResumeBanner';
@@ -62,7 +61,14 @@ export default async function PublicRestaurantQueuePage({
   const search = searchParams ? await searchParams : {};
   const leftQueueParam = Boolean(search?.left_queue);
   const freshParam = Boolean(search?.new_entry || search?.fresh);
-  const initialService = search?.service === 'takeaway' ? 'TAKEAWAY' : 'DINE_IN';
+  // null = no service pre-selected (plain QR scan → show ServiceSelector first)
+  // Only set when the customer arrives via an explicit ?service= deep link.
+  const initialService: 'DINE_IN' | 'TAKEAWAY' | null =
+    search?.service === 'takeaway'
+      ? 'TAKEAWAY'
+      : search?.service === 'dine_in' || search?.service === 'dine-in'
+        ? 'DINE_IN'
+        : null;
 
   if (leftQueueParam || freshParam) {
     try {
@@ -296,11 +302,7 @@ export default async function PublicRestaurantQueuePage({
             </div>
           </section>
         ) : canJoin ? (
-          !restaurant.takeawayEnabled ? (
-            <QueueJoinForm restaurant={restaurant} />
-          ) : (
-            <CustomerJoinFlow restaurant={restaurant} initialService={initialService} />
-          )
+          <CustomerJoinFlow restaurant={restaurant} initialService={initialService} />
         ) : (
           <p className="px-2 text-center text-[11px] text-slate-500">
             {landingState === 'FULL'

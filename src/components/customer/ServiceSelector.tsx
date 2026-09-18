@@ -4,7 +4,8 @@ import React from 'react';
 import { UtensilsCrossed, ShoppingBag } from 'lucide-react';
 
 interface ServiceSelectorProps {
-  selectedService: 'DINE_IN' | 'TAKEAWAY';
+  /** null = no selection yet (initial state for plain QR scans) */
+  selectedService: 'DINE_IN' | 'TAKEAWAY' | null;
   onSelectService: (service: 'DINE_IN' | 'TAKEAWAY') => void;
 }
 
@@ -40,14 +41,14 @@ export function ServiceSelector({
           className={`flex flex-col items-center justify-center p-3.5 rounded-2xl border transition-all active:scale-[0.98] cursor-pointer text-center min-h-[96px] ${
             selectedService === 'DINE_IN'
               ? 'border-emerald-500/50 bg-gradient-to-b from-emerald-500/20 to-emerald-950/40 shadow-lg shadow-emerald-500/10 text-white'
-              : 'border-white/5 bg-white/[0.03] hover:bg-white/[0.06] text-slate-400 hover:text-slate-200'
+              : 'border-white/10 bg-white/[0.04] hover:bg-white/[0.08] text-slate-300 hover:text-white'
           }`}
         >
           <div
             className={`flex h-9 w-9 items-center justify-center rounded-xl mb-1.5 transition-colors ${
               selectedService === 'DINE_IN'
                 ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/30'
-                : 'bg-white/10 text-slate-400'
+                : 'bg-white/10 text-slate-300'
             }`}
           >
             <UtensilsCrossed className="h-4 w-4" />
@@ -67,14 +68,14 @@ export function ServiceSelector({
           className={`flex flex-col items-center justify-center p-3.5 rounded-2xl border transition-all active:scale-[0.98] cursor-pointer text-center min-h-[96px] ${
             selectedService === 'TAKEAWAY'
               ? 'border-emerald-500/50 bg-gradient-to-b from-emerald-500/20 to-emerald-950/40 shadow-lg shadow-emerald-500/10 text-white'
-              : 'border-white/5 bg-white/[0.03] hover:bg-white/[0.06] text-slate-400 hover:text-slate-200'
+              : 'border-white/10 bg-white/[0.04] hover:bg-white/[0.08] text-slate-300 hover:text-white'
           }`}
         >
           <div
             className={`flex h-9 w-9 items-center justify-center rounded-xl mb-1.5 transition-colors ${
               selectedService === 'TAKEAWAY'
                 ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/30'
-                : 'bg-white/10 text-slate-400'
+                : 'bg-white/10 text-slate-300'
             }`}
           >
             <ShoppingBag className="h-4 w-4" />
