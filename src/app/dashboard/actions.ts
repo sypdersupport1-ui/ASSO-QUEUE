@@ -13,6 +13,7 @@ import { revalidatePath } from 'next/cache';
 import { AuthorizationService } from '@/lib/services/authorization-service';
 import { PERMISSIONS } from '@/lib/auth/permissions';
 import { createAdminClient } from '@/lib/db/supabase/admin';
+import { generateQueueToken, hashQueueToken } from '@/lib/utils/token-utils';
 import type { TableStatus, ZoneStatus, InventoryUnit, QueueStatus } from '@/types/database.types';
 
 /**
@@ -64,6 +65,7 @@ export async function updateProfileFormAction(_prevState: unknown, formData: For
       dine_in_staff_ordering_enabled: formData.has('dine_in_staff_ordering_enabled') ? formData.get('dine_in_staff_ordering_enabled') === 'true' : undefined,
       takeaway_customer_ordering_enabled: formData.has('takeaway_customer_ordering_enabled') ? formData.get('takeaway_customer_ordering_enabled') === 'true' : undefined,
       takeaway_staff_ordering_enabled: formData.has('takeaway_staff_ordering_enabled') ? formData.get('takeaway_staff_ordering_enabled') === 'true' : undefined,
+      takeaway_manual_ordering_enabled: formData.has('takeaway_manual_ordering_enabled') ? formData.get('takeaway_manual_ordering_enabled') === 'true' : undefined,
     };
 
     await RestaurantAdminService.updateRestaurantProfile(input);
@@ -1073,3 +1075,109 @@ export async function createStaffDineInOrderAction(input: {
     };
   }
 }
+
+/**
+ * Staff action: Create a manual Takeaway order at the counter.
+ * Advances the ticket to PREPARING state so the customer sees "Order Placed" on their screen,
+ * without requiring pre-configured menu items in Menu Config.
+ */
+export async function createManualTakeawayOrderAction(queueEntryId: string, notes?: string) {
+  try {
+    const actorUserId = await requireActionActor();
+    if (!queueEntryId) throw new Error('Queue entry ID is required.');
+
+    const supabase = createAdminClient();
+
+    // 1. Fetch queue entry
+    const { data: entry, error: entryErr } = await supabase
+      .from('queue_entries')
+      .select('*')
+      .eq('id', queueEntryId)
+      .single();
+
+    if (entryErr || !entry) throw new Error('Queue entry not found.');
+    if (entry.queue_type !== 'TAKEAWAY') throw new Error('Not a takeaway entry.');
+
+    // 2. Authorization check
+    const canManage =
+      (await AuthorizationService.hasPermission({
+        userId: actorUserId,
+        restaurantId: entry.restaurant_id,
+        permission: PERMISSIONS.TAKEAWAY_MANAGE,
+      })) ||
+      (await AuthorizationService.hasPermission({
+        userId: actorUserId,
+        restaurantId: entry.restaurant_id,
+        permission: PERMISSIONS.ORDERS_CREATE,
+      }));
+
+    if (!canManage) throw new Error('Unauthorized: Staff lacks permission.');
+
+    // 3. Duplicate check: if an active order exists, return it
+    const { data: existingOrder } = await supabase
+      .from('orders')
+      .select('id, order_number, status')
+      .eq('queue_entry_id', entry.id)
+      .not('status', 'in', '("CANCELLED","SERVED")')
+      .maybeSingle();
+
+    if (existingOrder) {
+      return { success: true, order: existingOrder };
+    }
+
+    // 4. Generate order tokens & random order number
+    const rawToken = generateQueueToken();
+    const tokenHash = hashQueueToken(rawToken);
+    const orderNumber = `ORD-${Math.floor(1000 + Math.random() * 9000)}`;
+
+    // 5. Insert lightweight order directly in PREPARING status
+    const { data: newOrder, error: orderErr } = await supabase
+      .from('orders')
+      .insert({
+        restaurant_id: entry.restaurant_id,
+        queue_entry_id: entry.id,
+        order_number: orderNumber,
+        status: 'PREPARING',
+        payment_status: 'PAID',
+        subtotal: 0,
+        tax: 0,
+        total: 0,
+        order_token_hash: tokenHash,
+        customer_name: entry.customer_name,
+        customer_phone: entry.customer_phone,
+      })
+      .select()
+      .single();
+
+    if (orderErr || !newOrder) {
+      throw new Error(`Failed to record manual order: ${orderErr?.message}`);
+    }
+
+    // Insert outbox event for audit/realtime
+    await supabase.from('outbox_events').insert({
+      restaurant_id: entry.restaurant_id,
+      event_type: 'TAKEAWAY_ORDER_PLACED',
+      aggregate_type: 'QUEUE',
+      aggregate_id: entry.id,
+      payload: {
+        queueEntryId: entry.id,
+        orderId: newOrder.id,
+        orderNumber: newOrder.order_number,
+        status: 'PREPARING',
+        notes: notes || 'Manual Counter Order',
+      },
+      status: 'PENDING',
+    });
+
+    revalidatePath('/dashboard/queue');
+    revalidatePath('/dashboard');
+
+    return { success: true, order: newOrder };
+  } catch (error: unknown) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to place manual takeaway order.',
+    };
+  }
+}
+

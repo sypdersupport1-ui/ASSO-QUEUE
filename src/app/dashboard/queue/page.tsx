@@ -433,6 +433,7 @@ export default async function QueueManagementPage({
             initialOrders={dashboardOrders}
             menuItems={formattedMenuItems}
             currencySymbol={restaurant.currency === 'INR' ? '₹' : (restaurant.currency === 'USD' ? '$' : '₹')}
+            takeawayManualOrderingEnabled={Boolean(restaurant.takeaway_manual_ordering_enabled)}
           />
         </div>
 

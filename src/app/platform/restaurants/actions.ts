@@ -51,6 +51,7 @@ export async function updateRestaurantAction(restaurantId: string, _prevState: u
       dine_in_staff_ordering_enabled: formData.has('dine_in_staff_ordering_enabled') ? formData.get('dine_in_staff_ordering_enabled') === 'true' : undefined,
       takeaway_customer_ordering_enabled: formData.has('takeaway_customer_ordering_enabled') ? formData.get('takeaway_customer_ordering_enabled') === 'true' : undefined,
       takeaway_staff_ordering_enabled: formData.has('takeaway_staff_ordering_enabled') ? formData.get('takeaway_staff_ordering_enabled') === 'true' : undefined,
+      takeaway_manual_ordering_enabled: formData.has('takeaway_manual_ordering_enabled') ? formData.get('takeaway_manual_ordering_enabled') === 'true' : undefined,
     };
 
     await PlatformService.updateRestaurant(restaurantId, input);

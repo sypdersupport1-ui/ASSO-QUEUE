@@ -188,6 +188,7 @@ export interface Database {
           dine_in_staff_ordering_enabled: boolean;
           takeaway_customer_ordering_enabled: boolean;
           takeaway_staff_ordering_enabled: boolean;
+          takeaway_manual_ordering_enabled: boolean;
         };
         Insert: Omit<Database['public']['Tables']['restaurants']['Row'], 'id' | 'created_at' | 'updated_at'> & {
           id?: string;
@@ -200,6 +201,7 @@ export interface Database {
           dine_in_staff_ordering_enabled?: boolean;
           takeaway_customer_ordering_enabled?: boolean;
           takeaway_staff_ordering_enabled?: boolean;
+          takeaway_manual_ordering_enabled?: boolean;
         };
         Update: Partial<Database['public']['Tables']['restaurants']['Insert']>;
       };

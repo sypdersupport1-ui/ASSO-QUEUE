@@ -32,6 +32,7 @@ export interface PublicRestaurantInfo {
   dineInStaffOrderingEnabled: boolean;
   takeawayCustomerOrderingEnabled: boolean;
   takeawayStaffOrderingEnabled: boolean;
+  takeawayManualOrderingEnabled: boolean;
 }
 
 export class PublicRestaurantService {
@@ -48,7 +49,7 @@ export class PublicRestaurantService {
 
         const { data: restaurant, error } = await supabase
           .from('restaurants')
-          .select('id, name, slug, description, phone, address, city, logo_url, queue_enabled, queue_operating_state, max_queue_capacity, min_party_size, max_party_size, call_timeout_minutes, status, currency, avg_service_time_mins, service_capacity_units, eta_buffer_mins, takeaway_enabled, dine_in_customer_ordering_enabled, dine_in_staff_ordering_enabled, takeaway_customer_ordering_enabled, takeaway_staff_ordering_enabled')
+          .select('id, name, slug, description, phone, address, city, logo_url, queue_enabled, queue_operating_state, max_queue_capacity, min_party_size, max_party_size, call_timeout_minutes, status, currency, avg_service_time_mins, service_capacity_units, eta_buffer_mins, takeaway_enabled, dine_in_customer_ordering_enabled, dine_in_staff_ordering_enabled, takeaway_customer_ordering_enabled, takeaway_staff_ordering_enabled, takeaway_manual_ordering_enabled')
           .eq('slug', slug.trim().toLowerCase())
           .eq('status', 'ACTIVE')
           .maybeSingle();
@@ -78,6 +79,7 @@ export class PublicRestaurantService {
           dine_in_staff_ordering_enabled?: boolean;
           takeaway_customer_ordering_enabled?: boolean;
           takeaway_staff_ordering_enabled?: boolean;
+          takeaway_manual_ordering_enabled?: boolean;
         };
 
         return {
@@ -105,6 +107,7 @@ export class PublicRestaurantService {
           dineInStaffOrderingEnabled: raw.dine_in_staff_ordering_enabled ?? true,
           takeawayCustomerOrderingEnabled: raw.takeaway_customer_ordering_enabled ?? true,
           takeawayStaffOrderingEnabled: raw.takeaway_staff_ordering_enabled ?? true,
+          takeawayManualOrderingEnabled: raw.takeaway_manual_ordering_enabled ?? false,
         };
       },
       300 // 5 minutes TTL

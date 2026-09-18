@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { updateQueueStatusAction, markNoShowAction, completeTakeawayAction, acknowledgeTakeawayPaymentAndCompleteOrderAction, updateOrderStatusAction } from '@/app/dashboard/actions';
+import { updateQueueStatusAction, markNoShowAction, completeTakeawayAction, acknowledgeTakeawayPaymentAndCompleteOrderAction, updateOrderStatusAction, createManualTakeawayOrderAction } from '@/app/dashboard/actions';
 import { broadcastCustomerQueueUpdate } from '@/lib/realtime/useCustomerQueueRealtime';
 import { SeatCustomerModal, SeatableTableItem } from '@/components/dashboard/SeatCustomerModal';
 import { StaffQueueChatModal } from '@/components/dashboard/StaffQueueChatModal';
@@ -24,6 +24,7 @@ interface LiveQueueFeedClientProps {
   initialOrders?: any[];
   menuItems?: StaffTakeawayMenuItem[];
   currencySymbol?: string;
+  takeawayManualOrderingEnabled?: boolean;
 }
 
 export function LiveQueueFeedClient({
@@ -37,6 +38,7 @@ export function LiveQueueFeedClient({
   initialOrders = [],
   menuItems = [],
   currencySymbol = '₹',
+  takeawayManualOrderingEnabled = false,
 }: LiveQueueFeedClientProps) {
   const router = useRouter();
   const [entries, setEntries] = useState(initialEntries);
@@ -202,6 +204,25 @@ export function LiveQueueFeedClient({
     }
   };
 
+  const handlePlaceManualOrder = async (entryId: string) => {
+    setIsProcessing(entryId);
+    try {
+      const res = await createManualTakeawayOrderAction(entryId);
+      if (!res.success) {
+        alert(res.error || 'Failed to place manual order.');
+      } else if (res.order) {
+        setOrders((prev) => [...prev, { ...res.order, queueEntryId: entryId }]);
+        await broadcastCustomerQueueUpdate(entryId);
+      }
+    } catch (e) {
+      console.error('Failed to place manual order:', e);
+      alert('Failed to place manual order.');
+    } finally {
+      setIsProcessing(null);
+      router.refresh();
+    }
+  };
+
   // Action Handlers with optimistic UI updates and chime sound
   const handleNotify = async (entryId: string) => {
     setIsProcessing(entryId);
@@ -338,43 +359,73 @@ export function LiveQueueFeedClient({
           )}
         </div>
 
-        {/* Service Switcher (All / Dine-In / Takeaway) */}
-        <div className="flex items-center gap-1.5 overflow-x-auto hide-scrollbar pb-1 border-b border-white/5">
-          <span className="text-[10px] font-black uppercase tracking-wider text-slate-500 mr-1 shrink-0">
-            SERVICE:
+        {/* Service Switcher (Dine-In / Takeaway / All Channels) - Enhanced, Big & Vibrant */}
+        <div className="flex items-center gap-2 sm:gap-2.5 overflow-x-auto hide-scrollbar py-1.5 px-0.5 border-b border-white/10">
+          <span className="text-[11px] font-black uppercase tracking-wider text-slate-400 mr-0.5 shrink-0 flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            <span>CHANNEL:</span>
           </span>
-          <button
-            type="button"
-            onClick={() => setServiceFilter('ALL')}
-            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 border cursor-pointer ${
-              serviceFilter === 'ALL'
-                ? 'bg-white/15 text-white border-white/25 shadow-sm'
-                : 'bg-white/[0.03] text-slate-400 border-white/5 hover:bg-white/[0.08]'
-            }`}
-          >
-            All Services ({entries.length})
-          </button>
+
+          {/* DINE-IN BUTTON */}
           <button
             type="button"
             onClick={() => setServiceFilter('DINE_IN')}
-            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 border cursor-pointer ${
+            className={`px-4 sm:px-5 py-2.5 sm:py-3 rounded-2xl text-xs sm:text-sm font-black transition-all whitespace-nowrap shrink-0 border cursor-pointer flex items-center gap-2 active:scale-95 shadow-md ${
               serviceFilter === 'DINE_IN'
-                ? 'bg-blue-600/30 text-blue-300 border-blue-500/50 shadow-sm shadow-blue-500/10'
-                : 'bg-white/[0.03] text-slate-400 border-white/5 hover:bg-white/[0.08]'
+                ? 'bg-gradient-to-r from-blue-600 via-indigo-600 to-cyan-500 text-white border-cyan-300 shadow-blue-500/40 ring-2 ring-cyan-400/50 scale-[1.02]'
+                : 'bg-gradient-to-r from-blue-950/70 to-indigo-950/60 text-blue-200 border-blue-500/40 hover:border-cyan-400 hover:bg-blue-900/60 hover:text-white hover:shadow-blue-500/25'
             }`}
           >
-            🍽️ Dine-In ({dineInCount})
+            <span className="text-base sm:text-lg">🍽️</span>
+            <span>Dine-In</span>
+            <span
+              className={`ml-0.5 px-2 py-0.5 rounded-full text-xs font-mono font-black ${
+                serviceFilter === 'DINE_IN'
+                  ? 'bg-white/25 text-white border border-white/40'
+                  : 'bg-blue-500/20 text-blue-200 border border-blue-400/40'
+              }`}
+            >
+              {dineInCount}
+            </span>
           </button>
+
+          {/* TAKEAWAY BUTTON */}
           <button
             type="button"
             onClick={() => setServiceFilter('TAKEAWAY')}
-            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap shrink-0 border cursor-pointer ${
+            className={`px-4 sm:px-5 py-2.5 sm:py-3 rounded-2xl text-xs sm:text-sm font-black transition-all whitespace-nowrap shrink-0 border cursor-pointer flex items-center gap-2 active:scale-95 shadow-md ${
               serviceFilter === 'TAKEAWAY'
-                ? 'bg-amber-600/30 text-amber-300 border-amber-500/50 shadow-sm shadow-amber-500/10'
-                : 'bg-white/[0.03] text-slate-400 border-white/5 hover:bg-white/[0.08]'
+                ? 'bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500 text-white border-amber-200 shadow-amber-500/40 ring-2 ring-amber-400/50 scale-[1.02]'
+                : 'bg-gradient-to-r from-amber-950/70 to-orange-950/60 text-amber-200 border-amber-500/40 hover:border-amber-400 hover:bg-amber-900/60 hover:text-white hover:shadow-amber-500/25'
             }`}
           >
-            🛍️ Takeaway ({takeawayCount})
+            <span className="text-base sm:text-lg">🛍️</span>
+            <span>Takeaway</span>
+            <span
+              className={`ml-0.5 px-2 py-0.5 rounded-full text-xs font-mono font-black ${
+                serviceFilter === 'TAKEAWAY'
+                  ? 'bg-white/25 text-white border border-white/40'
+                  : 'bg-amber-500/20 text-amber-200 border border-amber-400/40'
+              }`}
+            >
+              {takeawayCount}
+            </span>
+          </button>
+
+          {/* ALL SERVICES BUTTON */}
+          <button
+            type="button"
+            onClick={() => setServiceFilter('ALL')}
+            className={`px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-2xl text-xs sm:text-xs font-extrabold transition-all whitespace-nowrap shrink-0 border cursor-pointer flex items-center gap-1.5 active:scale-95 ${
+              serviceFilter === 'ALL'
+                ? 'bg-white/20 text-white border-white/30 shadow-md ring-1 ring-white/30'
+                : 'bg-white/[0.04] text-slate-300 border-white/10 hover:bg-white/[0.08] hover:text-white'
+            }`}
+          >
+            <span>All Channels</span>
+            <span className="ml-0.5 px-1.5 py-0.5 rounded-full bg-white/10 text-slate-300 text-[11px] font-mono">
+              {entries.length}
+            </span>
           </button>
         </div>
 
@@ -608,8 +659,9 @@ export function LiveQueueFeedClient({
                       {/* Contact & Service details */}
                       {isTakeaway ? (
                         <div className="flex items-center gap-2 mt-0.5 text-xs sm:text-[13px] text-slate-300 flex-wrap">
-                          <span className="px-2 py-0.5 rounded-md bg-amber-500/15 text-amber-300 border border-amber-500/30 text-[10px] font-black uppercase tracking-wider">
-                            🛍️ TAKEAWAY
+                          <span className="px-2.5 py-1 rounded-lg bg-gradient-to-r from-amber-500/25 to-orange-500/20 text-amber-300 border border-amber-400/50 text-[11px] font-black uppercase tracking-wider shadow-sm shadow-amber-500/15 flex items-center gap-1">
+                            <span>🛍️</span>
+                            <span>TAKEAWAY</span>
                           </span>
                           {entry.customer_phone ? (
                             <>
@@ -627,6 +679,10 @@ export function LiveQueueFeedClient({
                         </div>
                       ) : (
                         <div className="flex items-center gap-2 mt-0.5 text-xs sm:text-[13px] text-slate-300 flex-wrap">
+                          <span className="px-2.5 py-1 rounded-lg bg-gradient-to-r from-blue-500/25 to-cyan-500/20 text-blue-300 border border-blue-400/50 text-[11px] font-black uppercase tracking-wider shadow-sm shadow-blue-500/15 flex items-center gap-1">
+                            <span>🍽️</span>
+                            <span>DINE-IN</span>
+                          </span>
                           <span className="font-semibold text-slate-200">
                             👥 {entry.party_size} {entry.party_size === 1 ? 'guest' : 'guests'}
                           </span>
@@ -719,14 +775,23 @@ export function LiveQueueFeedClient({
                             </div>
                           ) : (
                             <div className="flex items-center justify-between gap-2 text-xs">
-                              <span className="text-slate-400 italic text-[11px]">No order attached yet</span>
-                              <button
-                                type="button"
-                                onClick={() => setOrderModalEntry(entry)}
-                                className="px-2.5 py-1 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 text-[11px] font-bold transition-all cursor-pointer flex items-center gap-1"
-                              >
-                                <span>+ Take Order</span>
-                              </button>
+                              {takeawayManualOrderingEnabled ? (
+                                <span className="text-amber-300/80 font-medium text-[11px] flex items-center gap-1">
+                                  <span>📝</span>
+                                  <span>Manual Counter Ordering</span>
+                                </span>
+                              ) : (
+                                <>
+                                  <span className="text-slate-400 italic text-[11px]">No order attached yet</span>
+                                  <button
+                                    type="button"
+                                    onClick={() => setOrderModalEntry(entry)}
+                                    className="px-2.5 py-1 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 text-[11px] font-bold transition-all cursor-pointer flex items-center gap-1"
+                                  >
+                                    <span>+ Take Order</span>
+                                  </button>
+                                </>
+                              )}
                             </div>
                           )}
                         </div>
@@ -875,23 +940,48 @@ export function LiveQueueFeedClient({
                         <>
                           {!linkedOrder && (
                             <>
-                              <button
-                                type="button"
-                                onClick={() => setOrderModalEntry(entry)}
-                                className="col-span-1 px-4 h-11 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 text-xs font-bold transition-all cursor-pointer border border-amber-500/40 flex items-center justify-center gap-1.5"
-                              >
-                                <span>🛍️</span>
-                                <span>+ Take Order</span>
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => handleCompleteTakeaway(entry.id)}
-                                disabled={loading}
-                                className="col-span-2 sm:col-span-1 px-5 h-11 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-600 hover:brightness-110 active:scale-95 text-white text-sm font-black shadow-lg shadow-emerald-500/25 transition-all disabled:opacity-50 cursor-pointer flex items-center justify-center gap-2"
-                              >
-                                <span>✓</span>
-                                <span>Items Received</span>
-                              </button>
+                              {takeawayManualOrderingEnabled ? (
+                                <>
+                                  <button
+                                    type="button"
+                                    onClick={() => handlePlaceManualOrder(entry.id)}
+                                    disabled={loading}
+                                    className="col-span-1 px-4 h-11 rounded-xl bg-gradient-to-r from-amber-600 to-orange-600 hover:brightness-110 active:scale-95 text-white text-xs font-black shadow-md shadow-amber-500/20 transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                                  >
+                                    <span>📝</span>
+                                    <span>Place Order</span>
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleCompleteTakeaway(entry.id)}
+                                    disabled={loading}
+                                    className="col-span-2 sm:col-span-1 px-5 h-11 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-600 hover:brightness-110 active:scale-95 text-white text-sm font-black shadow-lg shadow-emerald-500/25 transition-all disabled:opacity-50 cursor-pointer flex items-center justify-center gap-2"
+                                  >
+                                    <span>✓</span>
+                                    <span>Items Received</span>
+                                  </button>
+                                </>
+                              ) : (
+                                <>
+                                  <button
+                                    type="button"
+                                    onClick={() => setOrderModalEntry(entry)}
+                                    className="col-span-1 px-4 h-11 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 text-xs font-bold transition-all cursor-pointer border border-amber-500/40 flex items-center justify-center gap-1.5"
+                                  >
+                                    <span>🛍️</span>
+                                    <span>+ Take Order</span>
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleCompleteTakeaway(entry.id)}
+                                    disabled={loading}
+                                    className="col-span-2 sm:col-span-1 px-5 h-11 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-600 hover:brightness-110 active:scale-95 text-white text-sm font-black shadow-lg shadow-emerald-500/25 transition-all disabled:opacity-50 cursor-pointer flex items-center justify-center gap-2"
+                                  >
+                                    <span>✓</span>
+                                    <span>Items Received</span>
+                                  </button>
+                                </>
+                              )}
                             </>
                           )}
 

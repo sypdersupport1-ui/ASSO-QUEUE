@@ -44,6 +44,7 @@ interface TakeawayTicketCardProps {
   orders?: TakeawayOrderSummary[];
   currency?: string;
   takeawayCustomerOrderingEnabled?: boolean;
+  takeawayManualOrderingEnabled?: boolean;
 }
 
 /**
@@ -70,6 +71,7 @@ export function TakeawayTicketCard({
   orders = [],
   currency = 'INR',
   takeawayCustomerOrderingEnabled = true,
+  takeawayManualOrderingEnabled = false,
 }: TakeawayTicketCardProps) {
   const router = useRouter();
   const ticketNo = formatTakeawayTicketNumber(status.displayNumber, status.entryId);
@@ -289,7 +291,7 @@ export function TakeawayTicketCard({
                   : 'text-emerald-400/80 font-semibold'
               }
             >
-              1. Waiting
+              {takeawayManualOrderingEnabled ? '1. In Queue' : '1. Waiting'}
             </span>
             <span
               className={
@@ -300,7 +302,7 @@ export function TakeawayTicketCard({
                   : 'text-slate-500 font-medium'
               }
             >
-              2. Called
+              {takeawayManualOrderingEnabled ? '2. Called' : '2. Called'}
             </span>
             <span
               className={
@@ -311,7 +313,7 @@ export function TakeawayTicketCard({
                   : 'text-slate-500 font-medium'
               }
             >
-              3. Order Completed
+              {takeawayManualOrderingEnabled ? '3. Place Order' : '3. Order Completed'}
             </span>
             <span
               className={
@@ -414,7 +416,9 @@ export function TakeawayTicketCard({
               Ticket {ticketNo} — Please proceed to the takeaway counter.
             </p>
             <p className="text-xs text-slate-400 leading-relaxed">
-              Show your ticket to the staff. They will confirm your order and begin preparation.
+              {takeawayManualOrderingEnabled
+                ? 'Show your ticket to the staff. Place your order at the counter to begin preparation.'
+                : 'Show your ticket to the staff. They will confirm your order and begin preparation.'}
             </p>
           </div>
 
@@ -462,10 +466,12 @@ export function TakeawayTicketCard({
                 <Flame className="h-6 w-6 text-amber-400 animate-pulse" />
               </div>
               <h2 className="text-2xl font-black text-white tracking-tight">
-                ORDER ACCEPTED &amp; PREPARING
+                {takeawayManualOrderingEnabled ? 'ORDER PLACED' : 'ORDER ACCEPTED & PREPARING'}
               </h2>
               <p className="text-xs sm:text-sm font-bold text-teal-300">
-                Counter acceptance complete. The kitchen is preparing your order.
+                {takeawayManualOrderingEnabled
+                  ? 'Your order has been placed at the counter. Food is being prepared!'
+                  : 'Counter acceptance complete. The kitchen is preparing your order.'}
               </p>
               <p className="text-xs text-slate-400 leading-relaxed">
                 Please wait near the counter. We will notify you the moment your food is packed and ready!

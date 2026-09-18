@@ -20,6 +20,7 @@ type Initial = {
   dine_in_staff_ordering_enabled?: boolean;
   takeaway_customer_ordering_enabled?: boolean;
   takeaway_staff_ordering_enabled?: boolean;
+  takeaway_manual_ordering_enabled?: boolean;
 };
 
 const inputCls =
@@ -170,6 +171,16 @@ export default function EditRestaurantForm({
                   className="rounded border-slate-700 text-emerald-500 focus:ring-0"
                 />
                 <span>Staff Counter Ordering</span>
+              </label>
+              <label className="flex items-center gap-2 text-xs text-slate-300 cursor-pointer pt-1 border-t border-white/5">
+                <input
+                  type="checkbox"
+                  name="takeaway_manual_ordering_enabled"
+                  value="true"
+                  defaultChecked={initial.takeaway_manual_ordering_enabled ?? false}
+                  className="rounded border-slate-700 text-amber-500 focus:ring-0"
+                />
+                <span className="text-amber-300 font-semibold">Manual Ordering (Counter Order &amp; Handover)</span>
               </label>
             </div>
           </div>

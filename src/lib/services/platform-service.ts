@@ -35,6 +35,7 @@ export const createRestaurantSchema = z.object({
   dine_in_staff_ordering_enabled: z.boolean().optional(),
   takeaway_customer_ordering_enabled: z.boolean().optional(),
   takeaway_staff_ordering_enabled: z.boolean().optional(),
+  takeaway_manual_ordering_enabled: z.boolean().optional(),
 });
 
 export const updateRestaurantSchema = createRestaurantSchema.partial();
@@ -365,6 +366,7 @@ export class PlatformService {
     if (data.dine_in_staff_ordering_enabled !== undefined) updatePayload.dine_in_staff_ordering_enabled = data.dine_in_staff_ordering_enabled;
     if (data.takeaway_customer_ordering_enabled !== undefined) updatePayload.takeaway_customer_ordering_enabled = data.takeaway_customer_ordering_enabled;
     if (data.takeaway_staff_ordering_enabled !== undefined) updatePayload.takeaway_staff_ordering_enabled = data.takeaway_staff_ordering_enabled;
+    if (data.takeaway_manual_ordering_enabled !== undefined) updatePayload.takeaway_manual_ordering_enabled = data.takeaway_manual_ordering_enabled;
 
     const { data: updated, error } = await supabase
       .from('restaurants')

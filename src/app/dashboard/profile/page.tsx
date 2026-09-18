@@ -25,6 +25,7 @@ export default async function RestaurantProfilePage() {
           dine_in_staff_ordering_enabled: (restaurant as unknown as { dine_in_staff_ordering_enabled?: boolean }).dine_in_staff_ordering_enabled ?? true,
           takeaway_customer_ordering_enabled: (restaurant as unknown as { takeaway_customer_ordering_enabled?: boolean }).takeaway_customer_ordering_enabled ?? true,
           takeaway_staff_ordering_enabled: (restaurant as unknown as { takeaway_staff_ordering_enabled?: boolean }).takeaway_staff_ordering_enabled ?? true,
+          takeaway_manual_ordering_enabled: (restaurant as unknown as { takeaway_manual_ordering_enabled?: boolean }).takeaway_manual_ordering_enabled ?? false,
         }}
       />
     </div>

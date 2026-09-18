@@ -22,6 +22,7 @@ interface RestaurantProfileClientProps {
     dine_in_staff_ordering_enabled?: boolean;
     takeaway_customer_ordering_enabled?: boolean;
     takeaway_staff_ordering_enabled?: boolean;
+    takeaway_manual_ordering_enabled?: boolean;
   };
 }
 
@@ -276,6 +277,19 @@ export default function RestaurantProfileClient({ restaurant }: RestaurantProfil
                   />
                   <span>Staff Counter Ordering at Pickup</span>
                 </label>
+                <label className="flex items-center gap-2.5 text-xs text-slate-200 cursor-pointer pt-1 border-t border-white/5">
+                  <input
+                    type="checkbox"
+                    name="takeaway_manual_ordering_enabled"
+                    value="true"
+                    defaultChecked={restaurant.takeaway_manual_ordering_enabled ?? false}
+                    className="rounded border-slate-700 text-amber-500 focus:ring-0 cursor-pointer"
+                  />
+                  <span className="font-semibold text-amber-300/90">Manual Ordering (Queue &amp; Counter Handover)</span>
+                </label>
+                <p className="text-[11px] text-slate-400 pl-6 leading-tight">
+                  For outlets without menu config: Customer joins queue ➔ Comes to counter ➔ Places order ➔ Receives items.
+                </p>
               </div>
             </div>
           </div>
