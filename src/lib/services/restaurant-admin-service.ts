@@ -28,6 +28,7 @@ export const updateRestaurantProfileSchema = z.object({
   timezone: z.string().default('UTC'),
   currency: z.string().default('USD'),
   seating_mode: z.enum(['SIMPLE', 'STRICT']).default('SIMPLE'),
+  takeaway_enabled: z.boolean().optional(),
 });
 
 /**
@@ -226,6 +227,7 @@ export class RestaurantAdminService {
       timezone: data.timezone,
       currency: data.currency,
       seating_mode: data.seating_mode,
+      ...(data.takeaway_enabled !== undefined ? { takeaway_enabled: data.takeaway_enabled } : {}),
       updated_at: new Date().toISOString(),
     };
 

@@ -673,10 +673,10 @@ export function CustomerMenuBrowser({
                 <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3 text-xs space-y-1">
                   <div className="flex items-center gap-1.5 font-bold text-emerald-400">
                     <ShoppingBag className="h-4 w-4 shrink-0" />
-                    <span>Takeaway Order · Pay at Counter</span>
+                    <span className="uppercase tracking-wider">PAY AT COUNTER</span>
                   </div>
                   <p className="text-[11px] text-slate-300 leading-relaxed">
-                    You can pay when collecting your order at the takeaway counter.
+                    You can pay when collecting your order.
                   </p>
                 </div>
               ) : (
@@ -737,7 +737,7 @@ export function CustomerMenuBrowser({
                 ) : isTakeaway ? (
                   <>
                     <ShoppingBag className="h-4 w-4" />
-                    <span>Place Takeaway Order (Pay at Counter)</span>
+                    <span>PLACE TAKEAWAY ORDER</span>
                   </>
                 ) : (
                   <>

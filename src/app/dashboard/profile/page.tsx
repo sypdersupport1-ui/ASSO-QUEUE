@@ -20,6 +20,7 @@ export default async function RestaurantProfilePage() {
           timezone: restaurant.timezone,
           currency: restaurant.currency,
           seating_mode: (restaurant.seating_mode || 'SIMPLE') as 'SIMPLE' | 'STRICT',
+          takeaway_enabled: Boolean(restaurant.takeaway_enabled),
         }}
       />
     </div>

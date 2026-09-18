@@ -452,7 +452,7 @@ export function TakeawayTicketCard({
               Order #{activeOrder.orderNumber}
             </span>
             <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-emerald-300">
-              Pay at Counter
+              PAY AT COUNTER
             </span>
           </div>
 
@@ -478,7 +478,7 @@ export function TakeawayTicketCard({
           </div>
 
           <p className="text-[11px] text-slate-400 text-center">
-            💵 Payment: <strong className="text-slate-200">PAY AT COUNTER</strong> when picking up.
+            💵 <strong className="text-slate-200 uppercase tracking-wider">PAY AT COUNTER</strong> — You can pay when collecting your order.
           </p>
         </div>
       ) : isInQueue ? (

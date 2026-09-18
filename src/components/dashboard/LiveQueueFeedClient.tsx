@@ -873,7 +873,7 @@ export function LiveQueueFeedClient({
                               className="col-span-1 px-4 h-11 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 text-xs font-bold transition-all cursor-pointer border border-emerald-500/40 flex items-center justify-center gap-1.5"
                             >
                               <span>💵</span>
-                              <span>Collect Payment</span>
+                              <span>Record Payment</span>
                             </button>
                           )}
 

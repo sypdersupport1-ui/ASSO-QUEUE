@@ -17,6 +17,7 @@ interface RestaurantProfileClientProps {
     timezone?: string;
     currency?: string;
     seating_mode?: 'SIMPLE' | 'STRICT';
+    takeaway_enabled?: boolean;
   };
 }
 
@@ -24,6 +25,7 @@ export default function RestaurantProfileClient({ restaurant }: RestaurantProfil
   const [state, formAction, isPending] = useActionState(updateProfileFormAction, null);
   const [showSuccess, setShowSuccess] = useState(false);
   const [currentMode, setCurrentMode] = useState<'SIMPLE' | 'STRICT'>(restaurant.seating_mode || 'SIMPLE');
+  const [takeawayEnabled, setTakeawayEnabled] = useState<boolean>(Boolean(restaurant.takeaway_enabled));
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -47,7 +49,7 @@ export default function RestaurantProfileClient({ restaurant }: RestaurantProfil
 
       {showSuccess && (
         <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-3 text-xs font-semibold text-emerald-400">
-          ✓ Restaurant profile & seating mode successfully updated.
+          ✓ Restaurant profile, takeaway settings &amp; seating mode successfully updated.
         </div>
       )}
 
@@ -123,6 +125,77 @@ export default function RestaurantProfileClient({ restaurant }: RestaurantProfil
                 <span className="text-xs font-bold text-white block">Strict Seating (Shared Tables)</span>
                 <span className="text-[11px] text-slate-400 block mt-1 leading-snug">
                   High capacity utilization. Allows sharing free seats on large tables with multiple queue parties.
+                </span>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        {/* TAKEAWAY SERVICE SETTINGS */}
+        <div className="rounded-2xl border border-blue-500/30 bg-slate-950/80 p-5 space-y-3 shadow-inner">
+          <div className="flex items-center justify-between">
+            <div>
+              <span className="text-[10px] font-black uppercase tracking-widest text-blue-400">
+                Service Channels
+              </span>
+              <h3 className="text-sm font-bold text-white mt-0.5">TAKEAWAY</h3>
+            </div>
+            <span className={`text-[10px] font-black px-2.5 py-0.5 rounded-full border uppercase tracking-wider ${
+              takeawayEnabled
+                ? 'bg-blue-500/20 text-blue-300 border-blue-500/40'
+                : 'bg-slate-700/30 text-slate-400 border-slate-700/50'
+            }`}>
+              {takeawayEnabled ? 'Enabled' : 'Disabled'}
+            </span>
+          </div>
+          
+          <p className="text-xs text-slate-400 leading-relaxed">
+            Allow customers to join the takeaway queue and order for pickup.
+          </p>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+            <label 
+              className={`flex items-start gap-3 p-3.5 rounded-xl border cursor-pointer transition-all ${
+                takeawayEnabled
+                  ? 'bg-blue-500/10 border-blue-500/50 shadow-[0_0_15px_rgba(59,130,246,0.15)]'
+                  : 'bg-[#111827] border-white/10 hover:border-white/20'
+              }`}
+            >
+              <input
+                type="radio"
+                name="takeaway_enabled"
+                value="true"
+                checked={takeawayEnabled}
+                onChange={() => setTakeawayEnabled(true)}
+                className="mt-1 text-blue-500 focus:ring-0 cursor-pointer"
+              />
+              <div className="flex-1">
+                <span className="text-xs font-bold text-white block">Enabled</span>
+                <span className="text-[11px] text-slate-400 block mt-1 leading-snug">
+                  Customers can scan venue QR to join the takeaway queue, browse menu, and collect at counter.
+                </span>
+              </div>
+            </label>
+
+            <label 
+              className={`flex items-start gap-3 p-3.5 rounded-xl border cursor-pointer transition-all ${
+                !takeawayEnabled
+                  ? 'bg-slate-800/40 border-slate-600/50'
+                  : 'bg-[#111827] border-white/10 hover:border-white/20'
+              }`}
+            >
+              <input
+                type="radio"
+                name="takeaway_enabled"
+                value="false"
+                checked={!takeawayEnabled}
+                onChange={() => setTakeawayEnabled(false)}
+                className="mt-1 text-slate-500 focus:ring-0 cursor-pointer"
+              />
+              <div className="flex-1">
+                <span className="text-xs font-bold text-white block">Disabled</span>
+                <span className="text-[11px] text-slate-400 block mt-1 leading-snug">
+                  Venue offers Dine-In only. Takeaway queue joining is rejected server-side and hidden on QR.
                 </span>
               </div>
             </label>

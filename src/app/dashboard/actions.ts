@@ -59,6 +59,7 @@ export async function updateProfileFormAction(_prevState: unknown, formData: For
       timezone: (formData.get('timezone') as string) || 'UTC',
       currency: (formData.get('currency') as string) || 'USD',
       seating_mode: (formData.get('seating_mode') as 'SIMPLE' | 'STRICT') || 'SIMPLE',
+      takeaway_enabled: formData.has('takeaway_enabled') ? formData.get('takeaway_enabled') === 'true' : undefined,
     };
 
     await RestaurantAdminService.updateRestaurantProfile(input);
