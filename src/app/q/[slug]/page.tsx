@@ -1,7 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { ChevronRight, Phone, UtensilsCrossed, LogOut } from 'lucide-react';
-import { PublicRestaurantService } from '@/lib/services/public-restaurant-service';
+import { PublicRestaurantService, PublicRestaurantInfo } from '@/lib/services/public-restaurant-service';
 import { QueueService } from '@/lib/services/queue-service';
 import { ETAService } from '@/lib/services/eta-service';
 import { QueueScheduleService } from '@/lib/services/queue-schedule-service';
@@ -25,16 +25,20 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const restaurant = await PublicRestaurantService.getPublicRestaurantBySlug(slug);
+  try {
+    const restaurant = await PublicRestaurantService.getPublicRestaurantBySlug(slug);
 
-  if (!restaurant) {
-    return { title: 'Restaurant Not Found — QueueFlow' };
+    if (!restaurant) {
+      return { title: 'Restaurant Not Found — QueueFlow' };
+    }
+
+    return {
+      title: `${restaurant.name} — Join Digital Queue | QueueFlow`,
+      description: `Join the digital waiting line for ${restaurant.name}. Save your spot without standing in line.`,
+    };
+  } catch {
+    return { title: 'QueueFlow — Digital Queue' };
   }
-
-  return {
-    title: `${restaurant.name} — Join Digital Queue | QueueFlow`,
-    description: `Join the digital waiting line for ${restaurant.name}. Save your spot without standing in line.`,
-  };
 }
 
 /**
@@ -65,7 +69,22 @@ export default async function PublicRestaurantQueuePage({
       await clearTicketCookie(slug);
     } catch {}
   }
-  const restaurant = await PublicRestaurantService.getPublicRestaurantBySlug(slug);
+  let restaurant: PublicRestaurantInfo | null = null;
+  try {
+    restaurant = await PublicRestaurantService.getPublicRestaurantBySlug(slug);
+  } catch (err) {
+    logger.error('Public restaurant queue page error loading restaurant', {
+      operation: 'public_queue_page',
+      metadata: { slug, error: err instanceof Error ? err.message : String(err) },
+    });
+    return (
+      <CustomerErrorState
+        variant="generic"
+        title="Temporarily unavailable"
+        body="We're having trouble loading this restaurant right now. Please try refreshing in a moment."
+      />
+    );
+  }
 
   if (!restaurant) {
     return (

@@ -1,5 +1,6 @@
 import { createAdminClient } from '@/lib/db/supabase/admin';
 import { CacheService, CacheKeys } from '@/lib/cache';
+import { logger } from '@/lib/logging/logger';
 
 export interface PublicRestaurantInfo {
   id: string;
@@ -52,7 +53,20 @@ export class PublicRestaurantService {
           .eq('status', 'ACTIVE')
           .maybeSingle();
 
-        if (error || !restaurant) {
+        if (error) {
+          logger.error('Database error fetching public restaurant by slug', {
+            operation: 'getPublicRestaurantBySlug',
+            metadata: {
+              slug,
+              code: error.code,
+              message: error.message,
+              details: error.details,
+            },
+          });
+          throw new Error(`Database error fetching restaurant: ${error.message}`);
+        }
+
+        if (!restaurant) {
           return null;
         }
 

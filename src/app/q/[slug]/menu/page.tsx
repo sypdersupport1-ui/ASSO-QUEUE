@@ -1,9 +1,11 @@
 import React from 'react';
-import { PublicRestaurantService } from '@/lib/services/public-restaurant-service';
+import { PublicRestaurantService, PublicRestaurantInfo } from '@/lib/services/public-restaurant-service';
 import { RestaurantHeader } from '@/components/customer/RestaurantHeader';
 import { CustomerMenuBrowser } from '@/components/customer/CustomerMenuBrowser';
 import { CustomerTicketFloat } from '@/components/customer/CustomerTicketFloat';
 import { TicketCookieSync } from '@/components/customer/TicketCookieSync';
+import { CustomerErrorState } from '@/components/customer/CustomerErrorState';
+import { logger } from '@/lib/logging/logger';
 import type { Metadata } from 'next';
 
 export async function generateMetadata({
@@ -12,16 +14,20 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const restaurant = await PublicRestaurantService.getPublicRestaurantBySlug(slug);
+  try {
+    const restaurant = await PublicRestaurantService.getPublicRestaurantBySlug(slug);
 
-  if (!restaurant) {
-    return { title: 'Menu Not Found — QueueFlow' };
+    if (!restaurant) {
+      return { title: 'Menu Not Found — QueueFlow' };
+    }
+
+    return {
+      title: `Menu — ${restaurant.name} | QueueFlow`,
+      description: `Browse menu items and order online for ${restaurant.name}.`,
+    };
+  } catch {
+    return { title: 'Menu — QueueFlow' };
   }
-
-  return {
-    title: `Menu — ${restaurant.name} | QueueFlow`,
-    description: `Browse menu items and order online for ${restaurant.name}.`,
-  };
 }
 
 export default async function CustomerMenuPage({
@@ -34,7 +40,23 @@ export default async function CustomerMenuPage({
   const { slug } = await params;
   const { tableId, qtoken, service } = await searchParams;
 
-  const restaurant = await PublicRestaurantService.getPublicRestaurantBySlug(slug);
+  let restaurant: PublicRestaurantInfo | null = null;
+  try {
+    restaurant = await PublicRestaurantService.getPublicRestaurantBySlug(slug);
+  } catch (err) {
+    logger.error('Customer menu page error loading restaurant', {
+      operation: 'customer_menu_page',
+      metadata: { slug, error: err instanceof Error ? err.message : String(err) },
+    });
+    return (
+      <CustomerErrorState
+        variant="generic"
+        title="Temporarily unavailable"
+        body="We're having trouble loading this menu right now. Please try refreshing in a moment."
+      />
+    );
+  }
+
   if (!restaurant) {
     return (
       <div className="qf-bg min-h-[100dvh] text-slate-100 flex items-center justify-center p-6">

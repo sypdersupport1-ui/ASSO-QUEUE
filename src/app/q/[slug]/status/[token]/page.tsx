@@ -1,7 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { UtensilsCrossed } from 'lucide-react';
-import { PublicRestaurantService } from '@/lib/services/public-restaurant-service';
+import { PublicRestaurantService, PublicRestaurantInfo } from '@/lib/services/public-restaurant-service';
 import { QueueService } from '@/lib/services/queue-service';
 import { NotificationService } from '@/lib/services/notification-service';
 import { QueueTicketCard } from '@/components/customer/QueueTicketCard';
@@ -14,6 +14,7 @@ import { TicketCookieSync } from '@/components/customer/TicketCookieSync';
 import { CustomerQueueRealtime } from '@/components/realtime/CustomerQueueRealtime';
 import { CustomerErrorState } from '@/components/customer/CustomerErrorState';
 import { shouldShowNotificationBanner } from '@/lib/customer-ticket-ux';
+import { logger } from '@/lib/logging/logger';
 import type { Metadata } from 'next';
 
 export async function generateMetadata({
@@ -22,16 +23,20 @@ export async function generateMetadata({
   params: Promise<{ slug: string; token: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const restaurant = await PublicRestaurantService.getPublicRestaurantBySlug(slug);
+  try {
+    const restaurant = await PublicRestaurantService.getPublicRestaurantBySlug(slug);
 
-  if (!restaurant) {
-    return { title: 'Ticket Not Found — QueueFlow' };
+    if (!restaurant) {
+      return { title: 'Ticket Not Found — QueueFlow' };
+    }
+
+    return {
+      title: `Queue Ticket #${restaurant.name} | QueueFlow`,
+      description: `Live digital queue status for ${restaurant.name}.`,
+    };
+  } catch {
+    return { title: 'Queue Ticket — QueueFlow' };
   }
-
-  return {
-    title: `My Queue Ticket — ${restaurant.name} | QueueFlow`,
-    description: `View live queue status and position for ${restaurant.name}.`,
-  };
 }
 
 /**
@@ -57,7 +62,23 @@ export default async function CustomerQueueStatusPage({
   const { slug, token } = await params;
 
   // 1. Resolve restaurant by slug
-  const restaurant = await PublicRestaurantService.getPublicRestaurantBySlug(slug);
+  let restaurant: PublicRestaurantInfo | null = null;
+  try {
+    restaurant = await PublicRestaurantService.getPublicRestaurantBySlug(slug);
+  } catch (err) {
+    logger.error('Customer queue status page error loading restaurant', {
+      operation: 'customer_status_page',
+      metadata: { slug, error: err instanceof Error ? err.message : String(err) },
+    });
+    return (
+      <CustomerErrorState
+        variant="generic"
+        title="Temporarily unavailable"
+        body="We're having trouble loading this queue ticket right now. Please try refreshing in a moment."
+      />
+    );
+  }
+
   if (!restaurant) {
     return (
       <CustomerErrorState
