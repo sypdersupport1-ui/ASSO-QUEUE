@@ -31,6 +31,10 @@ export const createRestaurantSchema = z.object({
   country: z.string().optional(),
   timezone: z.string().default('UTC'),
   currency: z.string().default('USD'),
+  dine_in_customer_ordering_enabled: z.boolean().optional(),
+  dine_in_staff_ordering_enabled: z.boolean().optional(),
+  takeaway_customer_ordering_enabled: z.boolean().optional(),
+  takeaway_staff_ordering_enabled: z.boolean().optional(),
 });
 
 export const updateRestaurantSchema = createRestaurantSchema.partial();
@@ -357,6 +361,10 @@ export class PlatformService {
     if (data.country !== undefined) updatePayload.country = data.country?.trim() || null;
     if (data.timezone !== undefined) updatePayload.timezone = data.timezone;
     if (data.currency !== undefined) updatePayload.currency = data.currency;
+    if (data.dine_in_customer_ordering_enabled !== undefined) updatePayload.dine_in_customer_ordering_enabled = data.dine_in_customer_ordering_enabled;
+    if (data.dine_in_staff_ordering_enabled !== undefined) updatePayload.dine_in_staff_ordering_enabled = data.dine_in_staff_ordering_enabled;
+    if (data.takeaway_customer_ordering_enabled !== undefined) updatePayload.takeaway_customer_ordering_enabled = data.takeaway_customer_ordering_enabled;
+    if (data.takeaway_staff_ordering_enabled !== undefined) updatePayload.takeaway_staff_ordering_enabled = data.takeaway_staff_ordering_enabled;
 
     const { data: updated, error } = await supabase
       .from('restaurants')

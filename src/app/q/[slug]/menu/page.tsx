@@ -68,6 +68,9 @@ export default async function CustomerMenuPage({
 
   const isTakeaway = (queueType === 'TAKEAWAY') || (service === 'takeaway' && Boolean(restaurant.takeawayEnabled));
   const serviceType: 'DINE_IN' | 'TAKEAWAY' = isTakeaway ? 'TAKEAWAY' : 'DINE_IN';
+  const isOrderingDisabled = isTakeaway
+    ? restaurant.takeawayCustomerOrderingEnabled === false
+    : restaurant.dineInCustomerOrderingEnabled === false;
 
   const menuCategories = await PublicRestaurantService.getPublicMenuPreview(restaurant.id);
   const currency = (restaurant as unknown as { currency?: string })?.currency || 'INR';
@@ -96,7 +99,7 @@ export default async function CustomerMenuPage({
             </a>
           ) : (
             <span className="text-xs font-medium text-slate-500">
-              {isTakeaway ? 'Takeaway order' : 'Browse & order'}
+              {isTakeaway ? 'Takeaway menu' : 'Food menu'}
             </span>
           )}
         </div>
@@ -111,6 +114,12 @@ export default async function CustomerMenuPage({
           queueToken={qtoken || null}
           queueStatus={queueStatus}
           serviceType={serviceType}
+          orderingDisabled={isOrderingDisabled}
+          orderingDisabledReason={
+            isTakeaway
+              ? 'Takeaway online ordering is currently not active for this restaurant. You can browse the menu and order directly at the counter.'
+              : 'Dine-in pre-ordering is currently not active for this restaurant. You can browse the menu and order at your table.'
+          }
         />
       </div>
 

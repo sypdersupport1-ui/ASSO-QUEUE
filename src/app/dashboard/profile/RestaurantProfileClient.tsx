@@ -18,6 +18,10 @@ interface RestaurantProfileClientProps {
     currency?: string;
     seating_mode?: 'SIMPLE' | 'STRICT';
     takeaway_enabled?: boolean;
+    dine_in_customer_ordering_enabled?: boolean;
+    dine_in_staff_ordering_enabled?: boolean;
+    takeaway_customer_ordering_enabled?: boolean;
+    takeaway_staff_ordering_enabled?: boolean;
   };
 }
 
@@ -199,6 +203,81 @@ export default function RestaurantProfileClient({ restaurant }: RestaurantProfil
                 </span>
               </div>
             </label>
+          </div>
+        </div>
+
+        {/* ORDERING CAPABILITIES CONFIGURATION */}
+        <div className="rounded-2xl border border-blue-500/30 bg-slate-950/80 p-5 space-y-4 shadow-inner">
+          <div>
+            <span className="text-[10px] font-black uppercase tracking-widest text-blue-400">
+              Ordering Module Permissions
+            </span>
+            <h3 className="text-sm font-bold text-white mt-0.5">Outlet Ordering Capabilities</h3>
+            <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+              Enable or disable customer self-ordering and staff counter ordering independently for each service. Queue joining functions independently of whether ordering is enabled.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
+            {/* Dine-In Ordering */}
+            <div className="rounded-xl border border-white/10 bg-[#111827] p-4 space-y-3">
+              <span className="text-xs font-bold text-white flex items-center gap-1.5">
+                <span>🍽️</span>
+                <span>Dine-In Ordering</span>
+              </span>
+              <div className="space-y-2 pt-1">
+                <label className="flex items-center gap-2.5 text-xs text-slate-200 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    name="dine_in_customer_ordering_enabled"
+                    value="true"
+                    defaultChecked={restaurant.dine_in_customer_ordering_enabled ?? true}
+                    className="rounded border-slate-700 text-emerald-500 focus:ring-0 cursor-pointer"
+                  />
+                  <span>Customer Self-Ordering from Menu</span>
+                </label>
+                <label className="flex items-center gap-2.5 text-xs text-slate-200 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    name="dine_in_staff_ordering_enabled"
+                    value="true"
+                    defaultChecked={restaurant.dine_in_staff_ordering_enabled ?? true}
+                    className="rounded border-slate-700 text-emerald-500 focus:ring-0 cursor-pointer"
+                  />
+                  <span>Staff Counter / Table Ordering</span>
+                </label>
+              </div>
+            </div>
+
+            {/* Takeaway Ordering */}
+            <div className="rounded-xl border border-white/10 bg-[#111827] p-4 space-y-3">
+              <span className="text-xs font-bold text-white flex items-center gap-1.5">
+                <span>🛍️</span>
+                <span>Takeaway Ordering</span>
+              </span>
+              <div className="space-y-2 pt-1">
+                <label className="flex items-center gap-2.5 text-xs text-slate-200 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    name="takeaway_customer_ordering_enabled"
+                    value="true"
+                    defaultChecked={restaurant.takeaway_customer_ordering_enabled ?? true}
+                    className="rounded border-slate-700 text-emerald-500 focus:ring-0 cursor-pointer"
+                  />
+                  <span>Customer Self-Ordering from Menu</span>
+                </label>
+                <label className="flex items-center gap-2.5 text-xs text-slate-200 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    name="takeaway_staff_ordering_enabled"
+                    value="true"
+                    defaultChecked={restaurant.takeaway_staff_ordering_enabled ?? true}
+                    className="rounded border-slate-700 text-emerald-500 focus:ring-0 cursor-pointer"
+                  />
+                  <span>Staff Counter Ordering at Pickup</span>
+                </label>
+              </div>
+            </div>
           </div>
         </div>
 

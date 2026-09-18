@@ -60,6 +60,10 @@ export async function updateProfileFormAction(_prevState: unknown, formData: For
       currency: (formData.get('currency') as string) || 'USD',
       seating_mode: (formData.get('seating_mode') as 'SIMPLE' | 'STRICT') || 'SIMPLE',
       takeaway_enabled: formData.has('takeaway_enabled') ? formData.get('takeaway_enabled') === 'true' : undefined,
+      dine_in_customer_ordering_enabled: formData.has('dine_in_customer_ordering_enabled') ? formData.get('dine_in_customer_ordering_enabled') === 'true' : undefined,
+      dine_in_staff_ordering_enabled: formData.has('dine_in_staff_ordering_enabled') ? formData.get('dine_in_staff_ordering_enabled') === 'true' : undefined,
+      takeaway_customer_ordering_enabled: formData.has('takeaway_customer_ordering_enabled') ? formData.get('takeaway_customer_ordering_enabled') === 'true' : undefined,
+      takeaway_staff_ordering_enabled: formData.has('takeaway_staff_ordering_enabled') ? formData.get('takeaway_staff_ordering_enabled') === 'true' : undefined,
     };
 
     await RestaurantAdminService.updateRestaurantProfile(input);
@@ -912,6 +916,17 @@ export async function createStaffTakeawayOrderAction(input: {
       throw new Error('Unauthorized: Staff lacks permission to create takeaway orders.');
     }
 
+    // 3b. Outlet Capability Check: Staff counter ordering must be enabled for Takeaway at this outlet
+    const { data: restaurant } = await supabase
+      .from('restaurants')
+      .select('takeaway_staff_ordering_enabled')
+      .eq('id', entry.restaurant_id)
+      .single();
+
+    if (restaurant && restaurant.takeaway_staff_ordering_enabled === false) {
+      throw new Error('Staff counter ordering is disabled for Takeaway at this outlet.');
+    }
+
     // 4. Duplicate Check: Ensure no active non-cancelled order already exists for this queue entry
     const { data: existingOrder } = await supabase
       .from('orders')
@@ -950,6 +965,111 @@ export async function createStaffTakeawayOrderAction(input: {
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Failed to create takeaway order.',
+    };
+  }
+}
+
+/**
+ * Staff action: Acknowledge counter collection/payment and advance order to PREPARING.
+ * Represents customer stage: ORDER COMPLETED ("Your order is being prepared").
+ * Idempotent: safe under repeated staff clicks. Zero financial payment records created.
+ */
+export async function acknowledgeTakeawayPaymentAndCompleteOrderAction(queueEntryId: string, orderId: string) {
+  try {
+    const actorUserId = await requireActionActor();
+    const result = await OrderService.acknowledgeTakeawayCollection({
+      queueEntryId,
+      orderId,
+      actorUserId,
+    });
+    revalidatePath('/dashboard/queue');
+    revalidatePath('/dashboard');
+    return { success: true, data: result };
+  } catch (error: unknown) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to acknowledge collection.',
+    };
+  }
+}
+
+/**
+ * Staff action: Create Dine-In Order on behalf of customer/table.
+ * Validates staff authorization, outlet capability (dine_in_staff_ordering_enabled),
+ * and creates the order.
+ */
+export async function createStaffDineInOrderAction(input: {
+  restaurantId: string;
+  tableId?: string | null;
+  queueEntryId?: string | null;
+  customerName?: string | null;
+  customerPhone?: string | null;
+  items: Array<{ menuItemId: string; quantity: number; notes?: string | null }>;
+}) {
+  try {
+    const actorUserId = await requireActionActor();
+    const { restaurantId, tableId, queueEntryId, items, customerName, customerPhone } = input;
+
+    if (!restaurantId) {
+      throw new Error('Restaurant ID is required.');
+    }
+    if (!items || items.length === 0) {
+      throw new Error('Please select at least one menu item.');
+    }
+
+    const supabase = createAdminClient();
+
+    // 1. Authorization check
+    const canManage =
+      (await AuthorizationService.hasPermission({
+        userId: actorUserId,
+        restaurantId,
+        permission: PERMISSIONS.ORDERS_CREATE,
+      })) ||
+      (await AuthorizationService.hasPermission({
+        userId: actorUserId,
+        restaurantId,
+        permission: PERMISSIONS.ORDERS_MANAGE,
+      }));
+
+    if (!canManage) {
+      throw new Error('Unauthorized: Staff lacks permission to create dine-in orders.');
+    }
+
+    // 2. Outlet Capability Check: Staff ordering must be enabled for Dine-In
+    const { data: restaurant } = await supabase
+      .from('restaurants')
+      .select('dine_in_staff_ordering_enabled')
+      .eq('id', restaurantId)
+      .single();
+
+    if (restaurant && restaurant.dine_in_staff_ordering_enabled === false) {
+      throw new Error('Staff ordering is disabled for Dine-In at this outlet.');
+    }
+
+    // 3. Create the order
+    const orderResult = await OrderService.createCustomerOrder({
+      restaurantId,
+      tableId: tableId || null,
+      queueEntryId: queueEntryId || null,
+      customerName: customerName || 'Dine-In Guest',
+      customerPhone: customerPhone || null,
+      items,
+    });
+
+    revalidatePath('/dashboard/orders');
+    revalidatePath('/dashboard/kitchen');
+    revalidatePath('/dashboard');
+
+    return {
+      success: true,
+      order: orderResult.order,
+      items: orderResult.items,
+    };
+  } catch (error: unknown) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to create staff dine-in order.',
     };
   }
 }

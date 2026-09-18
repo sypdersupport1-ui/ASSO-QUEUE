@@ -29,6 +29,10 @@ export const updateRestaurantProfileSchema = z.object({
   currency: z.string().default('USD'),
   seating_mode: z.enum(['SIMPLE', 'STRICT']).default('SIMPLE'),
   takeaway_enabled: z.boolean().optional(),
+  dine_in_customer_ordering_enabled: z.boolean().optional(),
+  dine_in_staff_ordering_enabled: z.boolean().optional(),
+  takeaway_customer_ordering_enabled: z.boolean().optional(),
+  takeaway_staff_ordering_enabled: z.boolean().optional(),
 });
 
 /**
@@ -228,6 +232,10 @@ export class RestaurantAdminService {
       currency: data.currency,
       seating_mode: data.seating_mode,
       ...(data.takeaway_enabled !== undefined ? { takeaway_enabled: data.takeaway_enabled } : {}),
+      ...(data.dine_in_customer_ordering_enabled !== undefined ? { dine_in_customer_ordering_enabled: data.dine_in_customer_ordering_enabled } : {}),
+      ...(data.dine_in_staff_ordering_enabled !== undefined ? { dine_in_staff_ordering_enabled: data.dine_in_staff_ordering_enabled } : {}),
+      ...(data.takeaway_customer_ordering_enabled !== undefined ? { takeaway_customer_ordering_enabled: data.takeaway_customer_ordering_enabled } : {}),
+      ...(data.takeaway_staff_ordering_enabled !== undefined ? { takeaway_staff_ordering_enabled: data.takeaway_staff_ordering_enabled } : {}),
       updated_at: new Date().toISOString(),
     };
 

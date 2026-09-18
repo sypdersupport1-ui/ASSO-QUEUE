@@ -555,9 +555,13 @@ export function DashboardClient({
                             onClick={async () => {
                               setIsProcessing(entry.id);
                               chimeEngine.playAlertChime();
-                              setFeed((prev) => prev.filter((e) => e.id !== entry.id));
                               try {
-                                await completeTakeawayAction(entry.id);
+                                const res = await completeTakeawayAction(entry.id);
+                                if (!res.success) {
+                                  alert(res.error || 'Could not complete takeaway entry.');
+                                  return;
+                                }
+                                setFeed((prev) => prev.filter((e) => e.id !== entry.id));
                                 await broadcastCustomerQueueUpdate(entry.id);
                                 router.refresh();
                               } catch (e) {
@@ -571,7 +575,7 @@ export function DashboardClient({
                             className="col-span-2 sm:col-span-1 px-5 h-11 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white text-xs sm:text-sm font-bold shadow-md shadow-emerald-950/40 transition-all cursor-pointer flex items-center justify-center gap-1.5 active:scale-95"
                           >
                             <span className="material-symbols-outlined text-[16px]">check_circle</span>
-                            <span>Complete Pickup</span>
+                            <span>Items Received</span>
                           </button>
                         )}
 

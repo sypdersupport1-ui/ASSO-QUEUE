@@ -171,7 +171,7 @@ export default async function CustomerQueueStatusPage({
               </p>
             </div>
           </div>
-          {!isTerminal && (
+          {!isTerminal && (status.queueType === 'TAKEAWAY' ? restaurant.takeawayCustomerOrderingEnabled !== false : restaurant.dineInCustomerOrderingEnabled !== false) && (
             <Link
               href={menuUrl}
               className="inline-flex min-h-[40px] h-10 items-center gap-1.5 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 px-3.5 text-xs font-bold text-emerald-200 transition-all hover:bg-emerald-500/20 active:scale-95 shrink-0 shadow-sm shadow-emerald-500/10"
@@ -192,6 +192,7 @@ export default async function CustomerQueueStatusPage({
             restaurantName={restaurant.name}
             orders={myOrders}
             currency={restaurant.currency || 'INR'}
+            takeawayCustomerOrderingEnabled={restaurant.takeawayCustomerOrderingEnabled !== false}
           />
         ) : (
           <QueueTicketCard
@@ -211,7 +212,7 @@ export default async function CustomerQueueStatusPage({
               restaurantSlug={slug}
               queueToken={token}
             />
-            {status.status !== 'CALLED' && (
+            {restaurant.dineInCustomerOrderingEnabled !== false && status.status !== 'CALLED' && (
               <KitchenPreOrderCard
                 queueNumber={status.displayNumber || ''}
                 restaurantSlug={slug}

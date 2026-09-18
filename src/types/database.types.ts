@@ -184,6 +184,10 @@ export interface Database {
           auto_expire_called: boolean;
           /** Phase 1 Takeaway: enables Takeaway queue creation for this restaurant. Default false. */
           takeaway_enabled: boolean;
+          dine_in_customer_ordering_enabled: boolean;
+          dine_in_staff_ordering_enabled: boolean;
+          takeaway_customer_ordering_enabled: boolean;
+          takeaway_staff_ordering_enabled: boolean;
         };
         Insert: Omit<Database['public']['Tables']['restaurants']['Row'], 'id' | 'created_at' | 'updated_at'> & {
           id?: string;
@@ -192,6 +196,10 @@ export interface Database {
           seating_mode?: SeatingMode;
           auto_expire_called?: boolean;
           takeaway_enabled?: boolean;
+          dine_in_customer_ordering_enabled?: boolean;
+          dine_in_staff_ordering_enabled?: boolean;
+          takeaway_customer_ordering_enabled?: boolean;
+          takeaway_staff_ordering_enabled?: boolean;
         };
         Update: Partial<Database['public']['Tables']['restaurants']['Insert']>;
       };

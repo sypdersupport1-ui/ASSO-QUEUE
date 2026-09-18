@@ -47,6 +47,9 @@ interface CustomerMenuBrowserProps {
   queueStatus?: string | null;
   /** Phase 2: Service type (Dine-In vs Takeaway). */
   serviceType?: 'DINE_IN' | 'TAKEAWAY';
+  /** When true, customer can browse menu but cannot add to cart or place orders online */
+  orderingDisabled?: boolean;
+  orderingDisabledReason?: string;
 }
 
 export function CustomerMenuBrowser({
@@ -61,6 +64,8 @@ export function CustomerMenuBrowser({
   queueToken,
   queueStatus,
   serviceType = 'DINE_IN',
+  orderingDisabled = false,
+  orderingDisabledReason,
 }: CustomerMenuBrowserProps) {
   const router = useRouter();
   const isTakeaway = serviceType === 'TAKEAWAY';
@@ -321,6 +326,17 @@ export function CustomerMenuBrowser({
         </a>
       )}
 
+      {/* Ordering Disabled View-Only Banner */}
+      {orderingDisabled && (
+        <div className="rounded-2xl border border-amber-500/35 bg-amber-500/10 p-4 text-center space-y-1">
+          <p className="text-xs font-bold text-amber-300">Viewing Menu Only</p>
+          <p className="text-[11px] text-amber-200/80 leading-relaxed">
+            {orderingDisabledReason ||
+              'Online ordering is currently unavailable for this service. You can browse our offerings here and place your order directly with the staff.'}
+          </p>
+        </div>
+      )}
+
       {/* Search + Category Tabs */}
       <div className="space-y-3">
         <div className="relative group">
@@ -461,37 +477,39 @@ export function CustomerMenuBrowser({
                         >
                           Unavailable
                         </button>
-                      ) : inCart ? (
-                        <div className="flex items-center gap-1.5 bg-white/5 border border-white/10 rounded-xl p-1">
+                      ) : !orderingDisabled && (
+                        inCart ? (
+                          <div className="flex items-center gap-1.5 bg-white/5 border border-white/10 rounded-xl p-1 shrink-0">
+                            <button
+                              type="button"
+                              aria-label={`Remove one ${item.name} from cart`}
+                              onClick={() => handleUpdateQuantity(item.id, -1)}
+                              className="relative w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 text-white font-bold text-sm flex items-center justify-center transition-colors cursor-pointer before:absolute before:-inset-2 before:content-['']"
+                            >
+                              -
+                            </button>
+                            <span className="text-sm font-mono font-bold text-white px-1 min-w-[20px] text-center" aria-live="polite">
+                              {inCart.quantity}
+                            </span>
+                            <button
+                              type="button"
+                              aria-label={`Add one more ${item.name} to cart`}
+                              onClick={() => handleUpdateQuantity(item.id, 1)}
+                              className="relative w-8 h-8 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-sm flex items-center justify-center transition-colors cursor-pointer before:absolute before:-inset-2 before:content-['']"
+                            >
+                              +
+                            </button>
+                          </div>
+                        ) : (
                           <button
                             type="button"
-                            aria-label={`Remove one ${item.name} from cart`}
-                            onClick={() => handleUpdateQuantity(item.id, -1)}
-                            className="relative w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 text-white font-bold text-sm flex items-center justify-center transition-colors cursor-pointer before:absolute before:-inset-2 before:content-['']"
+                            aria-label={`Add ${item.name} to cart`}
+                            onClick={() => handleAddToCart(item)}
+                            className="px-3.5 py-1.5 rounded-xl bg-white/10 hover:bg-white/15 text-white text-xs font-bold border border-white/10 hover:border-white/20 transition-all active:scale-95 cursor-pointer"
                           >
-                            -
+                            + Add
                           </button>
-                          <span className="text-sm font-mono font-bold text-white px-1 min-w-[20px] text-center" aria-live="polite">
-                            {inCart.quantity}
-                          </span>
-                          <button
-                            type="button"
-                            aria-label={`Add one more ${item.name} to cart`}
-                            onClick={() => handleUpdateQuantity(item.id, 1)}
-                            className="relative w-8 h-8 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-sm flex items-center justify-center transition-colors cursor-pointer before:absolute before:-inset-2 before:content-['']"
-                          >
-                            +
-                          </button>
-                        </div>
-                      ) : (
-                        <button
-                          type="button"
-                          aria-label={`Add ${item.name} to cart`}
-                          onClick={() => handleAddToCart(item)}
-                          className="px-3.5 py-1.5 rounded-xl bg-white/10 hover:bg-white/15 text-white text-xs font-bold border border-white/10 hover:border-white/20 transition-all active:scale-95 cursor-pointer"
-                        >
-                          + Add
-                        </button>
+                        )
                       )}
                     </div>
                   </div>
@@ -503,7 +521,7 @@ export function CustomerMenuBrowser({
       )}
 
       {/* Floating Cart Sticky Bottom Bar */}
-      {totalItemsCount > 0 && (
+      {!orderingDisabled && totalItemsCount > 0 && (
         <div className="fixed bottom-4 inset-x-4 max-w-md mx-auto z-50 animate-in fade-in slide-in-from-bottom-2 duration-200">
           <div className="flex items-center justify-between gap-3 rounded-2xl bg-slate-900/95 border border-white/15 px-4 py-3 shadow-2xl backdrop-blur-xl">
             <div className="flex items-center gap-3 min-w-0">
@@ -843,20 +861,32 @@ export function CustomerMenuBrowser({
                 />
               </div>
 
-              <button
-                type="button"
-                onClick={confirmDetailAdd}
-                disabled={!detailItem.available}
-                className="w-full h-12 rounded-xl bg-emerald-500 hover:bg-emerald-400 disabled:opacity-40 text-slate-950 font-bold text-xs shadow-lg shadow-emerald-500/20 transition-all uppercase tracking-wider active:scale-[0.99] cursor-pointer"
-              >
-                {detailItem.available
-                  ? `Add ${detailQty} to cart · ${formatPrice(detailItem.price * detailQty)}`
-                  : 'Unavailable right now'}
-              </button>
-              {!detailItem.available && (
-                <p className="text-center text-[11px] text-slate-500">
-                  The kitchen will mark it available again soon — the restaurant confirms availability when you order.
-                </p>
+              {!orderingDisabled ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={confirmDetailAdd}
+                    disabled={!detailItem.available}
+                    className="w-full h-12 rounded-xl bg-emerald-500 hover:bg-emerald-400 disabled:opacity-40 text-slate-950 font-bold text-xs shadow-lg shadow-emerald-500/20 transition-all uppercase tracking-wider active:scale-[0.99] cursor-pointer"
+                  >
+                    {detailItem.available
+                      ? `Add ${detailQty} to cart · ${formatPrice(detailItem.price * detailQty)}`
+                      : 'Unavailable right now'}
+                  </button>
+                  {!detailItem.available && (
+                    <p className="text-center text-[11px] text-slate-500">
+                      The kitchen will mark it available again soon — the restaurant confirms availability when you order.
+                    </p>
+                  )}
+                </>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setDetailItem(null)}
+                  className="w-full h-11 rounded-xl bg-white/10 hover:bg-white/15 text-white font-bold text-xs transition-colors cursor-pointer"
+                >
+                  Close
+                </button>
               )}
             </div>
           </div>

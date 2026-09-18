@@ -2,8 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { updateQueueStatusAction, markNoShowAction, completeTakeawayAction } from '@/app/dashboard/actions';
-import { recordManualPaymentAction } from '@/app/dashboard/payments/actions';
+import { updateQueueStatusAction, markNoShowAction, completeTakeawayAction, acknowledgeTakeawayPaymentAndCompleteOrderAction, updateOrderStatusAction } from '@/app/dashboard/actions';
 import { broadcastCustomerQueueUpdate } from '@/lib/realtime/useCustomerQueueRealtime';
 import { SeatCustomerModal, SeatableTableItem } from '@/components/dashboard/SeatCustomerModal';
 import { StaffQueueChatModal } from '@/components/dashboard/StaffQueueChatModal';
@@ -146,36 +145,57 @@ export function LiveQueueFeedClient({
     setIsProcessing(entryId);
     chimeEngine.playSeatChime();
 
-    setEntries((prev) =>
-      prev.map((e) => (e.id === entryId ? { ...e, status: 'COMPLETED', completed_at: new Date().toISOString() } : e))
-    );
-
     try {
       const res = await completeTakeawayAction(entryId);
       if (!res.success) {
         alert(res.error || 'Failed to complete takeaway pickup.');
+        return;
       }
+      setEntries((prev) =>
+        prev.map((e) => (e.id === entryId ? { ...e, status: 'COMPLETED', completed_at: new Date().toISOString() } : e))
+      );
       await broadcastCustomerQueueUpdate(entryId);
     } catch (e) {
       console.error('Failed to complete takeaway order:', e);
+      alert('Failed to complete takeaway order.');
     } finally {
       setIsProcessing(null);
       router.refresh();
     }
   };
 
-  const handleRecordPayment = async (orderId: string, entryId: string) => {
-    if (!restaurantId) return;
+  const handleAcknowledgeCollection = async (entryId: string, orderId: string) => {
     setIsProcessing(entryId);
     try {
-      await recordManualPaymentAction(restaurantId, orderId, 'PAY_AT_RESTAURANT');
+      const res = await acknowledgeTakeawayPaymentAndCompleteOrderAction(entryId, orderId);
+      if (!res.success) {
+        alert(res.error || 'Failed to acknowledge collection.');
+      } else {
+        setOrders((prev) =>
+          prev.map((o) => (o.id === orderId ? { ...o, status: 'PREPARING' } : o))
+        );
+        await broadcastCustomerQueueUpdate(entryId);
+      }
+    } catch (e) {
+      console.error('Failed to acknowledge collection:', e);
+      alert('Failed to acknowledge collection.');
+    } finally {
+      setIsProcessing(null);
+      router.refresh();
+    }
+  };
+
+  const handleMarkReady = async (orderId: string, entryId: string) => {
+    setIsProcessing(entryId);
+    try {
+      await updateOrderStatusAction(orderId, 'READY', restaurantId, userId);
       setOrders((prev) =>
-        prev.map((o) => (o.id === orderId ? { ...o, paymentStatus: 'PAID' } : o))
+        prev.map((o) => (o.id === orderId ? { ...o, status: 'READY' } : o))
       );
       await broadcastCustomerQueueUpdate(entryId);
     } catch (e) {
-      console.error('Failed to record payment:', e);
-      alert('Failed to record payment.');
+      console.error('Failed to mark order ready:', e);
+      alert('Failed to mark order ready.');
     } finally {
       setIsProcessing(null);
       router.refresh();
@@ -673,17 +693,16 @@ export function LiveQueueFeedClient({
                                   </span>
                                 </div>
                                 <div className="flex items-center gap-1.5">
-                                  <span className="px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 text-[10px] font-black uppercase tracking-wider">
-                                    💵 PAY AT COUNTER
-                                  </span>
                                   <span
                                     className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider border ${
-                                      linkedOrder.paymentStatus === 'PAID'
+                                      linkedOrder.status === 'READY'
                                         ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
-                                        : 'bg-amber-500/20 text-amber-300 border-amber-500/40'
+                                        : linkedOrder.status === 'PREPARING'
+                                        ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
+                                        : 'bg-blue-500/20 text-blue-300 border-blue-500/40'
                                     }`}
                                   >
-                                    {linkedOrder.paymentStatus}
+                                    {linkedOrder.status}
                                   </span>
                                   <span className="font-mono font-black text-amber-400 text-xs">
                                     {currencySymbol}
@@ -855,37 +874,75 @@ export function LiveQueueFeedClient({
                       {isCalled && (
                         <>
                           {!linkedOrder && (
-                            <button
-                              type="button"
-                              onClick={() => setOrderModalEntry(entry)}
-                              className="col-span-1 px-4 h-11 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 text-xs font-bold transition-all cursor-pointer border border-amber-500/40 flex items-center justify-center gap-1.5"
-                            >
-                              <span>🛍️</span>
-                              <span>+ Take Order</span>
-                            </button>
+                            <>
+                              <button
+                                type="button"
+                                onClick={() => setOrderModalEntry(entry)}
+                                className="col-span-1 px-4 h-11 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 text-xs font-bold transition-all cursor-pointer border border-amber-500/40 flex items-center justify-center gap-1.5"
+                              >
+                                <span>🛍️</span>
+                                <span>+ Take Order</span>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleCompleteTakeaway(entry.id)}
+                                disabled={loading}
+                                className="col-span-2 sm:col-span-1 px-5 h-11 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-600 hover:brightness-110 active:scale-95 text-white text-sm font-black shadow-lg shadow-emerald-500/25 transition-all disabled:opacity-50 cursor-pointer flex items-center justify-center gap-2"
+                              >
+                                <span>✓</span>
+                                <span>Items Received</span>
+                              </button>
+                            </>
                           )}
 
-                          {linkedOrder && linkedOrder.paymentStatus !== 'PAID' && (
-                            <button
-                              type="button"
-                              onClick={() => handleRecordPayment(linkedOrder.id, entry.id)}
-                              disabled={loading}
-                              className="col-span-1 px-4 h-11 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 text-xs font-bold transition-all cursor-pointer border border-emerald-500/40 flex items-center justify-center gap-1.5"
-                            >
-                              <span>💵</span>
-                              <span>Record Payment</span>
-                            </button>
-                          )}
+                          {linkedOrder && (
+                            <>
+                              {/* Step A: Order is PLACED or CONFIRMED -> Staff acknowledges collection */}
+                              {['PLACED', 'CONFIRMED'].includes(linkedOrder.status) && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleAcknowledgeCollection(entry.id, linkedOrder.id)}
+                                  disabled={loading}
+                                  className="col-span-2 sm:col-span-1 px-4 h-11 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:brightness-110 active:scale-95 text-white text-xs font-black shadow-md shadow-emerald-500/20 transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                                >
+                                  <span>💵</span>
+                                  <span>Acknowledge Collection &amp; Start Prep</span>
+                                </button>
+                              )}
 
-                          <button
-                            type="button"
-                            onClick={() => handleCompleteTakeaway(entry.id)}
-                            disabled={loading}
-                            className="col-span-2 sm:col-span-1 px-5 h-11 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-600 hover:brightness-110 active:scale-95 text-white text-sm font-black shadow-lg shadow-emerald-500/25 transition-all disabled:opacity-50 cursor-pointer flex items-center justify-center gap-2"
-                          >
-                            <span>✓</span>
-                            <span>Complete Pickup</span>
-                          </button>
+                              {/* Step B: Order is PREPARING -> Kitchen cooking. RULE 1: ITEMS RECEIVED MUST NOT BE AVAILABLE WHILE PREPARING */}
+                              {linkedOrder.status === 'PREPARING' && (
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <span className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-amber-500/20 border border-amber-500/40 text-amber-300 text-xs font-bold">
+                                    <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+                                    <span>Preparing Food</span>
+                                  </span>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleMarkReady(linkedOrder.id, entry.id)}
+                                    disabled={loading}
+                                    className="px-4 h-11 rounded-xl bg-gradient-to-r from-amber-600 to-orange-600 hover:brightness-110 active:scale-95 text-white text-xs font-black shadow-md shadow-amber-500/20 transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                                  >
+                                    <span>🔔</span>
+                                    <span>Mark Ready for Pickup</span>
+                                  </button>
+                                </div>
+                              )}
+
+                              {/* Step C: Order is READY -> Items received becomes available! */}
+                              {linkedOrder.status === 'READY' && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleCompleteTakeaway(entry.id)}
+                                  disabled={loading}
+                                  className="col-span-2 sm:col-span-1 px-5 h-11 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-600 hover:brightness-110 active:scale-95 text-white text-sm font-black shadow-lg shadow-emerald-500/25 transition-all disabled:opacity-50 cursor-pointer flex items-center justify-center gap-2"
+                                >
+                                  <span>✓</span>
+                                  <span>Items Received</span>
+                                </button>
+                              )}
+                            </>
+                          )}
                         </>
                       )}
 

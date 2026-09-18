@@ -16,6 +16,10 @@ type Initial = {
   country: string;
   timezone: string;
   currency: string;
+  dine_in_customer_ordering_enabled?: boolean;
+  dine_in_staff_ordering_enabled?: boolean;
+  takeaway_customer_ordering_enabled?: boolean;
+  takeaway_staff_ordering_enabled?: boolean;
 };
 
 const inputCls =
@@ -104,6 +108,70 @@ export default function EditRestaurantForm({
           <div>
             <label className={labelCls}>Currency</label>
             <input type="text" name="currency" defaultValue={initial.currency} className={inputCls} />
+          </div>
+        </div>
+
+        {/* ORDERING CAPABILITIES CONFIGURATION */}
+        <div className="rounded-xl border border-slate-700 bg-slate-950/60 p-4 space-y-4">
+          <div>
+            <h3 className="text-xs font-bold text-emerald-400 uppercase tracking-wider">
+              Outlet Ordering Capabilities
+            </h3>
+            <p className="text-[11px] text-slate-400 mt-0.5">
+              Configure which ordering mechanisms are enabled for this outlet. Queue functions independently.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* Dine-In Ordering */}
+            <div className="rounded-lg border border-slate-800 bg-slate-900/80 p-3 space-y-2">
+              <span className="text-xs font-bold text-white block">🍽️ Dine-In Ordering</span>
+              <label className="flex items-center gap-2 text-xs text-slate-300 cursor-pointer">
+                <input
+                  type="checkbox"
+                  name="dine_in_customer_ordering_enabled"
+                  value="true"
+                  defaultChecked={initial.dine_in_customer_ordering_enabled ?? true}
+                  className="rounded border-slate-700 text-emerald-500 focus:ring-0"
+                />
+                <span>Customer Self-Ordering</span>
+              </label>
+              <label className="flex items-center gap-2 text-xs text-slate-300 cursor-pointer">
+                <input
+                  type="checkbox"
+                  name="dine_in_staff_ordering_enabled"
+                  value="true"
+                  defaultChecked={initial.dine_in_staff_ordering_enabled ?? true}
+                  className="rounded border-slate-700 text-emerald-500 focus:ring-0"
+                />
+                <span>Staff Counter Ordering</span>
+              </label>
+            </div>
+
+            {/* Takeaway Ordering */}
+            <div className="rounded-lg border border-slate-800 bg-slate-900/80 p-3 space-y-2">
+              <span className="text-xs font-bold text-white block">🛍️ Takeaway Ordering</span>
+              <label className="flex items-center gap-2 text-xs text-slate-300 cursor-pointer">
+                <input
+                  type="checkbox"
+                  name="takeaway_customer_ordering_enabled"
+                  value="true"
+                  defaultChecked={initial.takeaway_customer_ordering_enabled ?? true}
+                  className="rounded border-slate-700 text-emerald-500 focus:ring-0"
+                />
+                <span>Customer Self-Ordering</span>
+              </label>
+              <label className="flex items-center gap-2 text-xs text-slate-300 cursor-pointer">
+                <input
+                  type="checkbox"
+                  name="takeaway_staff_ordering_enabled"
+                  value="true"
+                  defaultChecked={initial.takeaway_staff_ordering_enabled ?? true}
+                  className="rounded border-slate-700 text-emerald-500 focus:ring-0"
+                />
+                <span>Staff Counter Ordering</span>
+              </label>
+            </div>
           </div>
         </div>
 

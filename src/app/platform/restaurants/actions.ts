@@ -47,6 +47,10 @@ export async function updateRestaurantAction(restaurantId: string, _prevState: u
       country: (formData.get('country') as string) || undefined,
       timezone: (formData.get('timezone') as string) || undefined,
       currency: (formData.get('currency') as string) || undefined,
+      dine_in_customer_ordering_enabled: formData.has('dine_in_customer_ordering_enabled') ? formData.get('dine_in_customer_ordering_enabled') === 'true' : undefined,
+      dine_in_staff_ordering_enabled: formData.has('dine_in_staff_ordering_enabled') ? formData.get('dine_in_staff_ordering_enabled') === 'true' : undefined,
+      takeaway_customer_ordering_enabled: formData.has('takeaway_customer_ordering_enabled') ? formData.get('takeaway_customer_ordering_enabled') === 'true' : undefined,
+      takeaway_staff_ordering_enabled: formData.has('takeaway_staff_ordering_enabled') ? formData.get('takeaway_staff_ordering_enabled') === 'true' : undefined,
     };
 
     await PlatformService.updateRestaurant(restaurantId, input);

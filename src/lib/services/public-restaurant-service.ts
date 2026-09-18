@@ -27,6 +27,10 @@ export interface PublicRestaurantInfo {
   etaBufferMins: number;
   /** Phase 1 Takeaway: whether Takeaway queue is enabled for this restaurant. */
   takeawayEnabled: boolean;
+  dineInCustomerOrderingEnabled: boolean;
+  dineInStaffOrderingEnabled: boolean;
+  takeawayCustomerOrderingEnabled: boolean;
+  takeawayStaffOrderingEnabled: boolean;
 }
 
 export class PublicRestaurantService {
@@ -43,7 +47,7 @@ export class PublicRestaurantService {
 
         const { data: restaurant, error } = await supabase
           .from('restaurants')
-          .select('id, name, slug, description, phone, address, city, logo_url, queue_enabled, queue_operating_state, max_queue_capacity, min_party_size, max_party_size, call_timeout_minutes, status, currency, avg_service_time_mins, service_capacity_units, eta_buffer_mins, takeaway_enabled')
+          .select('id, name, slug, description, phone, address, city, logo_url, queue_enabled, queue_operating_state, max_queue_capacity, min_party_size, max_party_size, call_timeout_minutes, status, currency, avg_service_time_mins, service_capacity_units, eta_buffer_mins, takeaway_enabled, dine_in_customer_ordering_enabled, dine_in_staff_ordering_enabled, takeaway_customer_ordering_enabled, takeaway_staff_ordering_enabled')
           .eq('slug', slug.trim().toLowerCase())
           .eq('status', 'ACTIVE')
           .maybeSingle();
@@ -51,6 +55,16 @@ export class PublicRestaurantService {
         if (error || !restaurant) {
           return null;
         }
+
+        const raw = restaurant as unknown as {
+          queue_operating_state?: 'OPEN' | 'PAUSED' | 'CLOSING_SOON' | 'CLOSED';
+          currency?: string;
+          takeaway_enabled?: boolean;
+          dine_in_customer_ordering_enabled?: boolean;
+          dine_in_staff_ordering_enabled?: boolean;
+          takeaway_customer_ordering_enabled?: boolean;
+          takeaway_staff_ordering_enabled?: boolean;
+        };
 
         return {
           id: restaurant.id,
@@ -62,17 +76,21 @@ export class PublicRestaurantService {
           city: restaurant.city,
           logoUrl: restaurant.logo_url,
           queueEnabled: restaurant.queue_enabled,
-          queueOperatingState: (restaurant as unknown as { queue_operating_state: 'OPEN' | 'PAUSED' | 'CLOSING_SOON' | 'CLOSED' }).queue_operating_state || 'OPEN',
+          queueOperatingState: raw.queue_operating_state || 'OPEN',
           maxQueueCapacity: restaurant.max_queue_capacity,
           minPartySize: restaurant.min_party_size,
           maxPartySize: restaurant.max_party_size,
           callTimeoutMinutes: restaurant.call_timeout_minutes,
           status: restaurant.status,
-          currency: (restaurant as unknown as { currency?: string }).currency || 'INR',
+          currency: raw.currency || 'INR',
           avgServiceTimeMins: restaurant.avg_service_time_mins ?? 15,
           serviceCapacityUnits: restaurant.service_capacity_units ?? 3,
           etaBufferMins: restaurant.eta_buffer_mins ?? 5,
-          takeawayEnabled: (restaurant as unknown as { takeaway_enabled?: boolean }).takeaway_enabled ?? false,
+          takeawayEnabled: raw.takeaway_enabled ?? false,
+          dineInCustomerOrderingEnabled: raw.dine_in_customer_ordering_enabled ?? true,
+          dineInStaffOrderingEnabled: raw.dine_in_staff_ordering_enabled ?? true,
+          takeawayCustomerOrderingEnabled: raw.takeaway_customer_ordering_enabled ?? true,
+          takeawayStaffOrderingEnabled: raw.takeaway_staff_ordering_enabled ?? true,
         };
       },
       300 // 5 minutes TTL

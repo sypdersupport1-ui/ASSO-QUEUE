@@ -90,6 +90,37 @@ export class OrderService {
       }
     }
 
+    // 1b. Validate Outlet Capability for Customer Self-Ordering
+    const { data: rest } = await supabase
+      .from('restaurants')
+      .select('dine_in_customer_ordering_enabled, takeaway_customer_ordering_enabled')
+      .eq('id', validated.restaurantId)
+      .maybeSingle();
+
+    if (rest) {
+      let isTakeaway = false;
+      if (validated.queueEntryId) {
+        const { data: queueEntry } = await supabase
+          .from('queue_entries')
+          .select('queue_type')
+          .eq('id', validated.queueEntryId)
+          .maybeSingle();
+        if (queueEntry?.queue_type === 'TAKEAWAY') {
+          isTakeaway = true;
+        }
+      }
+
+      const allowed = isTakeaway
+        ? rest.takeaway_customer_ordering_enabled ?? true
+        : rest.dine_in_customer_ordering_enabled ?? true;
+
+      if (!allowed) {
+        throw new DomainError(
+          `Customer self-ordering is disabled for ${isTakeaway ? 'Takeaway' : 'Dine-In'} at this outlet.`
+        );
+      }
+    }
+
     // 2. Fetch Menu Items to validate availability & current server prices
     const menuItemIds = validated.items.map((i) => i.menuItemId);
     const { data: menuItems, error: menuErr } = await supabase
@@ -651,5 +682,130 @@ export class OrderService {
         })),
       };
     });
+  }
+
+  /**
+   * Acknowledges counter payment collection for a Takeaway ticket and advances the order to PREPARING.
+   * Idempotent: safe under concurrent or repeated staff clicks.
+   * Zero financial payment records created.
+   */
+  static async acknowledgeTakeawayCollection(input: {
+    queueEntryId: string;
+    orderId: string;
+    restaurantId?: string;
+    actorUserId?: string;
+  }) {
+    const supabase = createAdminClient();
+
+    // 1. Fetch queue entry
+    const { data: entry, error: entryErr } = await supabase
+      .from('queue_entries')
+      .select('id, restaurant_id, status, queue_type, display_number')
+      .eq('id', input.queueEntryId)
+      .single();
+
+    if (entryErr || !entry) {
+      throw new NotFoundError('Queue entry not found');
+    }
+
+    if (entry.queue_type !== 'TAKEAWAY') {
+      throw new DomainError('Operation only valid for Takeaway queue entries');
+    }
+
+    if (entry.status !== 'CALLED') {
+      throw new DomainError(`Cannot acknowledge collection: Takeaway ticket is in status '${entry.status}', must be CALLED.`);
+    }
+
+    // 2. Fetch order
+    const { data: order, error: orderErr } = await supabase
+      .from('orders')
+      .select('id, restaurant_id, queue_entry_id, status, order_number')
+      .eq('id', input.orderId)
+      .single();
+
+    if (orderErr || !order) {
+      throw new NotFoundError('Order not found');
+    }
+
+    if (order.queue_entry_id !== entry.id) {
+      throw new DomainError('Order does not match specified queue entry');
+    }
+
+    if (input.restaurantId && order.restaurant_id !== input.restaurantId) {
+      throw new DomainError('Tenant isolation mismatch');
+    }
+
+    // 3. IDEMPOTENCY CHECK (Rule 3): If already PREPARING or READY, return idempotently
+    if (order.status === 'PREPARING' || order.status === 'READY') {
+      return {
+        success: true,
+        orderId: order.id,
+        queueEntryId: entry.id,
+        status: order.status,
+        idempotent: true,
+      };
+    }
+
+    if (order.status === 'CANCELLED' || order.status === 'SERVED') {
+      throw new DomainError(`Cannot acknowledge collection on ${order.status} order.`);
+    }
+
+    // 4. Update order to PREPARING
+    const now = new Date().toISOString();
+    const { error: updateErr } = await supabase
+      .from('orders')
+      .update({
+        status: 'PREPARING',
+        updated_at: now,
+      })
+      .eq('id', order.id);
+
+    if (updateErr) {
+      throw new DomainError(`Failed to advance order: ${updateErr.message}`);
+    }
+
+    // 5. Log operational order event (zero financial payment ledger rows)
+    try {
+      await supabase.from('order_events').insert({
+        order_id: order.id,
+        restaurant_id: order.restaurant_id,
+        event_type: 'COLLECTION_ACKNOWLEDGED',
+        actor_user_id: input.actorUserId || null,
+        metadata: {
+          message: 'Counter payment collection acknowledged. Preparation started.',
+          acknowledged_at: now,
+        },
+      });
+    } catch (evtErr) {
+      logger.warn('Failed to insert order_event on collection acknowledgement', { error: String(evtErr) });
+    }
+
+    // 6. Transactional Outbox for customer realtime updates
+    try {
+      await OutboxService.publishEvent({
+        restaurantId: order.restaurant_id,
+        aggregateType: 'ORDER',
+        aggregateId: order.id,
+        eventType: 'TAKEAWAY_ORDER_COMPLETED',
+        payload: {
+          orderId: order.id,
+          queueEntryId: entry.id,
+          orderNumber: order.order_number,
+          status: 'PREPARING',
+          displayNumber: entry.display_number,
+          acknowledgedAt: now,
+        },
+      });
+    } catch (outboxErr) {
+      logger.warn('Failed to publish outbox event on collection acknowledgement', { error: String(outboxErr) });
+    }
+
+    return {
+      success: true,
+      orderId: order.id,
+      queueEntryId: entry.id,
+      status: 'PREPARING',
+      idempotent: false,
+    };
   }
 }

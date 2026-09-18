@@ -1082,6 +1082,18 @@ export class QueueService {
       permission: PERMISSIONS.TAKEAWAY_COMPLETE,
     });
 
+    // Rule 1 Check: If linked order exists and is PREPARING, reject until READY
+    const { data: linkedOrder } = await supabase
+      .from('orders')
+      .select('id, status')
+      .eq('queue_entry_id', entryId)
+      .not('status', 'in', '("CANCELLED","SERVED")')
+      .maybeSingle();
+
+    if (linkedOrder && linkedOrder.status === 'PREPARING') {
+      throw new Error('CANNOT_RECEIVE_WHILE_PREPARING: Order is currently being prepared. It must be marked READY before items can be received.');
+    }
+
     // Step 3: Atomic RPC — all state transitions happen inside the DB
     const { data, error } = await supabase.rpc('complete_takeaway_atomic', {
       p_queue_entry_id: entryId,
@@ -1092,7 +1104,20 @@ export class QueueService {
       if (error.message.includes('QUEUE_ENTRY_NOT_FOUND')) throw new Error('QUEUE_ENTRY_NOT_FOUND');
       if (error.message.includes('NOT_TAKEAWAY_ENTRY')) throw new Error('NOT_TAKEAWAY_ENTRY');
       if (error.message.includes('TAKEAWAY_ENTRY_NOT_COMPLETABLE')) throw new Error('TAKEAWAY_ENTRY_NOT_COMPLETABLE');
+      if (error.message.includes('CANNOT_RECEIVE_WHILE_PREPARING')) throw new Error(error.message);
       throw new Error(`Failed to complete takeaway: ${error.message}`);
+    }
+
+    // Also ensure linked order transitions to SERVED
+    if (linkedOrder && linkedOrder.status !== 'SERVED') {
+      try {
+        await supabase
+          .from('orders')
+          .update({ status: 'SERVED', updated_at: new Date().toISOString() })
+          .eq('id', linkedOrder.id);
+      } catch (orderUpdateErr) {
+        logger.warn('Failed to update linked order to SERVED on completeTakeaway', { error: String(orderUpdateErr) });
+      }
     }
 
     return data as unknown as {

@@ -13,6 +13,7 @@ import {
   AlertTriangle,
   UtensilsCrossed,
   ArrowRight,
+  Flame,
 } from 'lucide-react';
 import type { PublicQueueStatusResponse } from '@/lib/services/queue-service';
 import { formatTakeawayTicketNumber } from '@/lib/customer-ticket-ux';
@@ -42,16 +43,18 @@ interface TakeawayTicketCardProps {
   restaurantName?: string;
   orders?: TakeawayOrderSummary[];
   currency?: string;
+  takeawayCustomerOrderingEnabled?: boolean;
 }
 
 /**
- * Phase 2 — Customer Takeaway Ticket Card.
+ * Customer Takeaway Ticket Card.
  *
  * Takeaway is strictly an ORDER + PICKUP queue (never a seating queue).
- * Customer-facing states:
- * 1. IN QUEUE
- * 2. CALLING (YOUR ORDER IS READY)
- * 3. COMPLETED (ORDER COLLECTED)
+ * Customer-facing 4 stages:
+ * 1. WAITING
+ * 2. CALLED
+ * 3. ORDER COMPLETED (preparation begins; READY milestone announces collection)
+ * 4. ITEMS RECEIVED (final physical handover, queue entry COMPLETED)
  *
  * Guaranteed ZERO mentions of:
  * - Party size
@@ -66,18 +69,39 @@ export function TakeawayTicketCard({
   restaurantName,
   orders = [],
   currency = 'INR',
+  takeawayCustomerOrderingEnabled = true,
 }: TakeawayTicketCardProps) {
   const router = useRouter();
   const ticketNo = formatTakeawayTicketNumber(status.displayNumber, status.entryId);
 
-  const isCompleted = Boolean(status.completedAt) || status.status === 'COMPLETED';
+  // Primary active order (if any)
+  const activeOrder = orders[0] || null;
+
+  const isPreparing = activeOrder?.status === 'PREPARING';
+  const isReady = activeOrder?.status === 'READY';
+  const isOrderServed = activeOrder?.status === 'SERVED';
+  const isCompleted = Boolean(status.completedAt) || status.status === 'COMPLETED' || isOrderServed;
   const isCalled = status.status === 'CALLED';
   const isCancelled = status.status === 'CANCELLED';
   const isExpired = status.status === 'NO_SHOW' || status.status === 'EXPIRED';
-  const isInQueue = (status.status === 'WAITING' || status.status === 'NOTIFIED') && !isCompleted;
+
+  // 4-Stage resolution
+  let currentStage: 'WAITING' | 'CALLED' | 'ORDER_COMPLETED' | 'ITEMS_RECEIVED' = 'WAITING';
+  if (isCompleted) {
+    currentStage = 'ITEMS_RECEIVED';
+  } else if (isCalled) {
+    if (isPreparing || isReady) {
+      currentStage = 'ORDER_COMPLETED';
+    } else {
+      currentStage = 'CALLED';
+    }
+  } else {
+    currentStage = 'WAITING';
+  }
 
   // Track status transitions for audible buzzer & screen announcements
   const prevStatusRef = useRef(status.status);
+  const prevOrderStatusRef = useRef(activeOrder?.status);
   const prevPositionRef = useRef(status.position);
 
   const [liveAnnouncement, setLiveAnnouncement] = useState('');
@@ -103,22 +127,32 @@ export function TakeawayTicketCard({
 
   // Sound and vibration triggers on status transitions
   useEffect(() => {
-    if (prevStatusRef.current !== status.status) {
-      if (status.status === 'CALLED') {
+    const prevStatus = prevStatusRef.current;
+    const prevOrderStatus = prevOrderStatusRef.current;
+
+    if (prevStatus !== status.status || prevOrderStatus !== activeOrder?.status) {
+      if (isCompleted) {
+        chimeEngine.playSeatChime();
+        setLiveAnnouncement('Items received! Thank you for ordering takeaway.');
+      } else if (isReady) {
+        chimeEngine.playSeatChime();
+        setLiveAnnouncement('Your takeaway order is ready for collection! Please step up to the counter.');
+      } else if (isPreparing) {
         chimeEngine.playBuzzerSound();
-        setLiveAnnouncement('Your takeaway order is ready! Please proceed to the takeaway counter.');
+        setLiveAnnouncement('Order accepted. Preparation has started in the kitchen.');
+      } else if (status.status === 'CALLED') {
+        chimeEngine.playBuzzerSound();
+        setLiveAnnouncement('Your ticket is called! Please proceed to the takeaway counter.');
         try {
           if ('vibrate' in navigator) {
             navigator.vibrate([300, 100, 300, 100, 400]);
           }
         } catch {}
-      } else if (isCompleted) {
-        chimeEngine.playSeatChime();
-        setLiveAnnouncement('Order collected. Thank you for ordering takeaway!');
       } else {
         setLiveAnnouncement(`Your takeaway order is in the queue. Ticket ${ticketNo}.`);
       }
       prevStatusRef.current = status.status;
+      prevOrderStatusRef.current = activeOrder?.status;
     } else if (
       status.position !== null &&
       prevPositionRef.current !== null &&
@@ -128,10 +162,7 @@ export function TakeawayTicketCard({
       chimeEngine.playBuzzerSound();
     }
     prevPositionRef.current = status.position;
-  }, [status.status, status.position, ticketNo, isCompleted]);
-
-  // Primary active order (if any)
-  const activeOrder = orders[0] || null;
+  }, [status.status, status.position, activeOrder?.status, ticketNo, isCompleted, isReady, isPreparing]);
 
   // Handle "I'm at the counter" acknowledge
   const handleAtCounter = async () => {
@@ -174,7 +205,7 @@ export function TakeawayTicketCard({
         aria-hidden="true"
         className="pointer-events-none absolute -top-24 left-1/2 -translate-x-1/2 h-60 w-60 rounded-full bg-emerald-500/15 blur-3xl"
       />
-      {isCalled && (
+      {(isCalled || isReady) && (
         <div
           aria-hidden="true"
           className="pointer-events-none absolute inset-0 bg-emerald-500/10 blur-2xl motion-safe:animate-pulse"
@@ -194,7 +225,7 @@ export function TakeawayTicketCard({
             <span>Takeaway</span>
           </span>
 
-          {isInQueue && (
+          {currentStage === 'WAITING' && (
             <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] font-black uppercase tracking-wider text-slate-300">
               <span className="relative flex h-2 w-2">
                 <span className="motion-safe:animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
@@ -204,16 +235,22 @@ export function TakeawayTicketCard({
             </span>
           )}
 
-          {isCalled && (
+          {currentStage === 'CALLED' && (
             <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/40 bg-amber-500/20 px-3 py-1 text-[11px] font-black uppercase tracking-wider text-amber-300 animate-pulse">
-              <span>● Calling</span>
+              <span>● Called</span>
             </span>
           )}
 
-          {isCompleted && (
+          {currentStage === 'ORDER_COMPLETED' && (
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-teal-500/40 bg-teal-500/20 px-3 py-1 text-[11px] font-black uppercase tracking-wider text-teal-300">
+              {isReady ? <span>🎉 Ready for Pickup</span> : <span>👨‍🍳 Preparing</span>}
+            </span>
+          )}
+
+          {currentStage === 'ITEMS_RECEIVED' && (
             <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/20 px-3 py-1 text-[11px] font-black uppercase tracking-wider text-emerald-300">
               <Check className="h-3 w-3" />
-              <span>Completed</span>
+              <span>Items Received</span>
             </span>
           )}
         </div>
@@ -241,17 +278,80 @@ export function TakeawayTicketCard({
         </div>
       </div>
 
+      {/* 4-STAGE LINEAR STEPPER */}
+      {!isCancelled && !isExpired && (
+        <div className="relative z-10 pt-1">
+          <div className="grid grid-cols-4 text-center text-[10px] sm:text-[11px] font-bold mb-1.5 gap-1">
+            <span
+              className={
+                currentStage === 'WAITING'
+                  ? 'text-emerald-400 font-black'
+                  : 'text-emerald-400/80 font-semibold'
+              }
+            >
+              1. Waiting
+            </span>
+            <span
+              className={
+                currentStage === 'CALLED'
+                  ? 'text-amber-300 font-black animate-pulse'
+                  : ['ORDER_COMPLETED', 'ITEMS_RECEIVED'].includes(currentStage)
+                  ? 'text-emerald-400/80 font-semibold'
+                  : 'text-slate-500 font-medium'
+              }
+            >
+              2. Called
+            </span>
+            <span
+              className={
+                currentStage === 'ORDER_COMPLETED'
+                  ? 'text-teal-300 font-black'
+                  : currentStage === 'ITEMS_RECEIVED'
+                  ? 'text-emerald-400/80 font-semibold'
+                  : 'text-slate-500 font-medium'
+              }
+            >
+              3. Order Completed
+            </span>
+            <span
+              className={
+                currentStage === 'ITEMS_RECEIVED'
+                  ? 'text-emerald-400 font-black'
+                  : 'text-slate-500 font-medium'
+              }
+            >
+              4. Items Received
+            </span>
+          </div>
+          <div className="h-2 w-full bg-white/10 rounded-full overflow-hidden p-0.5">
+            <div
+              className="h-full bg-gradient-to-r from-emerald-500 to-teal-400 rounded-full transition-all duration-500 shadow-sm shadow-emerald-500/50"
+              style={{
+                width:
+                  currentStage === 'WAITING'
+                    ? '25%'
+                    : currentStage === 'CALLED'
+                    ? '50%'
+                    : currentStage === 'ORDER_COMPLETED'
+                    ? '75%'
+                    : '100%',
+              }}
+            />
+          </div>
+        </div>
+      )}
+
       {/* 2. STATE PRESENTATION */}
 
-      {/* STATE 1: IN QUEUE */}
-      {isInQueue && (
+      {/* STAGE 1: WAITING */}
+      {currentStage === 'WAITING' && !isCancelled && !isExpired && (
         <div className="relative z-10 space-y-4 pt-1">
           <div className="space-y-1">
             <h2 className="text-base sm:text-lg font-black text-white">
-              Your takeaway order is in the queue.
+              You&apos;re in the takeaway queue.
             </h2>
             <p className="text-xs text-slate-400">
-              We&apos;ll let you know when it&apos;s time to collect.
+              We&apos;ll call your ticket when it&apos;s your turn at the counter.
             </p>
           </div>
 
@@ -286,20 +386,6 @@ export function TakeawayTicketCard({
             </div>
           </div>
 
-          {/* Linear Stepper */}
-          <div className="pt-1">
-            <div className="flex items-center justify-between text-[11px] font-bold mb-1.5 px-0.5">
-              <span className="inline-flex items-center gap-1 font-extrabold text-emerald-400">
-                <span className="h-2 w-2 rounded-full bg-emerald-400" /> In Queue
-              </span>
-              <span className="text-slate-500">Calling</span>
-              <span className="text-slate-500">Completed</span>
-            </div>
-            <div className="h-2 w-full bg-white/10 rounded-full overflow-hidden p-0.5">
-              <div className="h-full bg-gradient-to-r from-emerald-500 to-teal-400 rounded-full w-1/3 transition-all duration-500 shadow-sm shadow-emerald-500/50" />
-            </div>
-          </div>
-
           {/* Test Loud Buzzer Button */}
           <button
             type="button"
@@ -316,34 +402,20 @@ export function TakeawayTicketCard({
         </div>
       )}
 
-      {/* STATE 2: CALLING (YOUR ORDER IS READY) */}
-      {isCalled && !isCompleted && (
+      {/* STAGE 2: CALLED */}
+      {currentStage === 'CALLED' && !isCancelled && !isExpired && (
         <div className="relative z-10 space-y-4 pt-1 animate-fadeUp">
           <div className="rounded-2xl border border-amber-500/50 bg-gradient-to-br from-amber-500/25 via-emerald-950/30 to-slate-900/90 p-5 text-center shadow-xl space-y-2">
             <span className="text-3xl" aria-hidden="true">📢</span>
             <h2 className="text-2xl sm:text-3xl font-black text-amber-300 tracking-tight">
-              YOUR ORDER IS READY
+              YOUR TICKET IS CALLED
             </h2>
             <p className="text-xs sm:text-sm font-bold text-slate-200">
               Ticket {ticketNo} — Please proceed to the takeaway counter.
             </p>
             <p className="text-xs text-slate-400 leading-relaxed">
-              Show your ticket to the staff and pay at the counter.
+              Show your ticket to the staff. They will confirm your order and begin preparation.
             </p>
-          </div>
-
-          {/* Linear Stepper at Calling */}
-          <div className="pt-1">
-            <div className="flex items-center justify-between text-[11px] font-bold mb-1.5 px-0.5">
-              <span className="text-emerald-400">In Queue</span>
-              <span className="inline-flex items-center gap-1 font-extrabold text-amber-300 animate-pulse">
-                <span className="h-2 w-2 rounded-full bg-amber-400" /> Calling
-              </span>
-              <span className="text-slate-500">Completed</span>
-            </div>
-            <div className="h-2 w-full bg-white/10 rounded-full overflow-hidden p-0.5">
-              <div className="h-full bg-gradient-to-r from-emerald-500 to-amber-400 rounded-full w-2/3 transition-all duration-500 shadow-sm" />
-            </div>
           </div>
 
           <button
@@ -366,15 +438,52 @@ export function TakeawayTicketCard({
         </div>
       )}
 
-      {/* STATE 3: COMPLETED */}
-      {isCompleted && (
+      {/* STAGE 3: ORDER COMPLETED (Preparation Started / Ready for Collection) */}
+      {currentStage === 'ORDER_COMPLETED' && !isCancelled && !isExpired && (
+        <div className="relative z-10 space-y-4 pt-1 animate-fadeUp">
+          {isReady ? (
+            /* Sub-state: Order is READY for collection */
+            <div className="rounded-2xl border border-emerald-500/50 bg-gradient-to-br from-emerald-500/25 via-teal-950/30 to-slate-900/90 p-5 text-center shadow-xl space-y-2">
+              <span className="text-3xl" aria-hidden="true">🎉</span>
+              <h2 className="text-2xl sm:text-3xl font-black text-emerald-300 tracking-tight">
+                READY FOR COLLECTION!
+              </h2>
+              <p className="text-xs sm:text-sm font-bold text-slate-200">
+                Ticket {ticketNo} — Your food is packed and ready!
+              </p>
+              <p className="text-xs text-emerald-200/80 leading-relaxed">
+                Please step up to the takeaway counter to pick up your order.
+              </p>
+            </div>
+          ) : (
+            /* Sub-state: Order is PREPARING */
+            <div className="rounded-2xl border border-teal-500/40 bg-gradient-to-br from-teal-500/20 via-slate-900/90 to-slate-900/90 p-5 text-center shadow-xl space-y-2">
+              <div className="flex h-12 w-12 mx-auto items-center justify-center rounded-2xl bg-teal-500/20 text-teal-300 border border-teal-500/30">
+                <Flame className="h-6 w-6 text-amber-400 animate-pulse" />
+              </div>
+              <h2 className="text-2xl font-black text-white tracking-tight">
+                ORDER ACCEPTED &amp; PREPARING
+              </h2>
+              <p className="text-xs sm:text-sm font-bold text-teal-300">
+                Counter acceptance complete. The kitchen is preparing your order.
+              </p>
+              <p className="text-xs text-slate-400 leading-relaxed">
+                Please wait near the counter. We will notify you the moment your food is packed and ready!
+              </p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* STAGE 4: ITEMS RECEIVED */}
+      {currentStage === 'ITEMS_RECEIVED' && (
         <div className="relative z-10 space-y-4 pt-1 animate-fadeUp">
           <div className="rounded-2xl border border-emerald-500/40 bg-gradient-to-br from-emerald-500/20 to-slate-900/90 p-5 text-center shadow-xl space-y-2">
             <div className="flex h-12 w-12 mx-auto items-center justify-center rounded-2xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
               <CheckCircle2 className="h-6 w-6" />
             </div>
             <h2 className="text-2xl font-black text-white tracking-tight">
-              ORDER COLLECTED
+              ITEMS RECEIVED
             </h2>
             <p className="text-sm font-bold text-emerald-300">
               Thanks! Your takeaway order has been completed.
@@ -402,7 +511,7 @@ export function TakeawayTicketCard({
               <X className="h-6 w-6" />
             </div>
             <h2 className="text-xl font-black text-rose-200">
-              Takeaway Order Cancelled
+              Takeaway Ticket Cancelled
             </h2>
             <p className="text-xs text-rose-300/90 leading-relaxed">
               Your place in the takeaway queue has been cancelled.
@@ -413,7 +522,7 @@ export function TakeawayTicketCard({
             href={`/q/${restaurantSlug}`}
             className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs transition-all active:scale-[0.99]"
           >
-            <span>Start New Order</span>
+            <span>Join Takeaway Queue Again</span>
             <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
@@ -478,37 +587,45 @@ export function TakeawayTicketCard({
           </div>
 
           <p className="text-[11px] text-slate-400 text-center">
-            💵 <strong className="text-slate-200 uppercase tracking-wider">PAY AT COUNTER</strong> — You can pay when collecting your order.
+            💵 <strong className="text-slate-200 uppercase tracking-wider">PAY AT COUNTER</strong> — Pay and collect your items when ready.
           </p>
         </div>
-      ) : isInQueue ? (
+      ) : currentStage === 'WAITING' ? (
         /* Secondary Flow: Queue joined without ordering online yet */
         <div className="relative z-10 pt-3 border-t border-white/10 text-center space-y-2">
-          <p className="text-xs text-slate-300">
-            Want to choose your food while waiting?
-          </p>
-          <Link
-            href={`/q/${restaurantSlug}/menu?qtoken=${token}`}
-            className="flex min-h-[46px] h-11 w-full items-center justify-center gap-2 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 text-emerald-300 font-bold text-xs transition-all active:scale-[0.99]"
-          >
-            <UtensilsCrossed className="h-3.5 w-3.5" />
-            <span>Browse Menu &amp; Order Now</span>
-          </Link>
-          <p className="text-[10px] text-slate-400">
-            You can also order directly with the staff at the counter when called.
-          </p>
+          {takeawayCustomerOrderingEnabled ? (
+            <>
+              <p className="text-xs text-slate-300">
+                Want to choose your food while waiting?
+              </p>
+              <Link
+                href={`/q/${restaurantSlug}/menu?qtoken=${token}&service=takeaway`}
+                className="flex min-h-[46px] h-11 w-full items-center justify-center gap-2 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 text-emerald-300 font-bold text-xs transition-all active:scale-[0.99]"
+              >
+                <UtensilsCrossed className="h-3.5 w-3.5" />
+                <span>Browse Menu &amp; Order Now</span>
+              </Link>
+              <p className="text-[10px] text-slate-400">
+                You can also order directly with the staff at the counter when called.
+              </p>
+            </>
+          ) : (
+            <p className="text-xs text-slate-400">
+              Please wait until your ticket is called to place your order with the staff at the counter.
+            </p>
+          )}
         </div>
       ) : null}
 
-      {/* 4. CANCELLATION (ONLY FOR WAITING / CALLING) */}
-      {(isInQueue || isCalled) && (
+      {/* 4. CANCELLATION (ONLY FOR WAITING / CALLED STAGE BEFORE PREPARATION) */}
+      {(currentStage === 'WAITING' || (currentStage === 'CALLED' && !isPreparing && !isReady)) && (
         <div className="relative z-10 pt-2 border-t border-white/10 text-center">
           <button
             type="button"
             onClick={() => setShowCancelModal(true)}
             className="text-[11px] font-semibold text-rose-300/80 hover:text-rose-200 underline underline-offset-4 transition-colors cursor-pointer py-1"
           >
-            Cancel Takeaway Order
+            Cancel Takeaway Ticket
           </button>
         </div>
       )}
@@ -521,7 +638,7 @@ export function TakeawayTicketCard({
               <AlertTriangle className="h-6 w-6" />
             </div>
             <div className="space-y-1">
-              <h3 className="text-base font-bold text-white">Cancel Takeaway Order?</h3>
+              <h3 className="text-base font-bold text-white">Cancel Takeaway Ticket?</h3>
               <p className="text-xs text-slate-300 leading-relaxed">
                 Are you sure you want to cancel Ticket {ticketNo}? You will lose your spot in the takeaway queue.
               </p>
