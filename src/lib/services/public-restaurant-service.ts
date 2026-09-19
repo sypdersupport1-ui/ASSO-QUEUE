@@ -135,7 +135,25 @@ export class PublicRestaurantService {
           customer_theme_key?: string;
         };
 
-        return {
+        let effectiveThemeKey = raw.customer_theme_key || 'default';
+        let dynamicTtl = 300;
+
+        try {
+          const { CustomerThemeScheduleService } = await import('@/lib/services/customer-theme-schedule-service');
+          const schedules = await CustomerThemeScheduleService.getActiveAndUpcomingSchedules(raw.id, new Date());
+          const resolved = CustomerThemeScheduleService.resolveEffectiveThemeFromSchedules(raw.customer_theme_key, schedules, new Date());
+          effectiveThemeKey = resolved.themeKey;
+          if (resolved.nextTransitionSeconds !== null) {
+            dynamicTtl = Math.min(300, Math.max(1, resolved.nextTransitionSeconds));
+          }
+        } catch (schedErr) {
+          logger.warn('Failed to resolve theme schedules; falling back to base customer theme', {
+            operation: 'getPublicRestaurantBySlug',
+            metadata: { slug, error: schedErr instanceof Error ? schedErr.message : String(schedErr) },
+          });
+        }
+
+        const info: PublicRestaurantInfo = {
           id: raw.id,
           name: raw.name,
           slug: raw.slug,
@@ -161,10 +179,15 @@ export class PublicRestaurantService {
           takeawayCustomerOrderingEnabled: raw.takeaway_customer_ordering_enabled ?? true,
           takeawayStaffOrderingEnabled: raw.takeaway_staff_ordering_enabled ?? true,
           takeawayManualOrderingEnabled: raw.takeaway_manual_ordering_enabled ?? false,
-          customerThemeKey: raw.customer_theme_key || 'default',
+          customerThemeKey: effectiveThemeKey,
+        };
+
+        return {
+          data: info,
+          ttlSeconds: dynamicTtl,
         };
       },
-      300 // 5 minutes TTL
+      300 // default 5 minutes TTL fallback
     );
   }
 

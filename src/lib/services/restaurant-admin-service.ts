@@ -15,6 +15,11 @@ import { logger } from '@/lib/logging/logger';
 import { z } from 'zod';
 import { CacheService, CacheKeys } from '@/lib/cache';
 import { isRegisteredTheme } from '@/lib/themes/registry';
+import {
+  CustomerThemeScheduleService,
+  type CreateThemeScheduleInput,
+  type UpdateThemeScheduleInput,
+} from '@/lib/services/customer-theme-schedule-service';
 
 export const updateRestaurantProfileSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
@@ -334,6 +339,58 @@ export class RestaurantAdminService {
     );
 
     return { success: true, themeKey: normalized };
+  }
+
+  /**
+   * Phase 5 — List customer theme schedules for the authorized restaurant.
+   */
+  static async listCustomerThemeSchedules() {
+    const { restaurantId } = await this.getAuthorizedRestaurantContext();
+    await AuthorizationService.requirePermission({
+      permission: PERMISSIONS.RESTAURANT_VIEW,
+      restaurantId,
+    });
+
+    return CustomerThemeScheduleService.listSchedulesForRestaurant(restaurantId);
+  }
+
+  /**
+   * Phase 5 — Create a customer theme schedule. Requires RESTAURANT_UPDATE permission.
+   */
+  static async createCustomerThemeSchedule(input: CreateThemeScheduleInput) {
+    const { userId, restaurantId } = await this.getAuthorizedRestaurantContext();
+    await AuthorizationService.requirePermission({
+      permission: PERMISSIONS.RESTAURANT_UPDATE,
+      restaurantId,
+    });
+
+    return CustomerThemeScheduleService.createSchedule(restaurantId, input, userId);
+  }
+
+  /**
+   * Phase 5 — Update an existing customer theme schedule. Requires RESTAURANT_UPDATE permission.
+   */
+  static async updateCustomerThemeSchedule(scheduleId: string, input: UpdateThemeScheduleInput) {
+    const { userId, restaurantId } = await this.getAuthorizedRestaurantContext();
+    await AuthorizationService.requirePermission({
+      permission: PERMISSIONS.RESTAURANT_UPDATE,
+      restaurantId,
+    });
+
+    return CustomerThemeScheduleService.updateSchedule(scheduleId, restaurantId, input, userId);
+  }
+
+  /**
+   * Phase 5 — Cancel a customer theme schedule. Requires RESTAURANT_UPDATE permission.
+   */
+  static async cancelCustomerThemeSchedule(scheduleId: string) {
+    const { userId, restaurantId } = await this.getAuthorizedRestaurantContext();
+    await AuthorizationService.requirePermission({
+      permission: PERMISSIONS.RESTAURANT_UPDATE,
+      restaurantId,
+    });
+
+    return CustomerThemeScheduleService.cancelSchedule(scheduleId, restaurantId, userId);
   }
 
   /**

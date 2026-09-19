@@ -10,10 +10,11 @@ export class CacheService {
   /**
    * Tries to fetch data from Redis cache. If it doesn't exist, runs the fetcher function,
    * stores the result in Redis with the given TTL, and returns the result.
+   * Supports dynamic TTL when fetcher returns { data: T, ttlSeconds: number }.
    */
   static async getOrSet<T>(
     key: string,
-    fetcher: () => Promise<T | null>,
+    fetcher: () => Promise<T | null | { data: T; ttlSeconds?: number }>,
     ttlSeconds: number = 300 // default 5 minutes
   ): Promise<T | null> {
     try {
@@ -29,18 +30,38 @@ export class CacheService {
 
     logger.debug(`Cache MISS for key: ${key}. Fetching fresh data...`, { operation: 'cache_miss', key });
     
-    const freshData = await fetcher();
+    const freshResult = await fetcher();
     
     // Only cache if there's actual data to cache
-    if (freshData !== null && freshData !== undefined) {
+    if (freshResult !== null && freshResult !== undefined) {
+      let dataToReturn: T;
+      let effectiveTtl = ttlSeconds;
+
+      if (
+        typeof freshResult === 'object' &&
+        freshResult !== null &&
+        'data' in freshResult &&
+        'ttlSeconds' in freshResult
+      ) {
+        const wrapped = freshResult as { data: T; ttlSeconds?: number };
+        dataToReturn = wrapped.data;
+        if (typeof wrapped.ttlSeconds === 'number') {
+          effectiveTtl = wrapped.ttlSeconds;
+        }
+      } else {
+        dataToReturn = freshResult as T;
+      }
+
       try {
-        await redisClient.set(key, JSON.stringify(freshData), ttlSeconds);
+        await redisClient.set(key, JSON.stringify(dataToReturn), effectiveTtl);
       } catch (error) {
         logger.warn(`Failed to write to cache for key: ${key}`, { operation: 'cache_write_error', error, key });
       }
+
+      return dataToReturn;
     }
 
-    return freshData;
+    return null;
   }
 
   /**

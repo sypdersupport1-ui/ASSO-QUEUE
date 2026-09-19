@@ -652,6 +652,29 @@ export interface Database {
         };
         Update: Partial<Database['public']['Tables']['restaurant_queue_hours']['Insert']>;
       };
+      restaurant_customer_theme_schedules: {
+        Row: {
+          id: string;
+          restaurant_id: string;
+          theme_key: string;
+          start_at: string;
+          end_at: string;
+          timezone: string;
+          status: 'ACTIVE' | 'CANCELLED';
+          created_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: Omit<Database['public']['Tables']['restaurant_customer_theme_schedules']['Row'], 'id' | 'created_at' | 'updated_at'> & {
+          id?: string;
+          created_at?: string;
+          updated_at?: string;
+          timezone?: string;
+          status?: 'ACTIVE' | 'CANCELLED';
+          created_by?: string | null;
+        };
+        Update: Partial<Database['public']['Tables']['restaurant_customer_theme_schedules']['Insert']>;
+      };
     };
     Functions: {
       get_current_user_id: {

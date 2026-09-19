@@ -89,11 +89,139 @@ export async function updateCustomerThemeAction(themeKey: string) {
   try {
     const result = await RestaurantAdminService.updateCustomerTheme(themeKey);
     revalidatePath('/dashboard');
+    revalidatePath('/dashboard/settings/theme');
     return { success: true, themeKey: result.themeKey };
   } catch (error: unknown) {
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Failed to update customer theme.',
+    };
+  }
+}
+
+/**
+ * Phase 5 — Server action to create a customer theme schedule.
+ */
+export async function createCustomerThemeScheduleAction(input: {
+  themeKey: string;
+  startAt?: string;
+  endAt?: string;
+  startDate?: string;
+  startTime?: string;
+  endDate?: string;
+  endTime?: string;
+  timezone?: string;
+}) {
+  try {
+    const { CustomerThemeScheduleService } = await import('@/lib/services/customer-theme-schedule-service');
+
+    let startAt = input.startAt;
+    let endAt = input.endAt;
+
+    if (input.startDate && input.startTime) {
+      startAt = CustomerThemeScheduleService.zonedDateTimeToUtc(
+        input.startDate,
+        input.startTime,
+        input.timezone || 'UTC'
+      ).toISOString();
+    }
+    if (input.endDate && input.endTime) {
+      endAt = CustomerThemeScheduleService.zonedDateTimeToUtc(
+        input.endDate,
+        input.endTime,
+        input.timezone || 'UTC'
+      ).toISOString();
+    }
+
+    if (!startAt || !endAt) {
+      return { success: false, error: 'Start time and end time are required.' };
+    }
+
+    const schedule = await RestaurantAdminService.createCustomerThemeSchedule({
+      themeKey: input.themeKey,
+      startAt,
+      endAt,
+      timezone: input.timezone,
+    });
+
+    revalidatePath('/dashboard/settings/theme');
+    revalidatePath('/dashboard');
+    return { success: true, schedule };
+  } catch (error: unknown) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to create theme schedule.',
+    };
+  }
+}
+
+/**
+ * Phase 5 — Server action to update an existing customer theme schedule.
+ */
+export async function updateCustomerThemeScheduleAction(
+  scheduleId: string,
+  input: {
+    themeKey?: string;
+    startAt?: string;
+    endAt?: string;
+    startDate?: string;
+    startTime?: string;
+    endDate?: string;
+    endTime?: string;
+    timezone?: string;
+  }
+) {
+  try {
+    const { CustomerThemeScheduleService } = await import('@/lib/services/customer-theme-schedule-service');
+
+    let startAt = input.startAt;
+    let endAt = input.endAt;
+
+    if (input.startDate && input.startTime) {
+      startAt = CustomerThemeScheduleService.zonedDateTimeToUtc(
+        input.startDate,
+        input.startTime,
+        input.timezone || 'UTC'
+      ).toISOString();
+    }
+    if (input.endDate && input.endTime) {
+      endAt = CustomerThemeScheduleService.zonedDateTimeToUtc(
+        input.endDate,
+        input.endTime,
+        input.timezone || 'UTC'
+      ).toISOString();
+    }
+
+    const schedule = await RestaurantAdminService.updateCustomerThemeSchedule(scheduleId, {
+      themeKey: input.themeKey,
+      startAt,
+      endAt,
+    });
+
+    revalidatePath('/dashboard/settings/theme');
+    revalidatePath('/dashboard');
+    return { success: true, schedule };
+  } catch (error: unknown) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to update theme schedule.',
+    };
+  }
+}
+
+/**
+ * Phase 5 — Server action to cancel an active or upcoming customer theme schedule.
+ */
+export async function cancelCustomerThemeScheduleAction(scheduleId: string) {
+  try {
+    const schedule = await RestaurantAdminService.cancelCustomerThemeSchedule(scheduleId);
+    revalidatePath('/dashboard/settings/theme');
+    revalidatePath('/dashboard');
+    return { success: true, schedule };
+  } catch (error: unknown) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to cancel theme schedule.',
     };
   }
 }

@@ -12,11 +12,14 @@ export const metadata: Metadata = {
 export default async function ThemeSettingsPage() {
   const { restaurant } = await RestaurantAdminService.getRestaurantDashboardStats();
   const themes = getRegisteredThemes();
+  const schedules = await RestaurantAdminService.listCustomerThemeSchedules();
 
   return (
     <ThemeLibraryClient
       restaurantName={restaurant.name}
+      restaurantTimezone={restaurant.timezone || 'UTC'}
       initialThemeKey={restaurant.customer_theme_key || 'default'}
+      initialSchedules={schedules}
       themes={themes}
     />
   );
