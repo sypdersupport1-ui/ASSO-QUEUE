@@ -43,7 +43,8 @@ export function CustomerShell({
       />
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute top-4 left-1/2 -translate-x-1/2 h-64 w-64 rounded-full bg-emerald-500/[0.04] blur-3xl"
+        className="pointer-events-none absolute top-4 left-1/2 -translate-x-1/2 h-64 w-64 rounded-full blur-3xl opacity-60"
+        style={{ background: 'var(--qf-primary-glow)' }}
       />
 
       {/* Main content column with mobile-optimized padding */}
@@ -55,7 +56,7 @@ export function CustomerShell({
       <footer className="relative z-10 mx-auto w-full max-w-md px-4 pb-6 pt-6 text-center">
         <p className="inline-flex items-center gap-1.5 text-[11px] font-medium text-slate-500">
           <span>Powered by</span>
-          <span className="font-bold tracking-tight text-emerald-400">QueueFlow</span>
+          <span className="font-bold tracking-tight text-[var(--qf-primary)]">QueueFlow</span>
         </p>
       </footer>
     </Component>

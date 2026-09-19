@@ -271,12 +271,12 @@ export default async function PublicRestaurantQueuePage({
         {activeTicketToken ? (
           <section
             aria-label="Already in queue"
-            className="rounded-2xl border border-emerald-500/30 bg-[#121826]/95 p-5 text-center shadow-xl backdrop-blur-md"
+            className="rounded-2xl border border-[var(--qf-primary)]/30 bg-[var(--qf-surface-solid)]/95 p-5 text-center shadow-xl backdrop-blur-md"
           >
-            <p className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/15 px-3 py-1 text-[11px] font-bold uppercase tracking-widest text-emerald-300">
+            <p className="inline-flex items-center gap-1.5 rounded-full border border-[var(--qf-primary)]/30 bg-[var(--qf-primary-glow)] px-3 py-1 text-[11px] font-bold uppercase tracking-widest text-[var(--qf-primary)]">
               <span aria-hidden="true" className="relative flex h-2 w-2">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-                <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[var(--qf-primary)] opacity-75" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-[var(--qf-primary)]" />
               </span>
               Spot Saved
             </p>
@@ -292,7 +292,7 @@ export default async function PublicRestaurantQueuePage({
             </p>
             <Link
               href={`/q/${slug}/status/${activeTicketToken}`}
-              className="mt-3.5 flex h-12 min-h-[48px] items-center justify-center gap-2 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-sm font-black text-slate-950 shadow-lg shadow-emerald-500/15 transition-all active:scale-[0.98]"
+              className="mt-3.5 flex h-12 min-h-[48px] items-center justify-center gap-2 rounded-2xl bg-[var(--qf-primary)] hover:bg-[var(--qf-primary-hover)] text-sm font-black text-[var(--qf-primary-foreground)] shadow-lg shadow-black/20 transition-all active:scale-[0.98]"
             >
               View My Ticket →
             </Link>
@@ -334,7 +334,7 @@ export default async function PublicRestaurantQueuePage({
               <p className="text-center">
                 <a
                   href={`tel:${restaurant.phone.replace(/\s/g, '')}`}
-                  className="inline-flex min-h-[44px] items-center gap-1.5 rounded-full px-3 text-xs font-semibold text-emerald-400 hover:text-emerald-300"
+                  className="inline-flex min-h-[44px] items-center gap-1.5 rounded-full px-3 text-xs font-semibold text-[var(--qf-primary)] hover:opacity-80"
                 >
                   <Phone aria-hidden="true" className="h-3.5 w-3.5" />
                   {restaurant.phone}
@@ -351,7 +351,7 @@ export default async function PublicRestaurantQueuePage({
             className="mt-2.5 flex min-h-[48px] h-12 items-center justify-center gap-1.5 rounded-2xl border border-white/10 bg-white/[0.04] text-xs font-bold text-slate-200 transition-all hover:bg-white/[0.08] hover:text-white active:scale-[0.98]"
           >
             <span>View full menu</span>
-            <ChevronRight aria-hidden="true" className="h-4 w-4 text-emerald-400" />
+            <ChevronRight aria-hidden="true" className="h-4 w-4 text-[var(--qf-primary)]" />
           </Link>
         </div>
       </div>
@@ -359,7 +359,7 @@ export default async function PublicRestaurantQueuePage({
       <footer className="relative z-10 mx-auto w-full max-w-md px-4 pb-6 pt-6 text-center">
         <p className="inline-flex items-center gap-1.5 text-[11px] font-medium text-slate-500">
           <span>Powered by</span>
-          <span className="font-bold tracking-tight text-emerald-400">QueueFlow</span>
+          <span className="font-bold tracking-tight text-[var(--qf-primary)]">QueueFlow</span>
         </p>
       </footer>
     </main>

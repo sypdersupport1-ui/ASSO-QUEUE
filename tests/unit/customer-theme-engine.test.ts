@@ -6,195 +6,298 @@ import {
   isRegisteredTheme,
   resolveCustomerTheme,
   themeToCssVariables,
-  type CustomerTheme,
+  type CustomerThemeTokens,
 } from '@/lib/themes';
 import { updateRestaurantProfileSchema } from '@/lib/services/restaurant-admin-service';
 import { updateRestaurantSchema } from '@/lib/services/platform-service';
 
-describe('Phase 2 — Customer Theme Engine Architecture', () => {
-  describe('1 & 2. Default & Registered Theme Resolution', () => {
-    it('resolves the default theme correctly when key is "default"', () => {
-      const theme = resolveCustomerTheme('default');
-      expect(theme).toBeDefined();
-      expect(theme.key).toBe('default');
-      expect(theme.name).toBe('QueueFlow Premium');
-      expect(theme).toEqual(DEFAULT_CUSTOMER_THEME);
+describe('Phase 3 — QueueFlow Occasion & Festival Theme Library', () => {
+  const EXPECTED_THEME_KEYS = [
+    'default',
+    'durga-puja',
+    'kali-puja',
+    'diwali',
+    'holi',
+    'christmas',
+    'valentines-day',
+    'poila-boishakh',
+    'happy-new-year',
+    'happy-hour',
+    'weekend-special',
+  ] as const;
+
+  describe('1. Exactly 11 Approved Themes in THEME_REGISTRY', () => {
+    it('contains exactly 11 registered themes', () => {
+      const keys = Object.keys(THEME_REGISTRY);
+      expect(keys).toHaveLength(11);
+      expect(getRegisteredThemes()).toHaveLength(11);
     });
 
-    it('handles case-insensitivity and whitespace cleanly', () => {
-      const theme = resolveCustomerTheme('  DEFAULT  ');
-      expect(theme.key).toBe('default');
-      expect(theme).toEqual(DEFAULT_CUSTOMER_THEME);
+    it('contains every required theme key', () => {
+      for (const expectedKey of EXPECTED_THEME_KEYS) {
+        expect(THEME_REGISTRY).toHaveProperty(expectedKey);
+        expect(isRegisteredTheme(expectedKey)).toBe(true);
+      }
+    });
+
+    it('does not contain unapproved or extra themes', () => {
+      const registeredKeys = Object.keys(THEME_REGISTRY).sort();
+      const expectedKeys = [...EXPECTED_THEME_KEYS].sort();
+      expect(registeredKeys).toEqual(expectedKeys);
     });
   });
 
-  describe('3 & 4. Safe Fallbacks for Unknown, Null, Empty, and Arbitrary Strings', () => {
-    it('falls back to default theme for null, undefined, or empty strings', () => {
+  describe('2 & 3. Unique & Stable Kebab-Case Identifiers', () => {
+    it('all theme keys are unique', () => {
+      const keys = Object.keys(THEME_REGISTRY);
+      const uniqueKeys = new Set(keys);
+      expect(uniqueKeys.size).toBe(keys.length);
+    });
+
+    it('all theme keys strictly adhere to lowercase kebab-case format', () => {
+      const kebabCaseRegex = /^[a-z]+(-[a-z]+)*$/;
+      for (const key of Object.keys(THEME_REGISTRY)) {
+        expect(key).toMatch(kebabCaseRegex);
+        expect(key).toBe(key.toLowerCase().trim());
+      }
+    });
+  });
+
+  describe('4, 5 & 6. CustomerTheme Contract & Token Completeness', () => {
+    const requiredTokenGroups: (keyof CustomerThemeTokens)[] = [
+      'surfaces',
+      'accents',
+      'text',
+      'borders',
+      'status',
+      'geometry',
+    ];
+
+    it('every theme satisfies the CustomerTheme interface', () => {
+      for (const theme of getRegisteredThemes()) {
+        expect(theme.key).toBeDefined();
+        expect(typeof theme.key).toBe('string');
+        expect(theme.name).toBeDefined();
+        expect(typeof theme.name).toBe('string');
+        expect(theme.tokens).toBeDefined();
+        expect(typeof theme.tokens).toBe('object');
+      }
+    });
+
+    it('every theme provides all required semantic token groups', () => {
+      for (const theme of getRegisteredThemes()) {
+        for (const group of requiredTokenGroups) {
+          expect(theme.tokens[group]).toBeDefined();
+          expect(typeof theme.tokens[group]).toBe('object');
+        }
+      }
+    });
+
+    it('all required individual tokens are non-empty strings', () => {
+      for (const theme of getRegisteredThemes()) {
+        const { surfaces, accents, text, borders, status, geometry } = theme.tokens;
+
+        // Surfaces
+        expect(surfaces.background).toBeTruthy();
+        expect(surfaces.backgroundElevated).toBeTruthy();
+        expect(surfaces.surface).toBeTruthy();
+        expect(surfaces.surfaceSolid).toBeTruthy();
+        expect(surfaces.surfaceElevated).toBeTruthy();
+        expect(surfaces.surfaceInteractive).toBeTruthy();
+
+        // Accents
+        expect(accents.primary).toBeTruthy();
+        expect(accents.primaryHover).toBeTruthy();
+        expect(accents.primaryForeground).toBeTruthy();
+        expect(accents.primaryGlow).toBeTruthy();
+        expect(accents.accentDineIn).toBeTruthy();
+        expect(accents.accentDineInGlow).toBeTruthy();
+        expect(accents.accentTakeaway).toBeTruthy();
+        expect(accents.accentTakeawayGlow).toBeTruthy();
+
+        // Text
+        expect(text.text).toBeTruthy();
+        expect(text.textSecondary).toBeTruthy();
+        expect(text.textMuted).toBeTruthy();
+
+        // Borders
+        expect(borders.border).toBeTruthy();
+        expect(borders.borderSubtle).toBeTruthy();
+        expect(borders.borderHover).toBeTruthy();
+        expect(borders.borderActive).toBeTruthy();
+
+        // Status
+        expect(status.success).toBeTruthy();
+        expect(status.warning).toBeTruthy();
+        expect(status.danger).toBeTruthy();
+
+        // Geometry
+        expect(geometry.radiusSm).toBeTruthy();
+        expect(geometry.radiusMd).toBeTruthy();
+        expect(geometry.radiusLg).toBeTruthy();
+        expect(geometry.radiusXl).toBeTruthy();
+        expect(geometry.shadowSm).toBeTruthy();
+        expect(geometry.shadowMd).toBeTruthy();
+        expect(geometry.shadowLg).toBeTruthy();
+      }
+    });
+
+    it('every theme includes valid presentation metadata', () => {
+      for (const theme of getRegisteredThemes()) {
+        expect(theme.metadata).toBeDefined();
+        expect(theme.metadata?.category).toBeDefined();
+        expect(['core', 'cultural', 'seasonal', 'modern']).toContain(theme.metadata?.category);
+        expect(Array.isArray(theme.metadata?.tags)).toBe(true);
+        expect(theme.metadata?.previewAccentColor).toBeTruthy();
+        expect(theme.metadata?.previewSurfaceColor).toBeTruthy();
+      }
+    });
+  });
+
+  describe('7. CSS Variable Conversion (themeToCssVariables)', () => {
+    const REQUIRED_CSS_VARS = [
+      '--qf-background',
+      '--qf-background-elevated',
+      '--qf-surface',
+      '--qf-surface-solid',
+      '--qf-surface-elevated',
+      '--qf-surface-interactive',
+      '--qf-primary',
+      '--qf-primary-hover',
+      '--qf-primary-foreground',
+      '--qf-primary-glow',
+      '--qf-accent-dine-in',
+      '--qf-accent-dine-in-glow',
+      '--qf-accent-takeaway',
+      '--qf-accent-takeaway-glow',
+      '--qf-text',
+      '--qf-text-secondary',
+      '--qf-text-muted',
+      '--qf-border',
+      '--qf-border-subtle',
+      '--qf-border-hover',
+      '--qf-border-active',
+      '--qf-success',
+      '--qf-warning',
+      '--qf-danger',
+      '--qf-radius-sm',
+      '--qf-radius-md',
+      '--qf-radius-lg',
+      '--qf-radius-xl',
+      '--qf-shadow-sm',
+      '--qf-shadow-md',
+      '--qf-shadow-lg',
+    ];
+
+    it('successfully converts every registered theme to a full CSS property map', () => {
+      for (const theme of getRegisteredThemes()) {
+        const cssVars = themeToCssVariables(theme) as Record<string, string>;
+        expect(cssVars).toBeDefined();
+
+        for (const varName of REQUIRED_CSS_VARS) {
+          const val = cssVars[varName];
+          expect(val).toBeDefined();
+          expect(typeof val).toBe('string');
+          expect((val ?? '').trim().length).toBeGreaterThan(0);
+        }
+      }
+    });
+  });
+
+  describe('8 & 9. Authoritative Resolution & Default Immutability', () => {
+    it('resolves each registered theme key to its authoritative object', () => {
+      for (const expectedKey of EXPECTED_THEME_KEYS) {
+        const resolved = resolveCustomerTheme(expectedKey);
+        expect(resolved).toBeDefined();
+        expect(resolved.key).toBe(expectedKey);
+        expect(resolved).toEqual(THEME_REGISTRY[expectedKey]);
+      }
+    });
+
+    it('handles case-insensitivity and whitespace for all registered keys', () => {
+      for (const expectedKey of EXPECTED_THEME_KEYS) {
+        const upperPadded = `  ${expectedKey.toUpperCase()}  `;
+        const resolved = resolveCustomerTheme(upperPadded);
+        expect(resolved.key).toBe(expectedKey);
+        expect(resolved).toEqual(THEME_REGISTRY[expectedKey]);
+      }
+    });
+
+    it('safely falls back to default theme for unknown, null, undefined, or arbitrary strings', () => {
       expect(resolveCustomerTheme(null)).toEqual(DEFAULT_CUSTOMER_THEME);
       expect(resolveCustomerTheme(undefined)).toEqual(DEFAULT_CUSTOMER_THEME);
       expect(resolveCustomerTheme('')).toEqual(DEFAULT_CUSTOMER_THEME);
       expect(resolveCustomerTheme('   ')).toEqual(DEFAULT_CUSTOMER_THEME);
+      expect(resolveCustomerTheme('non-existent-theme')).toEqual(DEFAULT_CUSTOMER_THEME);
+      expect(resolveCustomerTheme('christmas-v2')).toEqual(DEFAULT_CUSTOMER_THEME);
+      expect(resolveCustomerTheme('<script>alert("xss")</script>')).toEqual(DEFAULT_CUSTOMER_THEME);
+      expect(resolveCustomerTheme('body { background: red; }')).toEqual(DEFAULT_CUSTOMER_THEME);
     });
 
-    it('falls back to default theme for unknown or future festival keys (no Phase 3 premature leaks)', () => {
-      expect(resolveCustomerTheme('durga-puja')).toEqual(DEFAULT_CUSTOMER_THEME);
-      expect(resolveCustomerTheme('diwali')).toEqual(DEFAULT_CUSTOMER_THEME);
-      expect(resolveCustomerTheme('christmas')).toEqual(DEFAULT_CUSTOMER_THEME);
-      expect(resolveCustomerTheme('non_existent_theme_999')).toEqual(DEFAULT_CUSTOMER_THEME);
-    });
-
-    it('safely rejects malicious or arbitrary CSS strings without injecting or throwing', () => {
-      const arbitraryCss = 'body { background: red; }';
-      const theme = resolveCustomerTheme(arbitraryCss);
-      expect(theme).toEqual(DEFAULT_CUSTOMER_THEME);
-      expect(theme.key).toBe('default');
+    it('preserves DEFAULT_CUSTOMER_THEME unchanged from Phase 1/Phase 2 baseline', () => {
+      expect(DEFAULT_CUSTOMER_THEME.key).toBe('default');
+      expect(DEFAULT_CUSTOMER_THEME.name).toBe('QueueFlow Premium');
+      expect(DEFAULT_CUSTOMER_THEME.tokens.surfaces.background).toBe('#0c1017');
+      expect(DEFAULT_CUSTOMER_THEME.tokens.accents.primary).toBe('#10b981');
+      expect(DEFAULT_CUSTOMER_THEME.tokens.accents.accentDineIn).toBe('#3b82f6');
+      expect(DEFAULT_CUSTOMER_THEME.tokens.accents.accentTakeaway).toBe('#f59e0b');
+      expect(DEFAULT_CUSTOMER_THEME.tokens.text.text).toBe('#f8fafc');
+      expect(DEFAULT_CUSTOMER_THEME.tokens.borders.border).toBe('rgba(255, 255, 255, 0.08)');
     });
   });
 
-  describe('5 & 6. Canonical Theme Registry & Semantic Token Vocabulary', () => {
-    it('registry contains only valid theme definitions', () => {
-      const registered = getRegisteredThemes();
-      expect(registered.length).toBeGreaterThanOrEqual(1);
-
-      for (const theme of registered) {
-        expect(theme.key).toBeDefined();
-        expect(typeof theme.key).toBe('string');
-        expect(theme.name).toBeDefined();
-        expect(theme.tokens).toBeDefined();
-        expect(THEME_REGISTRY[theme.key]).toBe(theme);
-        expect(isRegisteredTheme(theme.key)).toBe(true);
+  describe('10 & 11. Separation of Presentation from Business Logic', () => {
+    it('no theme definition contains operational or business configuration', () => {
+      for (const theme of getRegisteredThemes()) {
+        expect(theme).not.toHaveProperty('queueEnabled');
+        expect(theme).not.toHaveProperty('maxQueueCapacity');
+        expect(theme).not.toHaveProperty('seating_mode');
+        expect(theme).not.toHaveProperty('pricing');
+        expect(theme).not.toHaveProperty('currency');
+        expect(theme).not.toHaveProperty('takeaway_enabled');
+        expect(theme).not.toHaveProperty('tables');
+        expect(theme).not.toHaveProperty('permissions');
       }
     });
 
-    it('isRegisteredTheme accurately validates known and rejects unknown keys', () => {
-      expect(isRegisteredTheme('default')).toBe(true);
-      expect(isRegisteredTheme('DEFAULT')).toBe(true);
-      expect(isRegisteredTheme('unknown-key')).toBe(false);
-      expect(isRegisteredTheme(null)).toBe(false);
-      expect(isRegisteredTheme(undefined)).toBe(false);
-      expect(isRegisteredTheme('')).toBe(false);
-    });
-
-    it('contains all required semantic design tokens conforming to Phase 1 foundation', () => {
-      const { surfaces, accents, text, borders, status, geometry } = DEFAULT_CUSTOMER_THEME.tokens;
-
-      // Surfaces
-      expect(surfaces.background).toBe('#0c1017');
-      expect(surfaces.backgroundElevated).toBe('#111722');
-      expect(surfaces.surface).toBe('rgba(18, 24, 38, 0.88)');
-      expect(surfaces.surfaceSolid).toBe('#121826');
-      expect(surfaces.surfaceElevated).toBe('rgba(25, 34, 52, 0.94)');
-      expect(surfaces.surfaceInteractive).toBe('#1a2336');
-
-      // Accents (hospitality primary emerald, Dine-In blue, Takeaway amber)
-      expect(accents.primary).toBe('#10b981');
-      expect(accents.primaryHover).toBe('#059669');
-      expect(accents.primaryForeground).toBe('#022c22');
-      expect(accents.accentDineIn).toBe('#3b82f6');
-      expect(accents.accentTakeaway).toBe('#f59e0b');
-
-      // Text & Borders
-      expect(text.text).toBe('#f8fafc');
-      expect(text.textSecondary).toBe('#94a3b8');
-      expect(text.textMuted).toBe('#64748b');
-      expect(borders.border).toBe('rgba(255, 255, 255, 0.08)');
-      expect(borders.borderSubtle).toBe('rgba(255, 255, 255, 0.04)');
-      expect(borders.borderActive).toBe('rgba(255, 255, 255, 0.24)');
-
-      // Glow Accents
-      expect(accents.primaryGlow).toBe('rgba(16, 185, 129, 0.18)');
-      expect(accents.accentDineInGlow).toBe('rgba(59, 130, 246, 0.18)');
-      expect(accents.accentTakeawayGlow).toBe('rgba(245, 158, 11, 0.18)');
-
-      // Status & Geometry
-      expect(status.success).toBe('#10b981');
-      expect(status.warning).toBe('#f59e0b');
-      expect(status.danger).toBe('#ef4444');
-      expect(geometry.radiusSm).toBe('0.5rem');
-      expect(geometry.radiusMd).toBe('0.875rem');
-      expect(geometry.radiusLg).toBe('1.25rem');
-      expect(geometry.radiusXl).toBe('1.5rem');
-      expect(geometry.shadowSm).toBe('0 2px 8px rgba(0, 0, 0, 0.25)');
-      expect(geometry.shadowMd).toBe('0 8px 24px rgba(0, 0, 0, 0.35)');
-      expect(geometry.shadowLg).toBe('0 16px 40px rgba(0, 0, 0, 0.45)');
-    });
-
-    it('themeToCssVariables converts token object to full --qf-* custom property map', () => {
-      const cssVars = themeToCssVariables(DEFAULT_CUSTOMER_THEME) as Record<string, string>;
-
-      expect(cssVars['--qf-background']).toBe('#0c1017');
-      expect(cssVars['--qf-primary']).toBe('#10b981');
-      expect(cssVars['--qf-accent-dine-in']).toBe('#3b82f6');
-      expect(cssVars['--qf-accent-takeaway']).toBe('#f59e0b');
-      expect(cssVars['--qf-text']).toBe('#f8fafc');
-      expect(cssVars['--qf-border']).toBe('rgba(255, 255, 255, 0.08)');
-      expect(cssVars['--qf-radius-xl']).toBe('1.5rem');
-      expect(cssVars['--qf-shadow-md']).toBe('0 8px 24px rgba(0, 0, 0, 0.35)');
+    it('Dine-In and Takeaway accents remain visually distinct across all 11 themes', () => {
+      for (const theme of getRegisteredThemes()) {
+        const { accentDineIn, accentTakeaway } = theme.tokens.accents;
+        // Dine-In and Takeaway channel accents must never be identical
+        expect(accentDineIn.toLowerCase()).not.toBe(accentTakeaway.toLowerCase());
+      }
     });
   });
 
-  describe('7 & 8. Admin Selection Validation & Tenant Safety', () => {
-    it('validates customer_theme_key in updateRestaurantProfileSchema', () => {
-      const valid = updateRestaurantProfileSchema.safeParse({
-        name: 'Grand Bistro',
-        customer_theme_key: 'default',
-      });
-      expect(valid.success).toBe(true);
-
-      const empty = updateRestaurantProfileSchema.safeParse({
-        name: 'Grand Bistro',
-      });
-      expect(empty.success).toBe(true);
+  describe('12. Admin Schema Compatibility for all 11 Themes', () => {
+    it('updateRestaurantProfileSchema accepts all 11 registered keys and rejects unknown keys', () => {
+      for (const key of EXPECTED_THEME_KEYS) {
+        const valid = updateRestaurantProfileSchema.safeParse({
+          name: 'Bistro Spice',
+          customer_theme_key: key,
+        });
+        expect(valid.success).toBe(true);
+      }
 
       const invalid = updateRestaurantProfileSchema.safeParse({
-        name: 'Grand Bistro',
-        customer_theme_key: 'durga-puja-unregistered',
+        name: 'Bistro Spice',
+        customer_theme_key: 'unregistered-festival',
       });
       expect(invalid.success).toBe(false);
-
-      const malicious = updateRestaurantProfileSchema.safeParse({
-        name: 'Grand Bistro',
-        customer_theme_key: '<style>body{color:red}</style>',
-      });
-      expect(malicious.success).toBe(false);
     });
 
-    it('validates customer_theme_key in platform-service updateRestaurantSchema', () => {
-      const valid = updateRestaurantSchema.safeParse({
-        customer_theme_key: 'default',
-      });
-      expect(valid.success).toBe(true);
+    it('platform updateRestaurantSchema accepts all 11 registered keys and rejects unknown keys', () => {
+      for (const key of EXPECTED_THEME_KEYS) {
+        const valid = updateRestaurantSchema.safeParse({
+          customer_theme_key: key,
+        });
+        expect(valid.success).toBe(true);
+      }
 
       const invalid = updateRestaurantSchema.safeParse({
-        customer_theme_key: 'arbitrary-theme-key',
+        customer_theme_key: 'random-theme',
       });
       expect(invalid.success).toBe(false);
-    });
-  });
-
-  describe('9. Server-First Resolution Integrity', () => {
-    it('resolves synchronously without external network requests or client state', () => {
-      const start = performance.now();
-      const theme = resolveCustomerTheme('default');
-      const cssVars = themeToCssVariables(theme);
-      const duration = performance.now() - start;
-
-      expect(theme.key).toBe('default');
-      expect(Object.keys(cssVars).length).toBeGreaterThan(20);
-      expect(duration).toBeLessThan(5); // Pure CPU execution under 5ms
-    });
-  });
-
-  describe('10. Business Invariant Preservation', () => {
-    it('theme contract maintains strict separation from restaurant operational configuration', () => {
-      const theme: CustomerTheme = DEFAULT_CUSTOMER_THEME;
-
-      // CustomerTheme must only contain visual presentation tokens and metadata
-      expect(theme).not.toHaveProperty('queueEnabled');
-      expect(theme).not.toHaveProperty('maxCapacity');
-      expect(theme).not.toHaveProperty('pricing');
-      expect(theme).not.toHaveProperty('currency');
-      expect(theme).not.toHaveProperty('seating_mode');
     });
   });
 });

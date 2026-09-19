@@ -183,10 +183,10 @@ export default async function CustomerQueueStatusPage({
               <p className="truncate text-sm font-black text-white leading-tight">
                 {restaurant.name}
               </p>
-              <p className="flex items-center gap-1.5 text-[11px] font-semibold text-emerald-400 mt-0.5">
+              <p className="flex items-center gap-1.5 text-[11px] font-semibold text-[var(--qf-success)] mt-0.5">
                 <span className="relative flex h-1.5 w-1.5">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-                  <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[var(--qf-success)] opacity-75" />
+                  <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-[var(--qf-success)]" />
                 </span>
                 Live Digital Ticket
               </p>
@@ -197,7 +197,7 @@ export default async function CustomerQueueStatusPage({
               href={menuUrl}
               className="inline-flex min-h-[40px] h-10 items-center gap-1.5 rounded-xl border border-white/10 bg-white/[0.04] px-3.5 text-xs font-bold text-slate-200 transition-all hover:bg-white/[0.08] hover:text-white active:scale-95 shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
             >
-              <UtensilsCrossed aria-hidden="true" className="h-3.5 w-3.5 text-emerald-400" />
+              <UtensilsCrossed aria-hidden="true" className="h-3.5 w-3.5 text-[var(--qf-primary)]" />
               <span>Menu</span>
             </Link>
           )}
@@ -249,7 +249,7 @@ export default async function CustomerQueueStatusPage({
       <footer className="relative z-10 mx-auto w-full max-w-md px-4 pb-6 pt-6 text-center">
         <p className="inline-flex items-center gap-1.5 text-[11px] font-medium text-slate-500">
           <span>Powered by</span>
-          <span className="font-bold tracking-tight text-emerald-400">QueueFlow</span>
+          <span className="font-bold tracking-tight text-[var(--qf-primary)]">QueueFlow</span>
         </p>
       </footer>
     </main>
