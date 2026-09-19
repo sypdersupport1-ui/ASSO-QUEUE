@@ -847,6 +847,12 @@ export default function ThemeLibraryClient({
                   <p className="text-xs text-slate-400 line-clamp-2 leading-relaxed">
                     {theme.description || 'Special occasion theme with customized visual language.'}
                   </p>
+                  {theme.artwork?.motif && theme.artwork.motif !== 'none' && (
+                    <div className="flex items-center gap-1.5 text-[11px] text-slate-400 font-medium pt-0.5">
+                      <span className="material-symbols-outlined text-[13px] text-primary/80">draw</span>
+                      <span className="capitalize">{theme.artwork.motif.replace(/-/g, ' ')} motif</span>
+                    </div>
+                  )}
                 </div>
 
                 {/* Card Action Controls */}

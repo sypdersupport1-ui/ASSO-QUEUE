@@ -83,6 +83,11 @@ export function CustomerThemePreviewModal({
                 <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-white/10 text-slate-300 border border-white/10">
                   {categoryLabel}
                 </span>
+                {theme.artwork?.motif && theme.artwork.motif !== 'none' && (
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wider bg-primary/20 text-blue-300 border border-primary/30 capitalize">
+                    {theme.artwork.motif.replace(/-/g, ' ')} Motif
+                  </span>
+                )}
                 {isActiveTheme && (
                   <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
                     <span>✓</span>

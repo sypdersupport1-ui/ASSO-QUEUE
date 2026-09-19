@@ -64,4 +64,9 @@ export const DURGA_PUJA_THEME: CustomerTheme = {
     previewAccentColor: '#dc2626',
     previewSurfaceColor: '#2a0f13',
   },
+  artwork: {
+    motif: 'alpana',
+    opacity: 0.12,
+    placement: 'top-right',
+  },
 };

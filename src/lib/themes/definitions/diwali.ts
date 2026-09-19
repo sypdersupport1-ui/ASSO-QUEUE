@@ -63,4 +63,9 @@ export const DIWALI_THEME: CustomerTheme = {
     previewAccentColor: '#f59e0b',
     previewSurfaceColor: '#181b24',
   },
+  artwork: {
+    motif: 'diwali-rangoli',
+    opacity: 0.13,
+    placement: 'top-split',
+  },
 };

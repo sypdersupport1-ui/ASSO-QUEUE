@@ -1,6 +1,7 @@
 import React from 'react';
 import type { CustomerTheme } from '@/lib/themes/types';
 import { themeToCssVariables } from '@/lib/themes/resolver';
+import { ThemeArtwork } from '@/components/themes';
 
 interface CustomerShellProps {
   children: React.ReactNode;
@@ -46,6 +47,9 @@ export function CustomerShell({
         className="pointer-events-none absolute top-4 left-1/2 -translate-x-1/2 h-64 w-64 rounded-full blur-3xl opacity-60"
         style={{ background: 'var(--qf-primary-glow)' }}
       />
+
+      {/* Theme Decorative Motif & Artwork Layer */}
+      <ThemeArtwork theme={theme} variant="page" />
 
       {/* Main content column with mobile-optimized padding */}
       <div className="relative z-10 mx-auto w-full max-w-md flex-1 space-y-4 px-4 py-5 sm:py-7">

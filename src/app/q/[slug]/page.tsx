@@ -16,6 +16,8 @@ import { resolveJoinability, formatWaitLabel } from '@/lib/customer-join-ux';
 import { getTicketToken, clearTicketCookie } from '@/lib/customer-ticket-cookie';
 import { quitPreviousQueueAction } from '@/app/q/actions';
 import { logger } from '@/lib/logging/logger';
+import { resolveCustomerTheme } from '@/lib/themes';
+import { ThemeArtwork } from '@/components/themes';
 import type { Metadata } from 'next';
 
 export async function generateMetadata({
@@ -192,6 +194,8 @@ export default async function PublicRestaurantQueuePage({
     }
   }
 
+  const activeTheme = resolveCustomerTheme(restaurant.customerThemeKey);
+
   return (
     <main className="qf-bg relative flex min-h-[100dvh] flex-col justify-between overflow-x-hidden text-slate-100 selection:bg-emerald-500/30 selection:text-emerald-100">
       <LandingAutoRefresh />
@@ -205,6 +209,9 @@ export default async function PublicRestaurantQueuePage({
         aria-hidden="true"
         className="pointer-events-none absolute top-4 left-1/2 -translate-x-1/2 h-64 w-64 rounded-full bg-emerald-500/[0.04] blur-3xl"
       />
+
+      {/* Thematic Decorative Artwork & Motif Layer */}
+      <ThemeArtwork theme={activeTheme} variant="page" />
 
       <div className="relative z-10 mx-auto w-full max-w-md space-y-4 px-4 py-5 sm:py-7 flex-1">
         {/* Left queue confirmation banner */}

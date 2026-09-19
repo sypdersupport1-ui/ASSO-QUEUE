@@ -65,4 +65,9 @@ export const DEFAULT_CUSTOMER_THEME: CustomerTheme = {
     previewAccentColor: '#10b981',
     previewSurfaceColor: '#121826',
   },
+  artwork: {
+    motif: 'none',
+    opacity: 0.05,
+    placement: 'subtle-ambient',
+  },
 };

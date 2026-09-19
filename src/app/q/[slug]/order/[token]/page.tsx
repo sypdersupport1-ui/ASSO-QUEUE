@@ -5,6 +5,8 @@ import { PublicRestaurantService } from '@/lib/services/public-restaurant-servic
 import { QueueService } from '@/lib/services/queue-service';
 import { RestaurantHeader } from '@/components/customer/RestaurantHeader';
 import { customerOrderStatusCopy } from '@/lib/customer-order-ux';
+import { resolveCustomerTheme } from '@/lib/themes';
+import { ThemeArtwork } from '@/components/themes';
 import type { Metadata } from 'next';
 
 export async function generateMetadata({
@@ -131,10 +133,18 @@ export default async function CustomerOrderStatusPage({
   const isCancelled = orderDetails.status === 'CANCELLED';
   const isPaid = orderDetails.paymentStatus === 'PAID';
   const isTakeaway = orderDetails.queueType === 'TAKEAWAY';
+  const activeTheme = resolveCustomerTheme(restaurant.customerThemeKey);
 
   return (
-    <main className="qf-bg flex min-h-[100dvh] flex-col justify-between px-4 py-6 text-slate-100 selection:bg-orange-500 selection:text-white sm:py-8">
-      <div className="mx-auto w-full max-w-md space-y-4 sm:space-y-5">
+    <main className="qf-bg relative flex min-h-[100dvh] flex-col justify-between px-4 py-6 text-slate-100 selection:bg-orange-500 selection:text-white sm:py-8">
+      {/* Subtle ambient lighting */}
+      <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 h-[380px] bg-gradient-to-b from-slate-800/20 via-slate-900/10 to-transparent" />
+      <div aria-hidden="true" className="pointer-events-none absolute top-4 left-1/2 -translate-x-1/2 h-64 w-64 rounded-full bg-emerald-500/[0.04] blur-3xl" />
+
+      {/* Thematic Decorative Artwork & Motif Layer */}
+      <ThemeArtwork theme={activeTheme} variant="page" />
+
+      <div className="relative z-10 mx-auto w-full max-w-md space-y-4 sm:space-y-5">
         <RestaurantHeader restaurant={restaurant} />
 
         {/* CALLED Turn Priority Banner */}

@@ -3,6 +3,7 @@
 import React from 'react';
 import type { CustomerTheme } from '@/lib/themes/types';
 import { themeToCssVariables } from '@/lib/themes/resolver';
+import { ThemeArtwork } from '@/components/themes';
 
 export interface CustomerThemePreviewProps {
   theme: CustomerTheme;
@@ -47,15 +48,8 @@ export function CustomerThemePreview({
             borderColor: 'var(--qf-border)',
           }}
         >
-          {/* Ambient Glow */}
-          <div
-            className="absolute -top-16 -left-16 w-48 h-48 rounded-full pointer-events-none blur-3xl opacity-30"
-            style={{ backgroundColor: 'var(--qf-primary-glow)' }}
-          />
-          <div
-            className="absolute -bottom-16 -right-16 w-48 h-48 rounded-full pointer-events-none blur-3xl opacity-20"
-            style={{ backgroundColor: 'var(--qf-primary)' }}
-          />
+          {/* Thematic Artwork & Ambient Motif */}
+          <ThemeArtwork theme={theme} variant="modal" />
 
           {/* Restaurant Header */}
           <div className="relative z-10 flex items-center justify-between border-b pb-3" style={{ borderColor: 'var(--qf-border-subtle)' }}>
@@ -198,15 +192,8 @@ export function CustomerThemePreview({
         borderColor: 'var(--qf-border)',
       }}
     >
-      {/* Background Ambience Glow */}
-      <div
-        className="absolute -top-10 -right-10 w-28 h-28 rounded-full pointer-events-none blur-2xl opacity-35"
-        style={{ backgroundColor: 'var(--qf-primary-glow)' }}
-      />
-      <div
-        className="absolute -bottom-10 -left-10 w-28 h-28 rounded-full pointer-events-none blur-2xl opacity-25"
-        style={{ backgroundColor: 'var(--qf-primary)' }}
-      />
+      {/* Thematic Artwork & Ambient Motif */}
+      <ThemeArtwork theme={theme} variant="card" />
 
       {/* Mini Header */}
       <div className="relative z-10 flex items-center justify-between border-b pb-2" style={{ borderColor: 'var(--qf-border-subtle)' }}>

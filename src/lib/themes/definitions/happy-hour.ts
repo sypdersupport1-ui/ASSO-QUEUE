@@ -71,4 +71,9 @@ export const HAPPY_HOUR_THEME: CustomerTheme = {
     previewAccentColor: '#ea580c',
     previewSurfaceColor: '#221913',
   },
+  artwork: {
+    motif: 'cocktail-lounge',
+    opacity: 0.12,
+    placement: 'top-right',
+  },
 };

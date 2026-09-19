@@ -64,4 +64,9 @@ export const KALI_PUJA_THEME: CustomerTheme = {
     previewAccentColor: '#e11d48',
     previewSurfaceColor: '#14162a',
   },
+  artwork: {
+    motif: 'midnight-lotus',
+    opacity: 0.10,
+    placement: 'top-right',
+  },
 };

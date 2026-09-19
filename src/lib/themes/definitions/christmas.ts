@@ -64,4 +64,9 @@ export const CHRISTMAS_THEME: CustomerTheme = {
     previewAccentColor: '#dc2626',
     previewSurfaceColor: '#142d21',
   },
+  artwork: {
+    motif: 'evergreen-festive',
+    opacity: 0.11,
+    placement: 'top-right',
+  },
 };

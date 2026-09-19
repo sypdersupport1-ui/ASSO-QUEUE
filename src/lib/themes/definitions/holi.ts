@@ -64,4 +64,9 @@ export const HOLI_THEME: CustomerTheme = {
     previewAccentColor: '#ec4899',
     previewSurfaceColor: '#22173a',
   },
+  artwork: {
+    motif: 'holi-powder',
+    opacity: 0.10,
+    placement: 'subtle-ambient',
+  },
 };

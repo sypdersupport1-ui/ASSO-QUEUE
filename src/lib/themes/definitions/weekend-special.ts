@@ -63,4 +63,9 @@ export const WEEKEND_SPECIAL_THEME: CustomerTheme = {
     previewAccentColor: '#d97706',
     previewSurfaceColor: '#18241c',
   },
+  artwork: {
+    motif: 'botanical-brunch',
+    opacity: 0.11,
+    placement: 'top-right',
+  },
 };

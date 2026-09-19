@@ -6,6 +6,8 @@ import { CustomerTicketFloat } from '@/components/customer/CustomerTicketFloat';
 import { TicketCookieSync } from '@/components/customer/TicketCookieSync';
 import { CustomerErrorState } from '@/components/customer/CustomerErrorState';
 import { logger } from '@/lib/logging/logger';
+import { resolveCustomerTheme } from '@/lib/themes';
+import { ThemeArtwork } from '@/components/themes';
 import type { Metadata } from 'next';
 
 export async function generateMetadata({
@@ -96,12 +98,16 @@ export default async function CustomerMenuPage({
 
   const menuCategories = await PublicRestaurantService.getPublicMenuPreview(restaurant.id);
   const currency = (restaurant as unknown as { currency?: string })?.currency || 'INR';
+  const activeTheme = resolveCustomerTheme(restaurant.customerThemeKey);
 
   return (
-    <main className="qf-bg flex min-h-[100dvh] flex-col overflow-x-hidden px-4 py-5 text-slate-100 selection:bg-emerald-500/30 selection:text-emerald-100 sm:py-7">
+    <main className="qf-bg relative flex min-h-[100dvh] flex-col overflow-x-hidden px-4 py-5 text-slate-100 selection:bg-emerald-500/30 selection:text-emerald-100 sm:py-7">
       {/* Subtle ambient lighting */}
       <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 h-[380px] bg-gradient-to-b from-slate-800/20 via-slate-900/10 to-transparent" />
       <div aria-hidden="true" className="pointer-events-none absolute top-4 left-1/2 -translate-x-1/2 h-64 w-64 rounded-full bg-emerald-500/[0.04] blur-3xl" />
+
+      {/* Thematic Decorative Artwork & Motif Layer */}
+      <ThemeArtwork theme={activeTheme} variant="page" />
 
       {qtoken && <TicketCookieSync slug={slug} token={qtoken} isTerminal={false} />}
       <CustomerTicketFloat slug={slug} qtoken={qtoken} />

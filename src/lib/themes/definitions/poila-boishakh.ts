@@ -64,4 +64,9 @@ export const POILA_BOISHAKH_THEME: CustomerTheme = {
     previewAccentColor: '#dc2626',
     previewSurfaceColor: '#2a1b14',
   },
+  artwork: {
+    motif: 'boishakh-heritage',
+    opacity: 0.12,
+    placement: 'corner-ornaments',
+  },
 };

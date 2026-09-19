@@ -3,6 +3,7 @@
 import React, { useState, useEffect, use } from 'react';
 import Link from 'next/link';
 import { CreditCard, Store, ReceiptText, Ticket } from 'lucide-react';
+import { ThemeArtwork } from '@/components/themes';
 
 interface PaymentStatusState {
   status: 'IDLE' | 'PROCESSING' | 'SUCCEEDED' | 'FAILED' | 'REFUNDED';
@@ -223,8 +224,15 @@ export default function CustomerPaymentPage({
   }
 
   return (
-    <main className="qf-bg flex min-h-[100dvh] flex-col justify-between px-4 py-6 text-slate-100 selection:bg-orange-500 selection:text-white sm:py-8">
-      <div className="mx-auto w-full max-w-md space-y-4 sm:space-y-5">
+    <main className="qf-bg relative flex min-h-[100dvh] flex-col justify-between px-4 py-6 text-slate-100 selection:bg-orange-500 selection:text-white sm:py-8">
+      {/* Subtle ambient lighting */}
+      <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 h-[380px] bg-gradient-to-b from-slate-800/20 via-slate-900/10 to-transparent" />
+      <div aria-hidden="true" className="pointer-events-none absolute top-4 left-1/2 -translate-x-1/2 h-64 w-64 rounded-full bg-emerald-500/[0.04] blur-3xl" />
+
+      {/* Thematic Decorative Artwork & Motif Layer */}
+      <ThemeArtwork variant="page" />
+
+      <div className="relative z-10 mx-auto w-full max-w-md space-y-4 sm:space-y-5">
         {/* Restaurant Header */}
         <header className="flex items-center justify-between gap-3 py-2 text-left">
           <div className="flex min-w-0 flex-1 items-center gap-3">

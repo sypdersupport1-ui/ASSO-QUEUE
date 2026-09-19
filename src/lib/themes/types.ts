@@ -64,10 +64,32 @@ export interface CustomerThemeMetadata {
   previewSurfaceColor?: string;
 }
 
+export type ThemeMotifKind =
+  | 'none'
+  | 'alpana'
+  | 'midnight-lotus'
+  | 'diwali-rangoli'
+  | 'holi-powder'
+  | 'evergreen-festive'
+  | 'romantic-botanical'
+  | 'boishakh-heritage'
+  | 'celebration-spark'
+  | 'cocktail-lounge'
+  | 'botanical-brunch';
+
+export interface CustomerThemeArtwork {
+  motif: ThemeMotifKind;
+  opacity?: number;
+  placement?: 'top-right' | 'top-split' | 'subtle-ambient' | 'corner-ornaments' | 'header-motif';
+  subtleGlow?: string;
+}
+
 export interface CustomerTheme {
   key: string;
   name: string;
   description?: string;
   tokens: CustomerThemeTokens;
   metadata?: CustomerThemeMetadata;
+  artwork?: CustomerThemeArtwork;
 }
+

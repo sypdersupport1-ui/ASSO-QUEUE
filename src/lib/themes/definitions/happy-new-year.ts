@@ -64,4 +64,9 @@ export const HAPPY_NEW_YEAR_THEME: CustomerTheme = {
     previewAccentColor: '#eab308',
     previewSurfaceColor: '#141d36',
   },
+  artwork: {
+    motif: 'celebration-spark',
+    opacity: 0.12,
+    placement: 'top-split',
+  },
 };

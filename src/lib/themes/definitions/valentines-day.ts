@@ -64,4 +64,9 @@ export const VALENTINES_DAY_THEME: CustomerTheme = {
     previewAccentColor: '#e11d48',
     previewSurfaceColor: '#28111c',
   },
+  artwork: {
+    motif: 'romantic-botanical',
+    opacity: 0.10,
+    placement: 'top-right',
+  },
 };
