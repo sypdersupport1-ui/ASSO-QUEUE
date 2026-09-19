@@ -1,4 +1,5 @@
 import React from 'react';
+import { UtensilsCrossed, Sparkles } from 'lucide-react';
 
 export interface MenuPreviewCategory {
   id: string;
@@ -18,21 +19,17 @@ interface MenuPreviewSectionProps {
   currency?: string;
 }
 
-const FOOD_EMOJI = ['🍛', '🍕', '🍔', '🍜', '🥘', '🍰', '🥗', '🍗', '🌮', '🍝', '🥪', '🍩'];
-
-function emojiFor(name: string, index: number) {
-  let h = 0;
-  for (const c of name) h = (h * 31 + c.charCodeAt(0)) >>> 0;
-  return FOOD_EMOJI[(h + index) % FOOD_EMOJI.length];
-}
-
 export function MenuPreviewSection({ categories, currency = 'INR' }: MenuPreviewSectionProps) {
   if (!categories || categories.length === 0) {
     return (
-      <div className="qf-card rounded-3xl p-8 text-center">
-        <span aria-hidden="true" className="text-4xl">👨‍🍳</span>
-        <p className="mt-2 text-sm font-black text-white">Kitchen is prepping the menu</p>
-        <p className="mt-1 text-xs text-slate-400">Ask the host for today&apos;s specials 😋</p>
+      <div className="rounded-2xl border border-white/[0.08] bg-[#121826]/80 p-6 text-center space-y-2.5">
+        <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-xl bg-white/5 border border-white/10 text-slate-400">
+          <UtensilsCrossed className="h-5 w-5" aria-hidden="true" />
+        </div>
+        <div className="space-y-1">
+          <p className="text-sm font-bold text-white">Menu Preview</p>
+          <p className="text-xs text-slate-400">Full menu available when browsing the digital menu</p>
+        </div>
       </div>
     );
   }
@@ -49,17 +46,17 @@ export function MenuPreviewSection({ categories, currency = 'INR' }: MenuPreview
   };
 
   return (
-    <div className="qf-card space-y-5 rounded-3xl p-5 sm:p-6">
-      <div className="space-y-1 text-center">
-        <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-emerald-300">
-          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400"></span> While you wait
+    <div className="rounded-2xl sm:rounded-3xl border border-white/[0.08] bg-[#121826]/80 p-4 sm:p-5 space-y-4">
+      <div className="flex items-center justify-between pb-1 border-b border-white/[0.06]">
+        <div className="flex items-center gap-2">
+          <Sparkles className="h-3.5 w-3.5 text-emerald-400" aria-hidden="true" />
+          <h3 className="text-xs font-black uppercase tracking-widest text-slate-200">
+            Menu Highlights
+          </h3>
+        </div>
+        <span className="text-[11px] font-medium text-slate-400">
+          A selection from the kitchen
         </span>
-        <h3 className="qf-keep-dark text-xl font-black tracking-tight text-white">
-          Craving something? 😋
-        </h3>
-        <p className="text-xs text-slate-400">
-          A taste of the menu — full spread after you join
-        </p>
       </div>
 
       <div className="space-y-5">
@@ -71,14 +68,17 @@ export function MenuPreviewSection({ categories, currency = 'INR' }: MenuPreview
             </h4>
 
             <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
-              {cat.items.slice(0,4).map((item, idx) => (
+              {cat.items.slice(0,4).map((item) => (
                 <div
                   key={item.id}
                   className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.04] p-3 transition-all hover:border-emerald-500/30 hover:bg-white/[0.06] active:scale-[0.99]"
                 >
-                  <span aria-hidden="true" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-slate-800 border border-white/10 text-2xl shadow-sm">
-                    {emojiFor(item.name, idx)}
-                  </span>
+                  <div
+                    aria-hidden="true"
+                    className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/[0.04] border border-white/10 text-emerald-400 font-black text-xs shadow-sm"
+                  >
+                    <UtensilsCrossed className="h-4 w-4" />
+                  </div>
                   <div className="min-w-0 flex-1">
                     <h5 className="truncate text-[13px] font-black text-white">{item.name}</h5>
                     {item.description && (

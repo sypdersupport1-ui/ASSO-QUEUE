@@ -342,7 +342,7 @@ export function QueueTicketCard({
                 <span className="inline-block mt-1 text-[10px] font-bold text-amber-300/90">
                   {status.nowCallingNumber &&
                   status.nowCallingNumber.replace(/^#+/, '') === (status.displayNumber || '').replace(/^#+/, '')
-                    ? '🎉 That’s You!'
+                    ? 'Your Turn!'
                     : 'Host Stand'}
                 </span>
               </div>
@@ -355,7 +355,7 @@ export function QueueTicketCard({
                 </div>
                 <p className="font-mono text-2xl sm:text-3xl font-black text-cyan-200 tabular-nums drop-shadow-[0_2px_12px_rgba(6,182,212,0.4)]">
                   {status.position === 1 ? (
-                    <span className="text-emerald-300 font-black">YOU! ✨</span>
+                    <span className="text-emerald-300 font-black">YOU</span>
                   ) : status.upNextNumber ? (
                     `Q-${status.upNextNumber.replace(/^#+/, '')}`
                   ) : (
@@ -420,9 +420,9 @@ export function QueueTicketCard({
           {/* Contextual Alert: Almost Your Turn */}
           {status.isAlmostYourTurn && (
             <div className="rounded-2xl border border-amber-500/40 bg-gradient-to-r from-amber-500/20 to-orange-500/15 p-3.5 text-left flex items-start gap-3 shadow-lg shadow-amber-500/10 motion-safe:animate-fadeIn">
-              <span className="text-xl shrink-0" aria-hidden="true">
-                👣
-              </span>
+              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-amber-500/20 text-amber-300">
+                <Clock className="h-4 w-4" aria-hidden="true" />
+              </div>
               <div>
                 <p className="text-xs font-bold text-amber-200">Almost your turn</p>
                 <p className="text-[11px] text-amber-300/90 leading-relaxed mt-0.5">

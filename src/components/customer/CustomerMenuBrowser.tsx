@@ -3,7 +3,7 @@
 import React, { useState, useTransition, useEffect } from 'react';
 import { createCustomerOrderAction } from '@/app/dashboard/actions';
 import { createTakeawayOrderAndQueueAction } from '@/app/q/actions';
-import { ShoppingBag, User, Phone } from 'lucide-react';
+import { ShoppingBag, User, Phone, UtensilsCrossed, Ticket } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 export interface CustomerMenuItem {
@@ -285,12 +285,16 @@ export function CustomerMenuBrowser({
 
   if (!categories || categories.length === 0) {
     return (
-      <div className="bg-slate-900/60 border border-white/5 rounded-3xl p-10 text-center space-y-2 backdrop-blur-md">
-        <div className="text-3xl">🍽️</div>
-        <p className="text-sm font-bold text-white">Menu coming soon</p>
-        <p className="text-xs text-slate-400">
-          This restaurant hasn&apos;t added its menu yet.
-        </p>
+      <div className="bg-slate-900/60 border border-white/5 rounded-3xl p-10 text-center space-y-3 backdrop-blur-md">
+        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-white/5 border border-white/10 text-slate-400">
+          <UtensilsCrossed className="h-6 w-6" aria-hidden="true" />
+        </div>
+        <div className="space-y-1">
+          <p className="text-sm font-bold text-white">Menu coming soon</p>
+          <p className="text-xs text-slate-400">
+            This restaurant hasn&apos;t added its menu yet.
+          </p>
+        </div>
       </div>
     );
   }
@@ -319,7 +323,7 @@ export function CustomerMenuBrowser({
             <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-sky-400" />
           </span>
           <span className="min-w-0 flex-1">
-            <span className="block text-sm font-bold text-white">Your turn is here — please return 📢</span>
+            <span className="block text-sm font-bold text-white">Your turn is here — please return</span>
             <span className="block text-xs text-sky-200/80">Tap to open your ticket · ordering can wait</span>
           </span>
           <span aria-hidden="true" className="shrink-0 text-sky-300 font-bold">→</span>
@@ -588,7 +592,7 @@ export function CustomerMenuBrowser({
                     <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-sky-400" />
                   </span>
                   <span className="text-xs font-bold text-white">
-                    Your turn is here — return first 📢
+                    Your turn is here — return first
                   </span>
                   <span className="ml-auto shrink-0 text-xs font-bold text-sky-300">
                     My ticket →
@@ -599,8 +603,9 @@ export function CustomerMenuBrowser({
                   href={`/q/${restaurantSlug}/status/${queueToken}`}
                   className="flex items-center justify-between gap-2 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 shadow-sm transition-all hover:bg-emerald-500/20 active:scale-[0.99]"
                 >
-                  <span className="text-xs font-medium text-emerald-200">
-                    🎟️ Ordering while you wait — spot saved
+                  <span className="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-200">
+                    <Ticket className="h-3.5 w-3.5 text-emerald-400" aria-hidden="true" />
+                    <span>Ordering while you wait · spot saved</span>
                   </span>
                   <span className="shrink-0 text-xs font-bold text-emerald-300">
                     My ticket →
@@ -608,7 +613,7 @@ export function CustomerMenuBrowser({
                 </a>
               ) : (
                 <p className="rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-[11px] leading-relaxed text-slate-400">
-                  💡 Browsing as a guest — join the queue from the restaurant page to link your order to a ticket.
+                  Browsing as a guest — join the queue from the restaurant page to link your order to a ticket.
                 </p>
               )}
 

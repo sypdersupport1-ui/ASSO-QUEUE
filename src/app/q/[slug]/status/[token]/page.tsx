@@ -159,23 +159,23 @@ export default async function CustomerQueueStatusPage({
   const menuUrl = `/q/${slug}/menu?qtoken=${token}`;
 
   return (
-    <main className="qf-bg relative flex min-h-[100dvh] flex-col text-slate-100 selection:bg-orange-500/30 selection:text-orange-100">
+    <main className="qf-bg relative flex min-h-[100dvh] flex-col overflow-x-hidden text-slate-100 selection:bg-emerald-500/30 selection:text-emerald-100">
       {/* Phase 4E: the cookie is retained for active SEATED dining, but cleared
           when dining is completed (status.completedAt) or terminal states (CANCELLED / NO_SHOW / EXPIRED). */}
       <TicketCookieSync slug={slug} token={token} isTerminal={Boolean(status.completedAt) || (isTerminal && status.status !== 'SEATED')} />
       <CustomerQueueRealtime entryId={status.entryId} isTerminal={isTerminal} />
 
-      {/* Warm ambient glows (decorative, vibrant lighting) */}
-      <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 h-[420px] bg-gradient-to-b from-emerald-600/15 via-orange-600/10 to-transparent" />
-      <div aria-hidden="true" className="pointer-events-none absolute top-6 left-1/2 -translate-x-1/2 h-72 w-72 rounded-full bg-gradient-to-tr from-cyan-500/10 via-emerald-500/10 to-amber-500/10 blur-3xl" />
+      {/* Subtle ambient lighting */}
+      <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 h-[380px] bg-gradient-to-b from-slate-800/20 via-slate-900/10 to-transparent" />
+      <div aria-hidden="true" className="pointer-events-none absolute top-4 left-1/2 -translate-x-1/2 h-64 w-64 rounded-full bg-emerald-500/[0.04] blur-3xl" />
 
-      <div className="relative z-10 mx-auto w-full max-w-md flex-1 space-y-4 px-4 py-6 sm:py-8">
+      <div className="relative z-10 mx-auto w-full max-w-md flex-1 space-y-4 px-4 py-5 sm:py-7">
         {/* Streamlined Restaurant Header */}
-        <header className="flex items-center justify-between gap-3 pt-1 pb-1">
-          <div className="flex min-w-0 flex-1 items-center gap-2.5">
+        <header className="flex items-center justify-between gap-3 py-1">
+          <div className="flex min-w-0 flex-1 items-center gap-3">
             <div
               aria-hidden="true"
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-slate-800 to-slate-900 border border-emerald-500/30 text-emerald-300 text-sm font-black shadow-md shadow-emerald-500/10"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-white/[0.12] bg-[#141c2c] text-white text-sm font-black shadow-md shadow-black/20"
             >
               {restaurant.name.slice(0, 1).toUpperCase()}
             </div>
@@ -183,19 +183,19 @@ export default async function CustomerQueueStatusPage({
               <p className="truncate text-sm font-black text-white leading-tight">
                 {restaurant.name}
               </p>
-              <p className="flex items-center gap-1.5 text-[11px] font-semibold text-emerald-400">
+              <p className="flex items-center gap-1.5 text-[11px] font-semibold text-emerald-400 mt-0.5">
                 <span className="relative flex h-1.5 w-1.5">
                   <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
                   <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-400" />
                 </span>
-                Live ticket
+                Live Digital Ticket
               </p>
             </div>
           </div>
           {!isTerminal && (status.queueType === 'TAKEAWAY' ? (restaurant.takeawayCustomerOrderingEnabled !== false && !restaurant.takeawayManualOrderingEnabled) : restaurant.dineInCustomerOrderingEnabled !== false) && (
             <Link
               href={menuUrl}
-              className="inline-flex min-h-[40px] h-10 items-center gap-1.5 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 px-3.5 text-xs font-bold text-emerald-200 transition-all hover:bg-emerald-500/20 active:scale-95 shrink-0 shadow-sm shadow-emerald-500/10"
+              className="inline-flex min-h-[40px] h-10 items-center gap-1.5 rounded-xl border border-white/10 bg-white/[0.04] px-3.5 text-xs font-bold text-slate-200 transition-all hover:bg-white/[0.08] hover:text-white active:scale-95 shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
             >
               <UtensilsCrossed aria-hidden="true" className="h-3.5 w-3.5 text-emerald-400" />
               <span>Menu</span>
@@ -246,8 +246,8 @@ export default async function CustomerQueueStatusPage({
         )}
       </div>
 
-      <footer className="relative z-10 mx-auto w-full max-w-md px-4 pb-6 pt-4 text-center">
-        <p className="inline-flex items-center gap-2 text-xs font-medium text-slate-500">
+      <footer className="relative z-10 mx-auto w-full max-w-md px-4 pb-6 pt-6 text-center">
+        <p className="inline-flex items-center gap-1.5 text-[11px] font-medium text-slate-500">
           <span>Powered by</span>
           <span className="font-bold tracking-tight text-emerald-400">QueueFlow</span>
         </p>

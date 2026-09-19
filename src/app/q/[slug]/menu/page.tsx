@@ -98,15 +98,19 @@ export default async function CustomerMenuPage({
   const currency = (restaurant as unknown as { currency?: string })?.currency || 'INR';
 
   return (
-    <main className="qf-bg flex min-h-[100dvh] flex-col px-4 py-6 text-slate-100 selection:bg-orange-500 selection:text-white sm:py-8">
+    <main className="qf-bg flex min-h-[100dvh] flex-col overflow-x-hidden px-4 py-5 text-slate-100 selection:bg-emerald-500/30 selection:text-emerald-100 sm:py-7">
+      {/* Subtle ambient lighting */}
+      <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 h-[380px] bg-gradient-to-b from-slate-800/20 via-slate-900/10 to-transparent" />
+      <div aria-hidden="true" className="pointer-events-none absolute top-4 left-1/2 -translate-x-1/2 h-64 w-64 rounded-full bg-emerald-500/[0.04] blur-3xl" />
+
       {qtoken && <TicketCookieSync slug={slug} token={qtoken} isTerminal={false} />}
       <CustomerTicketFloat slug={slug} qtoken={qtoken} />
-      <div className="mx-auto w-full max-w-md space-y-5 sm:space-y-6">
+      <div className="relative z-10 mx-auto w-full max-w-md flex-1 space-y-4 sm:space-y-5">
         <RestaurantHeader restaurant={restaurant} />
 
         <div className="flex items-center justify-between gap-3 px-1">
           <div className="flex items-center gap-2">
-            <h1 className="text-base font-bold text-white tracking-tight">Food Menu</h1>
+            <h1 className="text-base font-black text-white tracking-tight">Food Menu</h1>
             <span className="text-xs font-semibold text-slate-400">
               · {menuCategories.flatMap((c) => c.items).length} items • Live
             </span>
@@ -114,14 +118,13 @@ export default async function CustomerMenuPage({
           {qtoken ? (
             <a
               href={`/q/${slug}/status/${qtoken}`}
-              className="inline-flex min-h-[40px] items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3.5 py-1.5 text-xs font-bold text-slate-200 transition-colors hover:bg-white/10 hover:text-white"
+              className="inline-flex min-h-[38px] items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-xs font-bold text-slate-200 transition-colors hover:bg-white/[0.08] hover:text-white"
             >
-              <span className="material-symbols-outlined text-[16px] text-emerald-400">confirmation_number</span>
-              My Ticket
+              <span>My Ticket →</span>
             </a>
           ) : (
-            <span className="text-xs font-medium text-slate-500">
-              {isTakeaway ? 'Takeaway menu' : 'Food menu'}
+            <span className="text-xs font-medium text-slate-400">
+              {isTakeaway ? 'Takeaway menu' : 'Dining menu'}
             </span>
           )}
         </div>
@@ -145,8 +148,8 @@ export default async function CustomerMenuPage({
         />
       </div>
 
-      <footer className="w-full max-w-md mx-auto text-center pt-10 pb-[calc(1rem+env(safe-area-inset-bottom))]">
-        <div className="inline-flex items-center gap-2 text-xs font-semibold text-slate-500">
+      <footer className="relative z-10 w-full max-w-md mx-auto text-center pt-8 pb-6">
+        <div className="inline-flex items-center gap-1.5 text-[11px] font-medium text-slate-500">
           <span>Powered by</span>
           <span className="text-emerald-400 font-bold tracking-tight">QueueFlow</span>
         </div>

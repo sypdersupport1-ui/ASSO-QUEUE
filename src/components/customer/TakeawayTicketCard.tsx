@@ -14,6 +14,8 @@ import {
   UtensilsCrossed,
   ArrowRight,
   Flame,
+  Megaphone,
+  Sparkles,
 } from 'lucide-react';
 import type { PublicQueueStatusResponse } from '@/lib/services/queue-service';
 import { formatTakeawayTicketNumber } from '@/lib/customer-ticket-ux';
@@ -245,7 +247,17 @@ export function TakeawayTicketCard({
 
           {currentStage === 'ORDER_COMPLETED' && (
             <span className="inline-flex items-center gap-1.5 rounded-full border border-teal-500/40 bg-teal-500/20 px-3 py-1 text-[11px] font-black uppercase tracking-wider text-teal-300">
-              {isReady ? <span>🎉 Ready for Pickup</span> : <span>👨‍🍳 Preparing</span>}
+              {isReady ? (
+                <span className="inline-flex items-center gap-1">
+                  <Sparkles className="h-3 w-3 text-emerald-300" aria-hidden="true" />
+                  <span>Ready for Pickup</span>
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1">
+                  <Flame className="h-3 w-3 text-amber-300" aria-hidden="true" />
+                  <span>Preparing</span>
+                </span>
+              )}
             </span>
           )}
 
@@ -407,8 +419,10 @@ export function TakeawayTicketCard({
       {/* STAGE 2: CALLED */}
       {currentStage === 'CALLED' && !isCancelled && !isExpired && (
         <div className="relative z-10 space-y-4 pt-1 animate-fadeUp">
-          <div className="rounded-2xl border border-amber-500/50 bg-gradient-to-br from-amber-500/25 via-emerald-950/30 to-slate-900/90 p-5 text-center shadow-xl space-y-2">
-            <span className="text-3xl" aria-hidden="true">📢</span>
+          <div className="rounded-2xl border border-amber-500/50 bg-gradient-to-br from-amber-500/25 via-emerald-950/30 to-slate-900/90 p-5 text-center shadow-xl space-y-3">
+            <div className="flex h-12 w-12 mx-auto items-center justify-center rounded-2xl bg-amber-500/20 text-amber-300 border border-amber-500/30">
+              <Megaphone className="h-6 w-6 text-amber-400" aria-hidden="true" />
+            </div>
             <h2 className="text-2xl sm:text-3xl font-black text-amber-300 tracking-tight">
               YOUR TICKET IS CALLED
             </h2>
@@ -447,8 +461,10 @@ export function TakeawayTicketCard({
         <div className="relative z-10 space-y-4 pt-1 animate-fadeUp">
           {isReady ? (
             /* Sub-state: Order is READY for collection */
-            <div className="rounded-2xl border border-emerald-500/50 bg-gradient-to-br from-emerald-500/25 via-teal-950/30 to-slate-900/90 p-5 text-center shadow-xl space-y-2">
-              <span className="text-3xl" aria-hidden="true">🎉</span>
+            <div className="rounded-2xl border border-emerald-500/50 bg-gradient-to-br from-emerald-500/25 via-teal-950/30 to-slate-900/90 p-5 text-center shadow-xl space-y-3">
+              <div className="flex h-12 w-12 mx-auto items-center justify-center rounded-2xl bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                <Sparkles className="h-6 w-6 text-emerald-400" aria-hidden="true" />
+              </div>
               <h2 className="text-2xl sm:text-3xl font-black text-emerald-300 tracking-tight">
                 READY FOR COLLECTION!
               </h2>

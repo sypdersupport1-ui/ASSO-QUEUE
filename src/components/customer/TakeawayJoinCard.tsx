@@ -2,9 +2,13 @@
 
 import React, { useState } from 'react';
 import { useActionState } from 'react';
-import { ShoppingBag, ArrowRight, User, Phone, LoaderCircle, TriangleAlert } from 'lucide-react';
+import { ShoppingBag, ArrowRight, User, Phone, TriangleAlert } from 'lucide-react';
 import { joinQueuePublicAction, JoinQueueState } from '@/app/q/actions';
 import type { PublicRestaurantInfo } from '@/lib/services/public-restaurant-service';
+import { CustomerSurface } from './ui/CustomerSurface';
+import { CustomerInput } from './ui/CustomerInput';
+import { CustomerButton } from './ui/CustomerButton';
+import { CustomerBadge } from './ui/CustomerBadge';
 import { normalizePhoneForSubmit, mapJoinErrorToUX, type JoinFormErrors } from '@/lib/customer-join-ux';
 
 interface TakeawayJoinCardProps {
@@ -48,33 +52,35 @@ export function TakeawayJoinCard({ restaurant }: TakeawayJoinCardProps) {
   }
 
   return (
-    <section
+    <CustomerSurface
       aria-label="Takeaway queue join"
-      className="relative space-y-5 rounded-3xl border border-white/10 bg-slate-900/90 p-5 sm:p-7 shadow-2xl backdrop-blur-xl"
+      variant="card"
+      className="space-y-4 sm:space-y-5"
     >
-      <div className="space-y-1 text-center">
-        <div className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-[11px] font-black uppercase tracking-wider text-emerald-400">
-          <ShoppingBag className="h-3 w-3" />
-          <span>Takeaway Queue</span>
+      <div className="space-y-2 text-center">
+        <div className="flex justify-center">
+          <CustomerBadge variant="warning" icon={<ShoppingBag className="h-3 w-3" />}>
+            Takeaway Service
+          </CustomerBadge>
         </div>
-        <h2 className="text-xl sm:text-2xl font-black tracking-tight text-white mt-1">
+        <h2 className="text-lg sm:text-xl font-black tracking-tight text-white">
           Join Takeaway Line
         </h2>
         <p className="text-xs text-slate-400">
-          Get your digital takeaway ticket first. You can browse the menu after joining.
+          Save your spot for counter pickup. You will be notified when your order is called.
         </p>
       </div>
 
       {serverError && (
         <div
           role="alert"
-          className="rounded-2xl border border-rose-500/30 bg-rose-500/10 p-3.5 text-center"
+          className="rounded-2xl border border-rose-500/30 bg-rose-500/10 p-3.5 text-center space-y-1"
         >
           <p className="flex items-center justify-center gap-1.5 text-xs font-bold text-rose-200">
             <TriangleAlert aria-hidden="true" className="h-4 w-4 shrink-0" />
             {serverError.title}
           </p>
-          <p className="mt-1 text-xs leading-relaxed text-rose-300/90">
+          <p className="text-xs leading-relaxed text-rose-300/90">
             {serverError.body}
           </p>
         </div>
@@ -87,89 +93,60 @@ export function TakeawayJoinCard({ restaurant }: TakeawayJoinCardProps) {
         <input type="hidden" name="queueType" value="TAKEAWAY" />
         <input type="hidden" name="customerPhone" value={normalizePhoneForSubmit(phone)} />
 
-        {/* Customer Name */}
-        <div className="space-y-1 text-left">
-          <label htmlFor="takeawayCustomerName" className="block text-xs font-bold uppercase tracking-wider text-slate-300">
-            Your name <span aria-hidden="true" className="text-emerald-400">*</span>
-          </label>
-          <div className="relative">
-            <User aria-hidden="true" className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
-            <input
-              id="takeawayCustomerName"
-              type="text"
-              name="customerName"
-              required
-              autoComplete="name"
-              placeholder="e.g. Rahul Sharma"
-              value={name}
-              onChange={(e) => {
-                setName(e.target.value);
-                if (fieldErrors.name) setFieldErrors((p) => ({ ...p, name: undefined }));
-              }}
-              className={`h-12 w-full rounded-2xl border bg-slate-950/80 pl-10 pr-4 text-sm text-white placeholder-slate-500 transition-all focus:outline-none ${
-                fieldErrors.name
-                  ? 'border-rose-500/80 focus:ring-2 focus:ring-rose-500/30'
-                  : 'border-white/10 focus:border-emerald-500/60 focus:ring-2 focus:ring-emerald-500/20'
-              }`}
-            />
-          </div>
-          {fieldErrors.name && (
-            <p className="text-[11px] font-medium text-rose-400 pl-1">{fieldErrors.name}</p>
-          )}
-        </div>
-
-        {/* Phone Number (Optional for buzzer/SMS) */}
-        <div className="space-y-1 text-left">
-          <label htmlFor="takeawayCustomerPhone" className="block text-xs font-bold uppercase tracking-wider text-slate-300">
-            Mobile phone <span className="text-[10px] text-slate-500 font-normal">(Optional for notifications)</span>
-          </label>
-          <div className="relative">
-            <Phone aria-hidden="true" className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
-            <input
-              id="takeawayCustomerPhone"
-              type="tel"
-              autoComplete="tel"
-              placeholder="e.g. 9876543210"
-              value={phone}
-              onChange={(e) => {
-                setPhone(e.target.value);
-                if (fieldErrors.phone) setFieldErrors((p) => ({ ...p, phone: undefined }));
-              }}
-              className={`h-12 w-full rounded-2xl border bg-slate-950/80 pl-10 pr-4 text-sm text-white placeholder-slate-500 transition-all focus:outline-none ${
-                fieldErrors.phone
-                  ? 'border-rose-500/80 focus:ring-2 focus:ring-rose-500/30'
-                  : 'border-white/10 focus:border-emerald-500/60 focus:ring-2 focus:ring-emerald-500/20'
-              }`}
-            />
-          </div>
-          {fieldErrors.phone && (
-            <p className="text-[11px] font-medium text-rose-400 pl-1">{fieldErrors.phone}</p>
-          )}
-        </div>
-
-        {/* Primary CTA: Join Takeaway Queue */}
-        <button
-          type="submit"
+        <CustomerInput
+          id="takeawayCustomerName"
+          name="customerName"
+          label="Your name"
+          required
+          autoComplete="name"
+          placeholder="e.g. Rahul Sharma"
           disabled={isPending}
-          className="flex min-h-[54px] h-13 w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-500 hover:brightness-110 active:scale-[0.99] text-slate-950 font-black text-sm tracking-wide shadow-xl shadow-emerald-500/25 transition-all disabled:opacity-50 cursor-pointer"
-        >
-          {isPending ? (
-            <>
-              <LoaderCircle className="h-4 w-4 animate-spin" />
-              <span>Saving your spot...</span>
-            </>
-          ) : (
-            <>
-              <span>Join Takeaway Queue</span>
-              <ArrowRight className="h-4 w-4" />
-            </>
-          )}
-        </button>
+          value={name}
+          error={fieldErrors.name}
+          icon={<User className="h-4 w-4" />}
+          onChange={(e) => {
+            setName(e.target.value);
+            if (fieldErrors.name) setFieldErrors((p) => ({ ...p, name: undefined }));
+          }}
+        />
 
-        <p className="text-center text-[11px] text-slate-400">
-          No table seating required. You will be called to the counter when ready.
-        </p>
+        <CustomerInput
+          id="takeawayCustomerPhone"
+          name="takeawayCustomerPhone"
+          label="Mobile phone"
+          hint="Optional for notifications"
+          type="tel"
+          autoComplete="tel"
+          placeholder="e.g. 98765 43210"
+          disabled={isPending}
+          value={phone}
+          error={fieldErrors.phone}
+          icon={<Phone className="h-4 w-4" />}
+          onChange={(e) => {
+            setPhone(e.target.value);
+            if (fieldErrors.phone) setFieldErrors((p) => ({ ...p, phone: undefined }));
+          }}
+        />
+
+        <div className="pt-2">
+          <CustomerButton
+            type="submit"
+            variant="takeaway"
+            size="lg"
+            className="w-full"
+            isLoading={isPending}
+            loadingText="Saving your spot…"
+            leftIcon={<ShoppingBag className="h-4 w-4" />}
+            rightIcon={<ArrowRight className="h-4 w-4" />}
+          >
+            Join Takeaway Queue
+          </CustomerButton>
+          <p className="text-center text-[11px] text-slate-400 mt-2.5">
+            No table wait · Direct counter collection
+          </p>
+        </div>
       </form>
-    </section>
+    </CustomerSurface>
   );
 }
+

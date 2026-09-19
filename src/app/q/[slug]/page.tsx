@@ -193,15 +193,25 @@ export default async function PublicRestaurantQueuePage({
   }
 
   return (
-    <main className="qf-bg relative flex min-h-[100dvh] flex-col justify-between overflow-hidden text-slate-100 selection:bg-orange-500/30 selection:text-orange-100">
+    <main className="qf-bg relative flex min-h-[100dvh] flex-col justify-between overflow-x-hidden text-slate-100 selection:bg-emerald-500/30 selection:text-emerald-100">
       <LandingAutoRefresh />
 
-      <div className="relative z-10 mx-auto w-full max-w-md space-y-4 px-4 py-5 sm:py-7">
+      {/* Subtle ambient lighting */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-x-0 top-0 h-[380px] bg-gradient-to-b from-slate-800/25 via-slate-900/10 to-transparent"
+      />
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute top-4 left-1/2 -translate-x-1/2 h-64 w-64 rounded-full bg-emerald-500/[0.04] blur-3xl"
+      />
+
+      <div className="relative z-10 mx-auto w-full max-w-md space-y-4 px-4 py-5 sm:py-7 flex-1">
         {/* Left queue confirmation banner */}
         {leftQueueParam && (
-          <div className="rounded-2xl border border-emerald-400/30 bg-emerald-500/15 p-4 text-center shadow-lg animate-fadeUp">
-            <p className="text-xs font-black text-emerald-300">✨ You have left the queue!</p>
-            <p className="mt-1 text-[11px] text-slate-300">Thank you for dining with us. Whenever you return, enter your details below to join again.</p>
+          <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-4 text-center shadow-lg animate-fadeUp">
+            <p className="text-xs font-bold text-emerald-300">You have left the queue</p>
+            <p className="mt-1 text-[11px] text-slate-300">Thank you for visiting. Whenever you return, choose an option below to join again.</p>
           </div>
         )}
 
@@ -218,23 +228,23 @@ export default async function PublicRestaurantQueuePage({
           capacity={{ active: activeQueueCount, max: restaurant.maxQueueCapacity }}
         />
 
-        <div className="animate-fadeUp space-y-4" style={{ animationDelay: '200ms' }}>
+        <div className="animate-fadeUp space-y-4" style={{ animationDelay: '150ms' }}>
         {/* Seated guest banner — allows rejoining while keeping previous ticket accessible */}
         {seatedTicket && (
-          <div className="rounded-3xl border border-emerald-500/30 bg-emerald-950/40 p-4 shadow-xl backdrop-blur-sm space-y-3">
+          <div className="rounded-2xl border border-emerald-500/30 bg-[#121826]/95 p-4 shadow-xl backdrop-blur-md space-y-3">
             <div className="flex items-start gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
                 <UtensilsCrossed className="h-5 w-5" />
               </div>
               <div className="min-w-0 flex-1">
-                <div className="inline-flex items-center gap-1 rounded-full bg-emerald-400/15 border border-emerald-400/30 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-emerald-300">
+                <div className="inline-flex items-center gap-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-300">
                   Seated Guest · {seatedTicket.displayNumber ? `Ticket Q-${seatedTicket.displayNumber.replace(/^#+/, '')}` : 'Table Ready'}
                 </div>
                 <p className="mt-1 text-xs font-bold text-white">
-                  Welcome back {seatedTicket.customerName}! Hope you enjoyed your meal 🎉
+                  Welcome back {seatedTicket.customerName}! Hope you enjoyed your meal.
                 </p>
-                <p className="text-[11px] text-slate-300 leading-relaxed">
-                  Visiting again today? Fill in the form below to get a new queue ticket, or quit your previous ticket.
+                <p className="text-[11px] text-slate-400 leading-relaxed">
+                  Visiting again today? Fill in the form below to get a new ticket, or release your previous table.
                 </p>
               </div>
             </div>
@@ -261,28 +271,28 @@ export default async function PublicRestaurantQueuePage({
         {activeTicketToken ? (
           <section
             aria-label="Already in queue"
-            className="rounded-3xl border border-emerald-400/30 bg-gradient-to-br from-emerald-500/20 via-slate-900/90 to-teal-500/10 p-5 text-center shadow-2xl shadow-emerald-500/10"
+            className="rounded-2xl border border-emerald-500/30 bg-[#121826]/95 p-5 text-center shadow-xl backdrop-blur-md"
           >
-            <p className="inline-flex items-center gap-1.5 rounded-full border border-emerald-400/30 bg-emerald-400/15 px-3 py-1 text-[11px] font-black uppercase tracking-widest text-emerald-300">
+            <p className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/15 px-3 py-1 text-[11px] font-bold uppercase tracking-widest text-emerald-300">
               <span aria-hidden="true" className="relative flex h-2 w-2">
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
                 <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
               </span>
-              Spot saved
+              Spot Saved
             </p>
             <p className="mt-2 text-base font-black tracking-tight text-white">
               {activeTicketState === 'CALLED'
-                ? 'Your turn is being called 📢'
-                : "You're already in the queue 🎉"}
+                ? 'Your turn is being called'
+                : "You're already in the queue"}
             </p>
             <p className="mt-1 text-xs leading-relaxed text-slate-300">
               {activeTicketState === 'CALLED'
                 ? 'Please return to the restaurant now — your ticket is live below.'
-                : 'No need to fill the form again — your ticket is live below.'}
+                : 'No need to fill the form again — your spot is secured.'}
             </p>
             <Link
               href={`/q/${slug}/status/${activeTicketToken}`}
-              className="qf-cta mt-3 flex h-13 min-h-[52px] items-center justify-center gap-2 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-sm font-black text-slate-950 shadow-lg shadow-emerald-500/20 transition-all active:scale-[0.99]"
+              className="mt-3.5 flex h-12 min-h-[48px] items-center justify-center gap-2 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-sm font-black text-slate-950 shadow-lg shadow-emerald-500/15 transition-all active:scale-[0.98]"
             >
               View My Ticket →
             </Link>
@@ -290,13 +300,13 @@ export default async function PublicRestaurantQueuePage({
               <form action={quitPreviousQueueAction.bind(null, slug)} className="w-full">
                 <button
                   type="submit"
-                  className="w-full flex h-11 items-center justify-center gap-2 rounded-xl border border-rose-500/30 bg-rose-500/10 text-xs font-bold text-rose-300 hover:bg-rose-500/20 active:scale-95 transition-all cursor-pointer"
+                  className="w-full flex h-10 items-center justify-center gap-2 rounded-xl border border-rose-500/30 bg-rose-500/10 text-xs font-bold text-rose-300 hover:bg-rose-500/20 active:scale-95 transition-all cursor-pointer"
                 >
                   <LogOut className="h-3.5 w-3.5" />
                   <span>Quit Queue & Start New Ticket</span>
                 </button>
               </form>
-              <p className="text-[10px] text-slate-400">
+              <p className="text-[10px] text-slate-500">
                 Returning for another meal or joining as a different guest? Tap above to start fresh.
               </p>
             </div>
@@ -304,19 +314,19 @@ export default async function PublicRestaurantQueuePage({
         ) : canJoin ? (
           <CustomerJoinFlow restaurant={restaurant} initialService={initialService} />
         ) : (
-          <p className="px-2 text-center text-[11px] text-slate-500">
+          <p className="px-2 text-center text-xs text-slate-400">
             {landingState === 'FULL'
               ? 'This page updates automatically — no need to refresh.'
-              : 'Ask the host if you need help.'}
+              : 'Please check with the host if you require assistance.'}
           </p>
         )}
         </div>
 
-        {/* Contact + secondary menu access (only when data exists) */}
+        {/* Contact + location (only when data exists) */}
         {(restaurant.phone || restaurant.address) && (
-          <section aria-label="Restaurant information" className="qf-card space-y-2 rounded-2xl p-4">
+          <section aria-label="Restaurant information" className="rounded-2xl border border-white/[0.08] bg-[#121826]/80 p-4 space-y-2">
             {restaurant.address && (
-              <p className="text-center text-[13px] text-slate-300">
+              <p className="text-center text-xs text-slate-300">
                 {restaurant.address}{restaurant.city ? `, ${restaurant.city}` : ''}
               </p>
             )}
@@ -324,9 +334,9 @@ export default async function PublicRestaurantQueuePage({
               <p className="text-center">
                 <a
                   href={`tel:${restaurant.phone.replace(/\s/g, '')}`}
-                  className="inline-flex min-h-[44px] items-center gap-1.5 rounded-full px-3 text-[13px] font-semibold text-emerald-400 hover:text-emerald-300"
+                  className="inline-flex min-h-[44px] items-center gap-1.5 rounded-full px-3 text-xs font-semibold text-emerald-400 hover:text-emerald-300"
                 >
-                  <Phone aria-hidden="true" className="h-4 w-4" />
+                  <Phone aria-hidden="true" className="h-3.5 w-3.5" />
                   {restaurant.phone}
                 </a>
               </p>
@@ -334,20 +344,20 @@ export default async function PublicRestaurantQueuePage({
           </section>
         )}
 
-        <div className="animate-fadeUp" style={{ animationDelay: '260ms' }}>
+        <div className="animate-fadeUp pt-1" style={{ animationDelay: '220ms' }}>
           <MenuPreviewSection categories={menuCategories} />
           <Link
             href={`/q/${slug}/menu`}
-            className="mt-2 flex min-h-[52px] items-center justify-center gap-1.5 rounded-2xl border border-white/10 bg-white/5 text-[13px] font-bold text-slate-200 transition-all hover:bg-white/10 hover:text-white active:scale-[0.99]"
+            className="mt-2.5 flex min-h-[48px] h-12 items-center justify-center gap-1.5 rounded-2xl border border-white/10 bg-white/[0.04] text-xs font-bold text-slate-200 transition-all hover:bg-white/[0.08] hover:text-white active:scale-[0.98]"
           >
-            🍽️ View full menu
+            <span>View full menu</span>
             <ChevronRight aria-hidden="true" className="h-4 w-4 text-emerald-400" />
           </Link>
         </div>
       </div>
 
-      <footer className="relative z-10 mx-auto w-full max-w-md px-4 pb-6 pt-8 text-center">
-        <p className="inline-flex items-center gap-2 text-xs font-medium text-slate-500">
+      <footer className="relative z-10 mx-auto w-full max-w-md px-4 pb-6 pt-6 text-center">
+        <p className="inline-flex items-center gap-1.5 text-[11px] font-medium text-slate-500">
           <span>Powered by</span>
           <span className="font-bold tracking-tight text-emerald-400">QueueFlow</span>
         </p>

@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, use } from 'react';
 import Link from 'next/link';
+import { CreditCard, Store, ReceiptText, Ticket } from 'lucide-react';
 
 interface PaymentStatusState {
   status: 'IDLE' | 'PROCESSING' | 'SUCCEEDED' | 'FAILED' | 'REFUNDED';
@@ -201,7 +202,9 @@ export default function CustomerPaymentPage({
     return (
       <main className="qf-bg flex min-h-[100dvh] items-center justify-center px-4 py-8 text-slate-100">
         <div role="alert" className="w-full max-w-sm rounded-3xl border border-white/10 bg-slate-900/90 p-8 text-center space-y-4 shadow-2xl backdrop-blur-xl">
-          <div aria-hidden="true" className="text-4xl">🧾</div>
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-slate-400">
+            <ReceiptText className="h-7 w-7" aria-hidden="true" />
+          </div>
           <div className="space-y-1">
             <h1 className="text-lg font-bold text-white">Order not found</h1>
             <p className="text-xs leading-relaxed text-slate-400">
@@ -246,9 +249,16 @@ export default function CustomerPaymentPage({
           </div>
           <Link
             href={backHref}
-            className="inline-flex min-h-[44px] shrink-0 items-center rounded-2xl border border-white/10 bg-white/5 px-3.5 text-xs font-bold text-slate-300 transition-colors hover:bg-white/10 hover:text-emerald-300"
+            className="inline-flex min-h-[44px] shrink-0 items-center gap-1.5 rounded-2xl border border-white/10 bg-white/5 px-3.5 text-xs font-bold text-slate-300 transition-colors hover:bg-white/10 hover:text-emerald-300"
           >
-            {qtoken ? '🎟️ My Ticket' : '← Back'}
+            {qtoken ? (
+              <>
+                <Ticket className="h-3.5 w-3.5 text-amber-400" aria-hidden="true" />
+                <span>My Ticket</span>
+              </>
+            ) : (
+              '← Back'
+            )}
           </Link>
         </header>
 
@@ -352,7 +362,7 @@ export default function CustomerPaymentPage({
                       <p className="text-[11px] text-slate-400">UPI, Cards, Netbanking</p>
                     </div>
                   </div>
-                  <span className="text-base" aria-hidden="true">💳</span>
+                  <CreditCard className="h-5 w-5 text-slate-400 shrink-0" aria-hidden="true" />
                 </button>
 
                 <button
@@ -379,7 +389,7 @@ export default function CustomerPaymentPage({
                       <p className="text-[11px] text-slate-400">Settle bill at the counter when served</p>
                     </div>
                   </div>
-                  <span className="text-base" aria-hidden="true">🏪</span>
+                  <Store className="h-5 w-5 text-slate-400 shrink-0" aria-hidden="true" />
                 </button>
               </div>
             </div>
