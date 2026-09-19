@@ -189,6 +189,8 @@ export interface Database {
           takeaway_customer_ordering_enabled: boolean;
           takeaway_staff_ordering_enabled: boolean;
           takeaway_manual_ordering_enabled: boolean;
+          /** Phase 2 Customer Theme: active customer-facing presentation theme identifier. Default 'default'. */
+          customer_theme_key: string;
         };
         Insert: Omit<Database['public']['Tables']['restaurants']['Row'], 'id' | 'created_at' | 'updated_at'> & {
           id?: string;
@@ -202,6 +204,7 @@ export interface Database {
           takeaway_customer_ordering_enabled?: boolean;
           takeaway_staff_ordering_enabled?: boolean;
           takeaway_manual_ordering_enabled?: boolean;
+          customer_theme_key?: string;
         };
         Update: Partial<Database['public']['Tables']['restaurants']['Insert']>;
       };

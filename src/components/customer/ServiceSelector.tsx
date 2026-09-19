@@ -53,17 +53,17 @@ export function ServiceSelector({
               onSelectService('DINE_IN');
             }
           }}
-          className={`group flex flex-col items-center justify-center p-4 rounded-2xl border transition-all active:scale-[0.98] cursor-pointer text-center min-h-[110px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 ${
+          className={`group flex flex-col items-center justify-center p-4 rounded-2xl border transition-all active:scale-[0.98] cursor-pointer text-center min-h-[110px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--qf-accent-dine-in)] ${
             selectedService === 'DINE_IN'
-              ? 'border-blue-500/80 bg-blue-950/40 shadow-lg shadow-blue-500/15 text-white'
+              ? 'border-[var(--qf-accent-dine-in)] bg-blue-950/40 shadow-lg shadow-blue-500/15 text-white'
               : 'border-white/[0.08] bg-white/[0.02] hover:border-white/[0.18] hover:bg-white/[0.05] text-slate-300 hover:text-white'
           }`}
         >
           <div
             className={`flex h-11 w-11 items-center justify-center rounded-xl mb-2 transition-all ${
               selectedService === 'DINE_IN'
-                ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30'
-                : 'bg-blue-500/10 border border-blue-500/20 text-blue-400 group-hover:bg-blue-500/20'
+                ? 'bg-[var(--qf-accent-dine-in)] text-white shadow-md shadow-blue-600/30'
+                : 'bg-[var(--qf-accent-dine-in-glow)] border border-blue-500/20 text-blue-400 group-hover:bg-blue-500/20'
             }`}
           >
             <UtensilsCrossed className="h-5 w-5" />
@@ -89,17 +89,17 @@ export function ServiceSelector({
               onSelectService('TAKEAWAY');
             }
           }}
-          className={`group flex flex-col items-center justify-center p-4 rounded-2xl border transition-all active:scale-[0.98] cursor-pointer text-center min-h-[110px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 ${
+          className={`group flex flex-col items-center justify-center p-4 rounded-2xl border transition-all active:scale-[0.98] cursor-pointer text-center min-h-[110px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--qf-accent-takeaway)] ${
             selectedService === 'TAKEAWAY'
-              ? 'border-amber-500/80 bg-amber-950/40 shadow-lg shadow-amber-500/15 text-white'
+              ? 'border-[var(--qf-accent-takeaway)] bg-amber-950/40 shadow-lg shadow-amber-500/15 text-white'
               : 'border-white/[0.08] bg-white/[0.02] hover:border-white/[0.18] hover:bg-white/[0.05] text-slate-300 hover:text-white'
           }`}
         >
           <div
             className={`flex h-11 w-11 items-center justify-center rounded-xl mb-2 transition-all ${
               selectedService === 'TAKEAWAY'
-                ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/30'
-                : 'bg-amber-500/10 border border-amber-500/20 text-amber-400 group-hover:bg-amber-500/20'
+                ? 'bg-[var(--qf-accent-takeaway)] text-slate-950 shadow-md shadow-amber-500/30'
+                : 'bg-[var(--qf-accent-takeaway-glow)] border border-amber-500/20 text-amber-400 group-hover:bg-amber-500/20'
             }`}
           >
             <ShoppingBag className="h-5 w-5" />

@@ -33,6 +33,8 @@ export interface PublicRestaurantInfo {
   takeawayCustomerOrderingEnabled: boolean;
   takeawayStaffOrderingEnabled: boolean;
   takeawayManualOrderingEnabled: boolean;
+  /** Phase 2 Customer Theme: active customer-facing presentation theme identifier (e.g. 'default'). */
+  customerThemeKey: string;
 }
 
 export class PublicRestaurantService {
@@ -46,25 +48,58 @@ export class PublicRestaurantService {
       CacheKeys.publicRestaurant(slug),
       async () => {
         const supabase = createAdminClient();
+        const baseFields =
+          'id, name, slug, description, phone, address, city, logo_url, queue_enabled, queue_operating_state, max_queue_capacity, min_party_size, max_party_size, call_timeout_minutes, status, currency, avg_service_time_mins, service_capacity_units, eta_buffer_mins, takeaway_enabled, dine_in_customer_ordering_enabled, dine_in_staff_ordering_enabled, takeaway_customer_ordering_enabled, takeaway_staff_ordering_enabled, takeaway_manual_ordering_enabled';
 
-        const { data: restaurant, error } = await supabase
+        let restaurant: Record<string, unknown> | null = null;
+        let queryError: { code: string; message: string; details?: string } | null = null;
+
+        // Try selecting customer_theme_key along with base fields
+        const primaryRes = await supabase
           .from('restaurants')
-          .select('id, name, slug, description, phone, address, city, logo_url, queue_enabled, queue_operating_state, max_queue_capacity, min_party_size, max_party_size, call_timeout_minutes, status, currency, avg_service_time_mins, service_capacity_units, eta_buffer_mins, takeaway_enabled, dine_in_customer_ordering_enabled, dine_in_staff_ordering_enabled, takeaway_customer_ordering_enabled, takeaway_staff_ordering_enabled, takeaway_manual_ordering_enabled')
+          .select(`${baseFields}, customer_theme_key`)
           .eq('slug', slug.trim().toLowerCase())
           .eq('status', 'ACTIVE')
           .maybeSingle();
 
-        if (error) {
+        if (primaryRes.error) {
+          // If remote migration has not yet added customer_theme_key (PostgreSQL code 42703: undefined_column),
+          // gracefully fall back to base fields query so customer QR flows NEVER break.
+          if (primaryRes.error.code === '42703') {
+            logger.warn('Remote database schema missing customer_theme_key column; falling back to default theme', {
+              operation: 'getPublicRestaurantBySlug',
+              metadata: { slug },
+            });
+            const fallbackRes = await supabase
+              .from('restaurants')
+              .select(baseFields)
+              .eq('slug', slug.trim().toLowerCase())
+              .eq('status', 'ACTIVE')
+              .maybeSingle();
+
+            if (fallbackRes.error) {
+              queryError = fallbackRes.error;
+            } else {
+              restaurant = fallbackRes.data as Record<string, unknown> | null;
+            }
+          } else {
+            queryError = primaryRes.error;
+          }
+        } else {
+          restaurant = primaryRes.data as Record<string, unknown> | null;
+        }
+
+        if (queryError) {
           logger.error('Database error fetching public restaurant by slug', {
             operation: 'getPublicRestaurantBySlug',
             metadata: {
               slug,
-              code: error.code,
-              message: error.message,
-              details: error.details,
+              code: queryError.code,
+              message: queryError.message,
+              details: queryError.details,
             },
           });
-          throw new Error(`Database error fetching restaurant: ${error.message}`);
+          throw new Error(`Database error fetching restaurant: ${queryError.message}`);
         }
 
         if (!restaurant) {
@@ -72,42 +107,61 @@ export class PublicRestaurantService {
         }
 
         const raw = restaurant as unknown as {
+          id: string;
+          name: string;
+          slug: string;
+          description: string | null;
+          phone: string | null;
+          address: string | null;
+          city: string | null;
+          logo_url: string | null;
+          queue_enabled: boolean;
           queue_operating_state?: 'OPEN' | 'PAUSED' | 'CLOSING_SOON' | 'CLOSED';
+          max_queue_capacity: number;
+          min_party_size: number;
+          max_party_size: number;
+          call_timeout_minutes: number;
+          status: string;
           currency?: string;
+          avg_service_time_mins?: number;
+          service_capacity_units?: number;
+          eta_buffer_mins?: number;
           takeaway_enabled?: boolean;
           dine_in_customer_ordering_enabled?: boolean;
           dine_in_staff_ordering_enabled?: boolean;
           takeaway_customer_ordering_enabled?: boolean;
           takeaway_staff_ordering_enabled?: boolean;
           takeaway_manual_ordering_enabled?: boolean;
+          customer_theme_key?: string;
         };
 
         return {
-          id: restaurant.id,
-          name: restaurant.name,
-          slug: restaurant.slug,
-          description: restaurant.description,
-          phone: restaurant.phone,
-          address: restaurant.address,
-          city: restaurant.city,
-          logoUrl: restaurant.logo_url,
-          queueEnabled: restaurant.queue_enabled,
+          id: raw.id,
+          name: raw.name,
+          slug: raw.slug,
+          description: raw.description,
+          phone: raw.phone,
+          address: raw.address,
+          city: raw.city,
+          logoUrl: raw.logo_url,
+          queueEnabled: raw.queue_enabled,
           queueOperatingState: raw.queue_operating_state || 'OPEN',
-          maxQueueCapacity: restaurant.max_queue_capacity,
-          minPartySize: restaurant.min_party_size,
-          maxPartySize: restaurant.max_party_size,
-          callTimeoutMinutes: restaurant.call_timeout_minutes,
-          status: restaurant.status,
+          maxQueueCapacity: raw.max_queue_capacity,
+          minPartySize: raw.min_party_size,
+          maxPartySize: raw.max_party_size,
+          callTimeoutMinutes: raw.call_timeout_minutes,
+          status: raw.status,
           currency: raw.currency || 'INR',
-          avgServiceTimeMins: restaurant.avg_service_time_mins ?? 15,
-          serviceCapacityUnits: restaurant.service_capacity_units ?? 3,
-          etaBufferMins: restaurant.eta_buffer_mins ?? 5,
+          avgServiceTimeMins: raw.avg_service_time_mins ?? 15,
+          serviceCapacityUnits: raw.service_capacity_units ?? 3,
+          etaBufferMins: raw.eta_buffer_mins ?? 5,
           takeawayEnabled: raw.takeaway_enabled ?? false,
           dineInCustomerOrderingEnabled: raw.dine_in_customer_ordering_enabled ?? true,
           dineInStaffOrderingEnabled: raw.dine_in_staff_ordering_enabled ?? true,
           takeawayCustomerOrderingEnabled: raw.takeaway_customer_ordering_enabled ?? true,
           takeawayStaffOrderingEnabled: raw.takeaway_staff_ordering_enabled ?? true,
           takeawayManualOrderingEnabled: raw.takeaway_manual_ordering_enabled ?? false,
+          customerThemeKey: raw.customer_theme_key || 'default',
         };
       },
       300 // 5 minutes TTL

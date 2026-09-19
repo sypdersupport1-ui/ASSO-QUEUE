@@ -14,6 +14,7 @@ import { logger } from '@/lib/logging/logger';
 import { z } from 'zod';
 import type { RestaurantStatus } from '@/types/database.types';
 import { CacheService, CacheKeys } from '@/lib/cache';
+import { isRegisteredTheme } from '@/lib/themes/registry';
 
 // Zod Validation Schemas
 export const createRestaurantSchema = z.object({
@@ -36,6 +37,12 @@ export const createRestaurantSchema = z.object({
   takeaway_customer_ordering_enabled: z.boolean().optional(),
   takeaway_staff_ordering_enabled: z.boolean().optional(),
   takeaway_manual_ordering_enabled: z.boolean().optional(),
+  customer_theme_key: z
+    .string()
+    .refine((key) => !key || isRegisteredTheme(key), {
+      message: 'Must be an approved registered customer theme.',
+    })
+    .optional(),
 });
 
 export const updateRestaurantSchema = createRestaurantSchema.partial();
@@ -367,6 +374,13 @@ export class PlatformService {
     if (data.takeaway_customer_ordering_enabled !== undefined) updatePayload.takeaway_customer_ordering_enabled = data.takeaway_customer_ordering_enabled;
     if (data.takeaway_staff_ordering_enabled !== undefined) updatePayload.takeaway_staff_ordering_enabled = data.takeaway_staff_ordering_enabled;
     if (data.takeaway_manual_ordering_enabled !== undefined) updatePayload.takeaway_manual_ordering_enabled = data.takeaway_manual_ordering_enabled;
+    if (data.customer_theme_key !== undefined) {
+      const key = data.customer_theme_key.trim().toLowerCase();
+      if (!isRegisteredTheme(key)) {
+        throw new ValidationError(`Unknown theme key: "${data.customer_theme_key}". Must be an approved registered theme.`);
+      }
+      updatePayload.customer_theme_key = key;
+    }
 
     const { data: updated, error } = await supabase
       .from('restaurants')

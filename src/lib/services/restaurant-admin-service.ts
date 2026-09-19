@@ -14,7 +14,7 @@ import {
 import { logger } from '@/lib/logging/logger';
 import { z } from 'zod';
 import { CacheService, CacheKeys } from '@/lib/cache';
-
+import { isRegisteredTheme } from '@/lib/themes/registry';
 
 export const updateRestaurantProfileSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
@@ -34,6 +34,12 @@ export const updateRestaurantProfileSchema = z.object({
   takeaway_customer_ordering_enabled: z.boolean().optional(),
   takeaway_staff_ordering_enabled: z.boolean().optional(),
   takeaway_manual_ordering_enabled: z.boolean().optional(),
+  customer_theme_key: z
+    .string()
+    .refine((key) => !key || isRegisteredTheme(key), {
+      message: 'Must be an approved registered customer theme.',
+    })
+    .optional(),
 });
 
 /**
@@ -238,6 +244,15 @@ export class RestaurantAdminService {
       ...(data.takeaway_customer_ordering_enabled !== undefined ? { takeaway_customer_ordering_enabled: data.takeaway_customer_ordering_enabled } : {}),
       ...(data.takeaway_staff_ordering_enabled !== undefined ? { takeaway_staff_ordering_enabled: data.takeaway_staff_ordering_enabled } : {}),
       ...(data.takeaway_manual_ordering_enabled !== undefined ? { takeaway_manual_ordering_enabled: data.takeaway_manual_ordering_enabled } : {}),
+      ...(data.customer_theme_key !== undefined
+        ? (() => {
+            const key = data.customer_theme_key.trim().toLowerCase();
+            if (!isRegisteredTheme(key)) {
+              throw new ValidationError(`Unknown theme key: "${data.customer_theme_key}". Must be an approved registered theme.`);
+            }
+            return { customer_theme_key: key };
+          })()
+        : {}),
       updated_at: new Date().toISOString(),
     };
 
@@ -263,6 +278,62 @@ export class RestaurantAdminService {
       userId,
       updatePayload
     );
+  }
+
+  /**
+   * Phase 2 Customer Theme Selection.
+   * Allows Restaurant Admin to select an approved customer theme from THEME_REGISTRY.
+   *
+   * Invariants:
+   * 1. Requires active RESTAURANT_ADMIN membership (tenant isolated).
+   * 2. Requires PERMISSIONS.RESTAURANT_UPDATE.
+   * 3. Theme key is strictly validated against canonical THEME_REGISTRY.
+   * 4. Arbitrary CSS strings are rejected.
+   * 5. Invalidates public restaurant cache so changes reflect on customer QR pages.
+   */
+  static async updateCustomerTheme(themeKey: string) {
+    const { userId, restaurantId } = await this.getAuthorizedRestaurantContext();
+    await AuthorizationService.requirePermission({
+      permission: PERMISSIONS.RESTAURANT_UPDATE,
+      restaurantId,
+    });
+
+    if (!themeKey || typeof themeKey !== 'string') {
+      throw new ValidationError('Theme key is required.');
+    }
+
+    const normalized = themeKey.trim().toLowerCase();
+    if (!isRegisteredTheme(normalized)) {
+      throw new ValidationError(`Unknown theme key: "${themeKey}". Only approved registered themes can be selected.`);
+    }
+
+    const adminClient = createAdminClient();
+    const { data: updated, error } = await adminClient
+      .from('restaurants')
+      .update({
+        customer_theme_key: normalized,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', restaurantId)
+      .select('slug')
+      .single();
+
+    if (error) {
+      throw new DomainError(`Failed to update customer theme: ${error.message}`);
+    }
+
+    await CacheService.invalidate(CacheKeys.publicRestaurant(updated.slug));
+
+    await this.logAuditAction(
+      'customer_theme_updated',
+      'restaurant',
+      restaurantId,
+      restaurantId,
+      userId,
+      { customer_theme_key: normalized }
+    );
+
+    return { success: true, themeKey: normalized };
   }
 
   /**

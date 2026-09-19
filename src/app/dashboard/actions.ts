@@ -81,6 +81,23 @@ export async function updateProfileFormAction(_prevState: unknown, formData: For
   }
 }
 
+/**
+ * Phase 2 — Server action for Restaurant Admin customer theme selection.
+ * Safely validates and persists approved theme key, invalidates customer page cache.
+ */
+export async function updateCustomerThemeAction(themeKey: string) {
+  try {
+    const result = await RestaurantAdminService.updateCustomerTheme(themeKey);
+    revalidatePath('/dashboard');
+    return { success: true, themeKey: result.themeKey };
+  } catch (error: unknown) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to update customer theme.',
+    };
+  }
+}
+
 export async function createStaffFormAction(_prevState: unknown, formData: FormData) {
   try {
     const input = {

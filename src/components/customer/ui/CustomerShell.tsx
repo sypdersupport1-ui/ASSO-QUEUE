@@ -1,23 +1,41 @@
 import React from 'react';
+import type { CustomerTheme } from '@/lib/themes/types';
+import { themeToCssVariables } from '@/lib/themes/resolver';
 
 interface CustomerShellProps {
   children: React.ReactNode;
   className?: string;
   as?: 'main' | 'div';
+  theme?: CustomerTheme | null;
+  style?: React.CSSProperties;
+  id?: string;
 }
 
 /**
  * Reusable CustomerShell primitive.
  * Provides consistent mobile-first container, safe area padding,
- * and warm, restrained ambient restaurant backdrop.
+ * warm ambient restaurant backdrop, and canonical customer theme CSS variable injection.
  */
 export function CustomerShell({
   children,
   className = '',
   as: Component = 'main',
+  theme,
+  style,
+  id,
 }: CustomerShellProps) {
+  const themeStyles = theme ? themeToCssVariables(theme) : undefined;
+
   return (
-    <Component className={`qf-bg relative flex min-h-[100dvh] flex-col justify-between overflow-x-hidden text-slate-100 selection:bg-emerald-500/30 selection:text-emerald-100 ${className}`}>
+    <Component
+      id={id}
+      data-theme={theme?.key || 'default'}
+      style={{
+        ...themeStyles,
+        ...style,
+      }}
+      className={`qf-bg relative flex min-h-[100dvh] flex-col justify-between overflow-x-hidden text-slate-100 selection:bg-emerald-500/30 selection:text-emerald-100 ${className}`}
+    >
       {/* Subtle ambient lighting with low opacity */}
       <div
         aria-hidden="true"
