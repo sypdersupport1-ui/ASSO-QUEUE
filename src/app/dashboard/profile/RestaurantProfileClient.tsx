@@ -23,6 +23,7 @@ interface RestaurantProfileClientProps {
     takeaway_customer_ordering_enabled?: boolean;
     takeaway_staff_ordering_enabled?: boolean;
     takeaway_manual_ordering_enabled?: boolean;
+    customer_theme_key?: string;
   };
 }
 
@@ -63,6 +64,34 @@ export default function RestaurantProfileClient({ restaurant }: RestaurantProfil
           {state.error}
         </div>
       )}
+
+      {/* CUSTOMER THEME & EXPERIENCE CARD */}
+      <div className="rounded-2xl border border-blue-500/30 bg-gradient-to-br from-blue-950/30 to-slate-900/80 p-5 shadow-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-primary/20 border border-primary/30 flex items-center justify-center text-primary shrink-0">
+            <span className="material-symbols-outlined text-[22px]">palette</span>
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h3 className="text-sm font-bold text-white">Customer Occasion Theme</h3>
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 uppercase">
+                Active: {restaurant.customer_theme_key || 'default'}
+              </span>
+            </div>
+            <p className="text-xs text-slate-400 mt-0.5">
+              Customize festive atmosphere, colors &amp; celebratory styling across all customer QR views.
+            </p>
+          </div>
+        </div>
+
+        <Link
+          href="/dashboard/settings/theme"
+          className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-primary hover:bg-blue-500 active:bg-blue-600 text-white text-xs font-bold transition-all shrink-0 shadow-md shadow-primary/20"
+        >
+          <span>Manage Themes</span>
+          <span>&rarr;</span>
+        </Link>
+      </div>
 
       <form action={formAction} className="rounded-xl border border-slate-800 bg-slate-900/60 p-6 space-y-5 shadow-xl">
         {/* SEATING SYSTEM MODE TOGGLE — PROMINENT */}

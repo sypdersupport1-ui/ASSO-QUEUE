@@ -52,6 +52,7 @@ export async function updateRestaurantAction(restaurantId: string, _prevState: u
       takeaway_customer_ordering_enabled: formData.has('takeaway_customer_ordering_enabled') ? formData.get('takeaway_customer_ordering_enabled') === 'true' : undefined,
       takeaway_staff_ordering_enabled: formData.has('takeaway_staff_ordering_enabled') ? formData.get('takeaway_staff_ordering_enabled') === 'true' : undefined,
       takeaway_manual_ordering_enabled: formData.has('takeaway_manual_ordering_enabled') ? formData.get('takeaway_manual_ordering_enabled') === 'true' : undefined,
+      customer_theme_key: formData.has('customer_theme_key') ? (formData.get('customer_theme_key') as string) : undefined,
     };
 
     await PlatformService.updateRestaurant(restaurantId, input);

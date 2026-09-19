@@ -118,6 +118,14 @@ export default function DesktopNavigation({ activeQueueCount, children }: Deskto
               </div>
             </Link>
 
+            <Link href="/dashboard/settings/theme" className={navLinkClass('/dashboard/settings/theme')}>
+              {isActive('/dashboard/settings/theme') && <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary rounded-r-full"></div>}
+              <div className="flex items-center gap-3">
+                <span className={`material-symbols-outlined text-[18px] ${isActive('/dashboard/settings/theme') ? 'text-primary' : ''}`}>palette</span>
+                <span className="font-medium text-sm">Customer Theme</span>
+              </div>
+            </Link>
+
             <Link href="/dashboard/profile" className={navLinkClass('/dashboard/profile')}>
               {isActive('/dashboard/profile') && <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary rounded-r-full"></div>}
               <div className="flex items-center gap-3">

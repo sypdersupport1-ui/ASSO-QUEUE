@@ -4,6 +4,8 @@ import { useActionState } from 'react';
 import Link from 'next/link';
 import { updateRestaurantAction } from '../../actions';
 
+import { getRegisteredThemes } from '@/lib/themes/registry';
+
 type Initial = {
   name: string;
   slug: string;
@@ -21,6 +23,7 @@ type Initial = {
   takeaway_customer_ordering_enabled?: boolean;
   takeaway_staff_ordering_enabled?: boolean;
   takeaway_manual_ordering_enabled?: boolean;
+  customer_theme_key?: string;
 };
 
 const inputCls =
@@ -110,6 +113,24 @@ export default function EditRestaurantForm({
             <label className={labelCls}>Currency</label>
             <input type="text" name="currency" defaultValue={initial.currency} className={inputCls} />
           </div>
+        </div>
+
+        <div>
+          <label className={labelCls}>Customer Experience &amp; Festival Theme</label>
+          <select
+            name="customer_theme_key"
+            defaultValue={initial.customer_theme_key || 'default'}
+            className={inputCls}
+          >
+            {getRegisteredThemes().map((t) => (
+              <option key={t.key} value={t.key}>
+                {t.name} ({t.metadata?.category?.toUpperCase() || 'GENERAL'})
+              </option>
+            ))}
+          </select>
+          <p className="text-[11px] text-slate-400 mt-1">
+            Active visual atmosphere shown on all customer-facing QR flows.
+          </p>
         </div>
 
         {/* ORDERING CAPABILITIES CONFIGURATION */}

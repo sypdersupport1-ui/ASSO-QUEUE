@@ -61,6 +61,10 @@ export default function MobileNavigation({ activeQueueCount }: MobileNavigationP
               <span className="material-symbols-outlined text-[24px]">qr_code</span>
               <span className="text-xs font-medium">QR Codes</span>
             </Link>
+            <Link onClick={() => setIsDrawerOpen(false)} href="/dashboard/settings/theme" className="flex flex-col items-center justify-center gap-2 p-4 rounded-xl bg-white/5 border border-white/5 text-slate-300 hover:bg-white/10 active:bg-white/10 transition-colors">
+              <span className="material-symbols-outlined text-[24px]">palette</span>
+              <span className="text-xs font-medium">Customer Theme</span>
+            </Link>
             <Link onClick={() => setIsDrawerOpen(false)} href="/dashboard/menu" className="flex flex-col items-center justify-center gap-2 p-4 rounded-xl bg-white/5 border border-white/5 text-slate-300 hover:bg-white/10 active:bg-white/10 transition-colors">
               <span className="material-symbols-outlined text-[24px]">menu_book</span>
               <span className="text-xs font-medium">Menu Configuration</span>

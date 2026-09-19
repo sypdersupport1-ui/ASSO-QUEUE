@@ -26,6 +26,7 @@ export default async function RestaurantProfilePage() {
           takeaway_customer_ordering_enabled: (restaurant as unknown as { takeaway_customer_ordering_enabled?: boolean }).takeaway_customer_ordering_enabled ?? true,
           takeaway_staff_ordering_enabled: (restaurant as unknown as { takeaway_staff_ordering_enabled?: boolean }).takeaway_staff_ordering_enabled ?? true,
           takeaway_manual_ordering_enabled: (restaurant as unknown as { takeaway_manual_ordering_enabled?: boolean }).takeaway_manual_ordering_enabled ?? false,
+          customer_theme_key: (restaurant as unknown as { customer_theme_key?: string }).customer_theme_key || 'default',
         }}
       />
     </div>
