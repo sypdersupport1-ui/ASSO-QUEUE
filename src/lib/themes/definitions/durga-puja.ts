@@ -23,10 +23,10 @@ export const DURGA_PUJA_THEME: CustomerTheme = {
     surfaces: {
       background: '#160406',
       backgroundElevated: '#22080c',
-      surface: 'rgba(38, 10, 14, 0.82)',
+      surface: 'rgba(28, 6, 10, 0.52)',
       surfaceSolid: '#24090d',
-      surfaceElevated: 'rgba(52, 14, 20, 0.90)',
-      surfaceInteractive: '#361118',
+      surfaceElevated: 'rgba(42, 10, 15, 0.58)',
+      surfaceInteractive: 'rgba(56, 14, 20, 0.65)',
     },
     accents: {
       primary: '#b91c1c',
