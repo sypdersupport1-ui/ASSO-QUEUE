@@ -19,12 +19,12 @@ export function HospitalityFeatureRow() {
       desc: 'Real-time status',
     },
     {
-      icon: <Flame className="h-4 w-4 text-amber-400" />,
+      icon: <Flame className="h-4 w-4 text-[var(--qf-accent-takeaway)]" />,
       title: 'Authentic Flavours',
       desc: 'Memorable moments',
     },
     {
-      icon: <HeartHandshake className="h-4 w-4 text-rose-400" />,
+      icon: <HeartHandshake className="h-4 w-4 text-[var(--qf-accent-dine-in)]" />,
       title: 'Warm Hospitality',
       desc: 'Always together',
     },
@@ -48,7 +48,7 @@ export function HospitalityFeatureRow() {
             <p className="text-[11px] sm:text-xs font-black tracking-tight text-white truncate">
               {item.title}
             </p>
-            <p className="text-[9.5px] sm:text-[10px] text-slate-400 leading-tight truncate">
+            <p className="text-[9.5px] sm:text-[10px] text-[var(--qf-text-secondary)]/80 leading-tight truncate">
               {item.desc}
             </p>
           </div>

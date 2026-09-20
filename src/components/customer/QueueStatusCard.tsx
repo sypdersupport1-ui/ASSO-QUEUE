@@ -41,8 +41,8 @@ export function QueueStatusCard({
       >
         <div className="inline-flex items-center gap-2">
           <span className="relative flex h-2.5 w-2.5 shrink-0">
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-            <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-400 shadow-sm shadow-emerald-500/50" />
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[var(--qf-success)] opacity-75" />
+            <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-[var(--qf-success)] shadow-sm shadow-[var(--qf-success)]/50" />
           </span>
           <span className="text-sm sm:text-base font-black tracking-tight text-white">
             {isNoWait
@@ -50,7 +50,7 @@ export function QueueStatusCard({
               : `${waitingCount} ${waitingCount === 1 ? 'party' : 'parties'} waiting in line`}
           </span>
         </div>
-        <p className="text-xs text-slate-300 font-medium">
+        <p className="text-xs text-[var(--qf-text-secondary)] font-medium">
           {isNoWait
             ? 'Great time to dine!'
             : waitLabel

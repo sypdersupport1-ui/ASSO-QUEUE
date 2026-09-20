@@ -33,9 +33,9 @@ export const CustomerInput = React.forwardRef<HTMLInputElement, CustomerInputPro
       <div className="space-y-1.5 text-left">
         <div className="flex items-center justify-between">
           <label htmlFor={id} className="block text-xs font-bold uppercase tracking-wider text-slate-300">
-            {label} {required && <span aria-hidden="true" className="text-emerald-400">*</span>}
+            {label} {required && <span aria-hidden="true" className="text-[var(--qf-primary)]">*</span>}
           </label>
-          {hint && <span className="text-[11px] text-slate-500 font-normal">{hint}</span>}
+          {hint && <span className="text-[11px] text-[var(--qf-text-secondary)]/70 font-normal">{hint}</span>}
         </div>
 
         <div className="relative">
@@ -58,7 +58,7 @@ export const CustomerInput = React.forwardRef<HTMLInputElement, CustomerInputPro
             } pr-4 ${
               error
                 ? 'border-rose-500/80 focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20'
-                : 'border-[var(--qf-border)] focus:border-[var(--qf-primary)] focus:ring-2 focus:ring-emerald-500/20'
+                : 'border-[var(--qf-border)] focus:border-[var(--qf-primary)] focus:ring-2 focus:ring-[var(--qf-primary)]/20'
             } disabled:cursor-not-allowed disabled:opacity-50 ${className}`}
             {...props}
           />

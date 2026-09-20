@@ -293,11 +293,11 @@ export function QueueTicketCard({
         {/* Guest & restaurant badges */}
         <div className="flex flex-wrap items-center justify-center gap-2 pt-0.5 text-xs">
           {restaurantName && (
-            <span className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--qf-border)] bg-white/5 px-2.5 py-1 font-semibold text-slate-300 max-w-[220px] truncate">
+            <span className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--qf-border)] bg-[var(--qf-surface)]/60 px-2.5 py-1 font-semibold text-[var(--qf-text-secondary)] max-w-[220px] truncate">
               {restaurantName}
             </span>
           )}
-          <span className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--qf-border)] bg-white/5 px-2.5 py-1 font-semibold text-[var(--qf-primary)]">
+          <span className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--qf-primary)]/30 bg-[var(--qf-primary-glow)] px-2.5 py-1 font-semibold text-[var(--qf-primary)]">
             <Users className="h-3 w-3 text-[var(--qf-primary)]" />
             <span>
               {status.customerName || 'Guest'} · {status.partySize}{' '}
@@ -565,7 +565,7 @@ export function QueueTicketCard({
               </p>
               <a
                 href={`/q/${restaurantSlug}`}
-                className="inline-flex min-h-[48px] h-12 w-full items-center justify-center rounded-2xl bg-white/10 hover:bg-white/15 text-white text-sm font-black border border-white/10 transition-all active:scale-[0.99] cursor-pointer"
+                className="customer-primary-cta flex min-h-[48px] h-12 w-full items-center justify-center rounded-2xl text-sm font-black transition-all active:scale-[0.99] cursor-pointer"
               >
                 Join the queue again
               </a>

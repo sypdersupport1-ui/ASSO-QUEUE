@@ -47,15 +47,15 @@ export function SignatureDishesCard({ slug, categories }: SignatureDishesCardPro
 
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-1.5">
-          <Sparkles className="h-3 w-3 text-amber-400 shrink-0" aria-hidden="true" />
-          <span className="text-[10px] font-bold uppercase tracking-widest text-amber-400">
+          <Sparkles className="h-3 w-3 text-[var(--qf-primary)] shrink-0" aria-hidden="true" />
+          <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--qf-primary)]">
             Chef Selection
           </span>
         </div>
         <h3 className="text-sm sm:text-base font-black text-white tracking-tight truncate mt-0.5">
           Our Signature Dishes
         </h3>
-        <p className="text-[11px] text-slate-300 truncate mt-0.5">
+        <p className="text-[11px] text-[var(--qf-text-secondary)] truncate mt-0.5">
           Explore our menu
         </p>
       </div>

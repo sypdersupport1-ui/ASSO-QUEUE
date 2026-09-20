@@ -57,8 +57,8 @@ export function ServiceSelector({
           <div
             className={`flex h-11 w-11 items-center justify-center rounded-xl mb-2 transition-all ${
               selectedService === 'DINE_IN'
-                ? 'bg-[var(--qf-accent-dine-in)] text-white shadow-md shadow-orange-950/40'
-                : 'bg-white/[0.04] border border-white/10 text-amber-200/90'
+                ? 'bg-[var(--qf-accent-dine-in)] text-white shadow-md'
+                : 'bg-white/[0.04] border border-white/10 text-[var(--qf-text-secondary)]'
             }`}
           >
             <UtensilsCrossed className="h-5 w-5" />
@@ -93,8 +93,8 @@ export function ServiceSelector({
           <div
             className={`flex h-11 w-11 items-center justify-center rounded-xl mb-2 transition-all ${
               selectedService === 'TAKEAWAY'
-                ? 'bg-[var(--qf-accent-takeaway)] text-[#140602] shadow-md shadow-amber-950/40 font-bold'
-                : 'bg-white/[0.04] border border-white/10 text-amber-200/90'
+                ? 'bg-[var(--qf-accent-takeaway)] text-[var(--qf-primary-foreground)] shadow-md font-bold'
+                : 'bg-white/[0.04] border border-white/10 text-[var(--qf-text-secondary)]'
             }`}
           >
             <ShoppingBag className="h-5 w-5" />

@@ -148,10 +148,10 @@ export function CustomerJoinFlow({
           </div>
         ) : (
           <div className="rounded-2xl border border-[var(--qf-accent-takeaway)]/25 bg-[var(--qf-accent-takeaway-glow)] p-3 text-center">
-            <p className="text-xs font-bold text-amber-200">
+            <p className="text-xs font-bold text-[var(--qf-accent-takeaway)]">
               Takeaway Counter Service
             </p>
-            <p className="text-[11px] text-amber-300/80 mt-0.5">
+            <p className="text-[11px] text-[var(--qf-text-secondary)]/85 mt-0.5">
               Direct counter pickup · No table wait required
             </p>
           </div>
@@ -213,7 +213,7 @@ export function CustomerJoinFlow({
             if (e.target === e.currentTarget) setIsSheetOpen(false);
           }}
         >
-          <div className="w-full max-w-md rounded-t-3xl sm:rounded-3xl border border-white/15 bg-[#0e1420]/95 backdrop-blur-xl p-5 sm:p-6 shadow-2xl space-y-4 motion-safe:animate-slideUp max-h-[90dvh] overflow-y-auto">
+          <div className="w-full max-w-md rounded-t-3xl sm:rounded-3xl border border-[var(--qf-border)] bg-[var(--qf-surface-solid)]/95 backdrop-blur-xl p-5 sm:p-6 shadow-2xl space-y-4 motion-safe:animate-slideUp max-h-[90dvh] overflow-y-auto">
             {/* Sheet Header */}
             <div className="flex items-center justify-between pb-1 border-b border-white/10">
               <div>

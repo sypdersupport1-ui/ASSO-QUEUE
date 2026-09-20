@@ -74,12 +74,12 @@ describe('Customer Theme Consistency Hardening — Suite', () => {
 
     it('verifies that non-Diwali themes do NOT contain hardcoded Diwali brown scrim', () => {
       const kaliPuja = resolveCustomerTheme('kali-puja');
-      expect(kaliPuja.artwork.scrim).toBeDefined();
+      expect(kaliPuja.artwork?.scrim).toBeDefined();
       // Kali Puja scrim must be midnight navy/black scrim, not maroon/brown rgba(20,6,0,...)
-      expect(kaliPuja.artwork.scrim).not.toContain('rgba(20,6,0');
+      expect(kaliPuja.artwork?.scrim).not.toContain('rgba(20,6,0');
 
       const defaultTheme = resolveCustomerTheme('default');
-      if (defaultTheme.artwork.scrim) {
+      if (defaultTheme.artwork?.scrim) {
         expect(defaultTheme.artwork.scrim).not.toContain('rgba(20,6,0');
       }
     });
@@ -175,7 +175,7 @@ describe('Customer Theme Consistency Hardening — Suite', () => {
         <CustomerShell theme={kaliTheme}>
           <CustomerErrorState
             title="Unable to Load Queue"
-            message="We could not retrieve your live ticket."
+            body="We could not retrieve your live ticket."
             actionLabel="Try Again"
             onAction={() => {}}
           />
@@ -200,7 +200,7 @@ describe('Customer Theme Consistency Hardening — Suite', () => {
       expect(diwali.tokens.surfaces.background).toBe('#140602');
       expect(diwali.tokens.accents.primary).toBe('#f59e0b');
       expect(diwali.tokens.accents.accentDineIn).toBe('#c2410c');
-      expect(diwali.artwork.scrim).toContain('rgba(20, 7, 3');
+      expect(diwali.artwork?.scrim).toContain('rgba(20, 7, 3');
       // Must NOT contain Kali violet/indigo primary
       expect(diwali.tokens.accents.primary).not.toBe('#7c3aed');
     });
@@ -213,7 +213,7 @@ describe('Customer Theme Consistency Hardening — Suite', () => {
       expect(kaliPuja.tokens.accents.accentDineIn).toBe('#6366f1');
       // Must NOT contain Diwali maroon background or brown scrim
       expect(kaliPuja.tokens.surfaces.background).not.toBe('#140602');
-      expect(kaliPuja.artwork.scrim).not.toContain('rgba(20,6,0');
+      expect(kaliPuja.artwork?.scrim).not.toContain('rgba(20,6,0');
     });
 
     it('renders canonical ASSO platform brand consistently in shell across both themes', () => {

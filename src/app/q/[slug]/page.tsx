@@ -210,9 +210,9 @@ export default async function PublicRestaurantQueuePage({
 
       {/* Left queue confirmation banner */}
       {leftQueueParam && (
-        <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-3.5 text-center shadow-lg animate-fadeUp">
-          <p className="text-xs font-bold text-emerald-300">You have left the queue</p>
-          <p className="mt-0.5 text-[11px] text-slate-300">
+        <div className="customer-glass-card border-[var(--qf-success)]/30 bg-[var(--qf-success)]/10 p-3.5 text-center shadow-lg animate-fadeUp">
+          <p className="text-xs font-bold text-[var(--qf-success)]">You have left the queue</p>
+          <p className="mt-0.5 text-[11px] text-[var(--qf-text-secondary)]">
             Thank you for visiting. Choose an option below whenever you are ready to join again.
           </p>
         </div>
@@ -232,19 +232,19 @@ export default async function PublicRestaurantQueuePage({
 
       {/* Seated guest banner — allows rejoining while keeping previous ticket accessible */}
       {seatedTicket && (
-        <div className="rounded-2xl border border-emerald-500/30 bg-[#121826]/95 p-4 shadow-xl backdrop-blur-md space-y-3 animate-fadeUp">
+        <div className="customer-glass-card p-4 shadow-xl space-y-3 animate-fadeUp">
           <div className="flex items-start gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[var(--qf-success)]/15 text-[var(--qf-success)] border border-[var(--qf-success)]/30">
               <UtensilsCrossed className="h-5 w-5" />
             </div>
             <div className="min-w-0 flex-1">
-              <div className="inline-flex items-center gap-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-300">
+              <div className="inline-flex items-center gap-1 rounded-full bg-[var(--qf-success)]/15 border border-[var(--qf-success)]/30 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[var(--qf-success)]">
                 Seated Guest · {seatedTicket.displayNumber ? `Ticket Q-${seatedTicket.displayNumber.replace(/^#+/, '')}` : 'Table Ready'}
               </div>
               <p className="mt-1 text-xs font-bold text-white">
                 Welcome back {seatedTicket.customerName}! Hope you enjoyed your meal.
               </p>
-              <p className="text-[11px] text-slate-400 leading-relaxed">
+              <p className="text-[11px] text-[var(--qf-text-secondary)]/80 leading-relaxed">
                 Visiting again today? Fill in the form below to get a new ticket, or release your previous table.
               </p>
             </div>
@@ -259,9 +259,9 @@ export default async function PublicRestaurantQueuePage({
             <form action={quitPreviousQueueAction.bind(null, slug)} className="flex-1">
               <button
                 type="submit"
-                className="w-full py-2.5 px-3 rounded-xl border border-emerald-500/30 bg-emerald-500/15 text-xs font-bold text-emerald-300 hover:bg-emerald-500/25 active:scale-95 transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                className="w-full py-2.5 px-3 rounded-xl border border-[var(--qf-border)] bg-white/5 hover:bg-white/10 text-xs font-bold text-slate-200 active:scale-95 transition-all cursor-pointer flex items-center justify-center gap-1.5"
               >
-                <LogOut className="h-3.5 w-3.5" />
+                <LogOut className="h-3.5 w-3.5 text-slate-400" />
                 <span>Quit Previous Ticket</span>
               </button>
             </form>
