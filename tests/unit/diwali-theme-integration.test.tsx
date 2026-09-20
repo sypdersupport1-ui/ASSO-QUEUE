@@ -207,9 +207,10 @@ describe('QueueFlow — Diwali Theme Visual Integration', () => {
         </CustomerShell>
       );
 
-      // 1. Platform Brand
-      expect(html).toContain('ASSO');
-      expect(html).toContain('QueueFlow');
+      // 1. Platform Brand (Official ASSO logo in top-left position)
+      expect(html).toContain('src="/brand/asso/asso-customer-white.png"');
+      expect(html).toMatch(/alt="ASSO — Business Management (&amp;|&) Q"/);
+      expect(html).toContain('justify-start');
 
       // 2. Restaurant Hero
       expect(html).toContain('Biriyani House');

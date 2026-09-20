@@ -41,11 +41,13 @@ const MOCK_RESTAURANT: PublicRestaurantInfo = {
 
 describe('QueueFlow Canonical Mobile Customer Shell', () => {
   describe('1. Platform Brand Placement', () => {
-    it('renders the fixed ASSO / QueueFlow platform brand lockup', () => {
+    it('renders the official ASSO logo in top-left position with black background and accessible alt text', () => {
       const html = renderToStaticMarkup(<CustomerPlatformBrand />);
-      expect(html).toContain('ASSO');
-      expect(html).toContain('QueueFlow');
-      expect(html).toContain('tracking-[0.22em]');
+      expect(html).toContain('src="/brand/asso/asso-customer-white.png"');
+      expect(html).toMatch(/alt="ASSO — Business Management (&amp;|&) Q"/);
+      expect(html).toContain('justify-start'); // Strictly TOP-LEFT aligned
+      expect(html).toContain('bg-black');
+      expect(html).not.toContain('aria-hidden="true"');
     });
   });
 

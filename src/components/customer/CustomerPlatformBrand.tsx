@@ -1,33 +1,30 @@
 import React from 'react';
 
 /**
- * Platform Identity Level 1: ASSO / QueueFlow
+ * Platform Identity Level 1: Official ASSO Customer-Facing Brand Logo
  *
  * Requirements:
- * - small
- * - premium
- * - clearly visible
- * - consistently positioned
- * - independent of restaurant data
- * - unchanged across all themes
+ * - Position: Top-left aligned (justify-start), outside glass cards
+ * - Alignment: Shares canonical 16–20px left content inset with customer shell
+ * - Asset: Canonical static asset /brand/asso/asso-customer-white.png
+ * - Black Background: Preserved on compact logo bounds (bg-black rounded-md)
+ * - Complete Lockup: Preserves ASSO wordmark, geometric A, gradient ring, and "BUSINESS MANAGEMENT & Q"
+ * - Compact Height: ~24px mobile (h-6), ~28px desktop (sm:h-7)
+ * - Accessibility: alt="ASSO — Business Management & Q", not aria-hidden
+ * - Reusable across all customer themes without dynamic recoloring
  */
 export function CustomerPlatformBrand() {
   return (
-    <div className="flex items-center justify-center pt-1 pb-0.5">
-      <div
-        className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-white/10 bg-white/[0.04] backdrop-blur-md shadow-sm select-none"
-        aria-label="Powered by ASSO QueueFlow Platform"
-      >
-        <span className="text-[10px] font-black uppercase tracking-[0.22em] text-slate-300">
-          ASSO
-        </span>
-        <span className="text-[10px] text-slate-600 font-light" aria-hidden="true">
-          /
-        </span>
-        <span className="text-[10px] font-black uppercase tracking-[0.16em] text-[var(--qf-primary)]">
-          QueueFlow
-        </span>
-      </div>
+    <div className="flex items-center justify-start pt-1 pb-0.5">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src="/brand/asso/asso-customer-white.png"
+        alt="ASSO — Business Management & Q"
+        width={1024}
+        height={341}
+        className="h-6 sm:h-7 w-auto object-contain bg-black rounded-md select-none"
+        decoding="async"
+      />
     </div>
   );
 }
