@@ -224,7 +224,7 @@ export default function CustomerPaymentPage({
   }
 
   return (
-    <main className="qf-bg relative flex min-h-[100dvh] flex-col justify-between px-4 py-6 text-slate-100 selection:bg-orange-500 selection:text-white sm:py-8">
+    <main className="qf-bg relative flex min-h-[100dvh] flex-col justify-between px-4 pt-[max(1.5rem,env(safe-area-inset-top))] pb-6 text-slate-100 selection:bg-orange-500 selection:text-white sm:py-8">
       {/* Subtle ambient lighting */}
       <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 h-[380px] bg-gradient-to-b from-slate-800/20 via-slate-900/10 to-transparent" />
       <div aria-hidden="true" className="pointer-events-none absolute top-4 left-1/2 -translate-x-1/2 h-64 w-64 rounded-full bg-emerald-500/[0.04] blur-3xl" />

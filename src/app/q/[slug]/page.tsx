@@ -213,7 +213,7 @@ export default async function PublicRestaurantQueuePage({
       {/* Thematic Decorative Artwork & Motif Layer */}
       <ThemeArtwork theme={activeTheme} variant="page" />
 
-      <div className="relative z-10 mx-auto w-full max-w-md space-y-4 px-4 py-5 sm:py-7 flex-1">
+      <div className="relative z-10 mx-auto w-full max-w-md space-y-4 px-4 pt-[max(1.25rem,env(safe-area-inset-top))] pb-5 sm:py-7 flex-1">
         {/* Left queue confirmation banner */}
         {leftQueueParam && (
           <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-4 text-center shadow-lg animate-fadeUp">
@@ -363,7 +363,7 @@ export default async function PublicRestaurantQueuePage({
         </div>
       </div>
 
-      <footer className="relative z-10 mx-auto w-full max-w-md px-4 pb-6 pt-6 text-center">
+      <footer className="relative z-10 mx-auto w-full max-w-md px-4 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-6 text-center">
         <p className="inline-flex items-center gap-1.5 text-[11px] font-medium text-slate-500">
           <span>Powered by</span>
           <span className="font-bold tracking-tight text-[var(--qf-primary)]">QueueFlow</span>

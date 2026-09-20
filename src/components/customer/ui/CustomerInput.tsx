@@ -48,7 +48,7 @@ export function CustomerInput({
           disabled={disabled}
           aria-invalid={Boolean(error)}
           aria-describedby={error ? `${id}-error` : undefined}
-          className={`h-12 w-full rounded-2xl border bg-[#0e1420] text-[15px] sm:text-sm text-white placeholder-slate-500 transition-all focus:outline-none ${
+          className={`h-12 w-full rounded-2xl border bg-[#0e1420] text-base sm:text-sm text-white placeholder-slate-500 transition-all focus:outline-none ${
             icon ? 'pl-10' : 'pl-4'
           } pr-4 ${
             error

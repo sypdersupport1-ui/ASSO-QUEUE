@@ -66,7 +66,7 @@ export function RestaurantHeader({ restaurant, waitingCount }: RestaurantHeaderP
 
       {/* Brand Name & Live Status */}
       <div className="min-w-0 flex-1">
-        <h1 className="truncate text-lg sm:text-xl font-black tracking-tight text-white leading-tight">
+        <h1 className="line-clamp-2 text-lg sm:text-xl font-black tracking-tight text-white leading-tight break-words">
           {restaurant.name}
         </h1>
         <div className="mt-1 flex flex-wrap items-center gap-2">

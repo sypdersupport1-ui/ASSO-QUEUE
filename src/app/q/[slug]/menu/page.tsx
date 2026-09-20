@@ -101,7 +101,7 @@ export default async function CustomerMenuPage({
   const activeTheme = resolveCustomerTheme(restaurant.customerThemeKey);
 
   return (
-    <main className="qf-bg relative flex min-h-[100dvh] flex-col overflow-x-hidden px-4 py-5 text-slate-100 selection:bg-emerald-500/30 selection:text-emerald-100 sm:py-7">
+    <main className="qf-bg relative flex min-h-[100dvh] flex-col overflow-x-hidden px-4 pt-[max(1.25rem,env(safe-area-inset-top))] pb-5 text-slate-100 selection:bg-emerald-500/30 selection:text-emerald-100 sm:py-7">
       {/* Subtle ambient lighting */}
       <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 h-[380px] bg-gradient-to-b from-slate-800/20 via-slate-900/10 to-transparent" />
       <div aria-hidden="true" className="pointer-events-none absolute top-4 left-1/2 -translate-x-1/2 h-64 w-64 rounded-full bg-emerald-500/[0.04] blur-3xl" />
@@ -154,7 +154,7 @@ export default async function CustomerMenuPage({
         />
       </div>
 
-      <footer className="relative z-10 w-full max-w-md mx-auto text-center pt-8 pb-6">
+      <footer className="relative z-10 w-full max-w-md mx-auto text-center pt-8 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
         <div className="inline-flex items-center gap-1.5 text-[11px] font-medium text-slate-500">
           <span>Powered by</span>
           <span className="text-emerald-400 font-bold tracking-tight">QueueFlow</span>
