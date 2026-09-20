@@ -82,6 +82,12 @@ export interface CustomerThemeArtwork {
   opacity?: number;
   placement?: 'top-right' | 'top-split' | 'subtle-ambient' | 'corner-ornaments' | 'header-motif';
   subtleGlow?: string;
+  /**
+   * Optional full-bleed background image asset path (relative to /public).
+   * When provided, this image is rendered as a fixed full-viewport background layer.
+   * A translucent scrim is applied automatically to preserve content legibility.
+   */
+  backgroundImage?: string;
 }
 
 export interface CustomerTheme {

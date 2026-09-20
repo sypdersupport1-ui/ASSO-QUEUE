@@ -6,7 +6,7 @@ import { CustomerTicketFloat } from '@/components/customer/CustomerTicketFloat';
 import { TicketCookieSync } from '@/components/customer/TicketCookieSync';
 import { CustomerErrorState } from '@/components/customer/CustomerErrorState';
 import { logger } from '@/lib/logging/logger';
-import { resolveCustomerTheme } from '@/lib/themes';
+import { resolveCustomerTheme, themeToCssVariables } from '@/lib/themes';
 import { ThemeArtwork } from '@/components/themes';
 import type { Metadata } from 'next';
 
@@ -99,19 +99,56 @@ export default async function CustomerMenuPage({
   const menuCategories = await PublicRestaurantService.getPublicMenuPreview(restaurant.id);
   const currency = (restaurant as unknown as { currency?: string })?.currency || 'INR';
   const activeTheme = resolveCustomerTheme(restaurant.customerThemeKey);
+  const themeStyles = themeToCssVariables(activeTheme);
+  const bgImage = activeTheme.artwork?.backgroundImage ?? null;
 
   return (
-    <main className="qf-bg relative flex min-h-[100dvh] flex-col overflow-x-hidden px-4 pt-[max(1.25rem,env(safe-area-inset-top))] pb-5 text-slate-100 selection:bg-emerald-500/30 selection:text-emerald-100 sm:py-7">
-      {/* Subtle ambient lighting */}
-      <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 h-[380px] bg-gradient-to-b from-slate-800/20 via-slate-900/10 to-transparent" />
-      <div aria-hidden="true" className="pointer-events-none absolute top-4 left-1/2 -translate-x-1/2 h-64 w-64 rounded-full bg-emerald-500/[0.04] blur-3xl" />
+    <main
+      className="qf-bg relative flex min-h-[100dvh] flex-col overflow-x-hidden px-4 pt-[max(1.25rem,env(safe-area-inset-top))] pb-5 text-slate-100 selection:bg-emerald-500/30 selection:text-emerald-100 sm:py-7"
+      data-theme={activeTheme.key}
+      style={themeStyles}
+    >
+      {/* ── Theme background image layer ──────────────────────────────────── */}
+      {bgImage ? (
+        <>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={bgImage}
+            alt=""
+            aria-hidden="true"
+            fetchPriority="high"
+            decoding="async"
+            className="pointer-events-none fixed inset-0 h-full w-full object-cover object-center select-none"
+            style={{ zIndex: 0 }}
+          />
+          <div
+            aria-hidden="true"
+            className="pointer-events-none fixed inset-0"
+            style={{
+              zIndex: 1,
+              background:
+                'linear-gradient(to bottom, rgba(20,6,0,0.55) 0%, rgba(20,6,0,0.20) 30%, rgba(20,6,0,0.20) 70%, rgba(20,6,0,0.60) 100%)',
+            }}
+          />
+        </>
+      ) : (
+        <>
+          <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 h-[380px] bg-gradient-to-b from-slate-800/20 via-slate-900/10 to-transparent" />
+          <div aria-hidden="true" className="pointer-events-none absolute top-4 left-1/2 -translate-x-1/2 h-64 w-64 rounded-full bg-emerald-500/[0.04] blur-3xl" />
+        </>
+      )}
 
       {/* Thematic Decorative Artwork & Motif Layer */}
-      <ThemeArtwork theme={activeTheme} variant="page" />
+      <div style={{ zIndex: bgImage ? 2 : undefined, position: bgImage ? 'relative' : undefined }}>
+        <ThemeArtwork theme={activeTheme} variant="page" />
+      </div>
 
       {qtoken && <TicketCookieSync slug={slug} token={qtoken} isTerminal={false} />}
       <CustomerTicketFloat slug={slug} qtoken={qtoken} />
-      <div className="relative z-10 mx-auto w-full max-w-md flex-1 space-y-4 sm:space-y-5">
+      <div
+        className="relative mx-auto w-full max-w-md flex-1 space-y-4 sm:space-y-5"
+        style={{ zIndex: bgImage ? 10 : undefined }}
+      >
         <RestaurantHeader restaurant={restaurant} />
 
         <div className="flex items-center justify-between gap-3 px-1">
@@ -154,7 +191,10 @@ export default async function CustomerMenuPage({
         />
       </div>
 
-      <footer className="relative z-10 w-full max-w-md mx-auto text-center pt-8 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
+      <footer
+        className="relative w-full max-w-md mx-auto text-center pt-8 pb-[max(1.5rem,env(safe-area-inset-bottom))]"
+        style={{ zIndex: bgImage ? 10 : undefined }}
+      >
         <div className="inline-flex items-center gap-1.5 text-[11px] font-medium text-slate-500">
           <span>Powered by</span>
           <span className="text-emerald-400 font-bold tracking-tight">QueueFlow</span>

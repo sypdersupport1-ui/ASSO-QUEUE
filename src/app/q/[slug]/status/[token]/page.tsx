@@ -15,7 +15,7 @@ import { CustomerQueueRealtime } from '@/components/realtime/CustomerQueueRealti
 import { CustomerErrorState } from '@/components/customer/CustomerErrorState';
 import { shouldShowNotificationBanner } from '@/lib/customer-ticket-ux';
 import { logger } from '@/lib/logging/logger';
-import { resolveCustomerTheme } from '@/lib/themes';
+import { resolveCustomerTheme, themeToCssVariables } from '@/lib/themes';
 import { ThemeArtwork } from '@/components/themes';
 import type { Metadata } from 'next';
 
@@ -161,22 +161,59 @@ export default async function CustomerQueueStatusPage({
   const menuUrl = `/q/${slug}/menu?qtoken=${token}`;
 
   const activeTheme = resolveCustomerTheme(restaurant.customerThemeKey);
+  const themeStyles = themeToCssVariables(activeTheme);
+  const bgImage = activeTheme.artwork?.backgroundImage ?? null;
 
   return (
-    <main className="qf-bg relative flex min-h-[100dvh] flex-col overflow-x-hidden text-slate-100 selection:bg-emerald-500/30 selection:text-emerald-100">
+    <main
+      className="qf-bg relative flex min-h-[100dvh] flex-col overflow-x-hidden text-slate-100 selection:bg-emerald-500/30 selection:text-emerald-100"
+      data-theme={activeTheme.key}
+      style={themeStyles}
+    >
       {/* Phase 4E: the cookie is retained for active SEATED dining, but cleared
           when dining is completed (status.completedAt) or terminal states (CANCELLED / NO_SHOW / EXPIRED). */}
       <TicketCookieSync slug={slug} token={token} isTerminal={Boolean(status.completedAt) || (isTerminal && status.status !== 'SEATED')} />
       <CustomerQueueRealtime entryId={status.entryId} isTerminal={isTerminal} />
 
-      {/* Subtle ambient lighting */}
-      <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 h-[380px] bg-gradient-to-b from-slate-800/20 via-slate-900/10 to-transparent" />
-      <div aria-hidden="true" className="pointer-events-none absolute top-4 left-1/2 -translate-x-1/2 h-64 w-64 rounded-full bg-emerald-500/[0.04] blur-3xl" />
+      {/* ── Theme background image layer ──────────────────────────────────── */}
+      {bgImage ? (
+        <>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={bgImage}
+            alt=""
+            aria-hidden="true"
+            fetchPriority="high"
+            decoding="async"
+            className="pointer-events-none fixed inset-0 h-full w-full object-cover object-center select-none"
+            style={{ zIndex: 0 }}
+          />
+          <div
+            aria-hidden="true"
+            className="pointer-events-none fixed inset-0"
+            style={{
+              zIndex: 1,
+              background:
+                'linear-gradient(to bottom, rgba(20,6,0,0.55) 0%, rgba(20,6,0,0.20) 30%, rgba(20,6,0,0.20) 70%, rgba(20,6,0,0.60) 100%)',
+            }}
+          />
+        </>
+      ) : (
+        <>
+          <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 h-[380px] bg-gradient-to-b from-slate-800/20 via-slate-900/10 to-transparent" />
+          <div aria-hidden="true" className="pointer-events-none absolute top-4 left-1/2 -translate-x-1/2 h-64 w-64 rounded-full bg-emerald-500/[0.04] blur-3xl" />
+        </>
+      )}
 
       {/* Thematic Decorative Artwork & Motif Layer */}
-      <ThemeArtwork theme={activeTheme} variant="page" />
+      <div style={{ zIndex: bgImage ? 2 : undefined, position: bgImage ? 'relative' : undefined }}>
+        <ThemeArtwork theme={activeTheme} variant="page" />
+      </div>
 
-      <div className="relative z-10 mx-auto w-full max-w-md flex-1 space-y-4 px-4 pt-[max(1.25rem,env(safe-area-inset-top))] pb-5 sm:py-7">
+      <div
+        className="relative mx-auto w-full max-w-md flex-1 space-y-4 px-4 pt-[max(1.25rem,env(safe-area-inset-top))] pb-5 sm:py-7"
+        style={{ zIndex: bgImage ? 10 : undefined }}
+      >
         {/* Streamlined Restaurant Header */}
         <header className="flex items-center justify-between gap-3 py-1">
           <div className="flex min-w-0 flex-1 items-center gap-3">
@@ -253,7 +290,10 @@ export default async function CustomerQueueStatusPage({
         )}
       </div>
 
-      <footer className="relative z-10 mx-auto w-full max-w-md px-4 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-6 text-center">
+      <footer
+        className="relative mx-auto w-full max-w-md px-4 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-6 text-center"
+        style={{ zIndex: bgImage ? 10 : undefined }}
+      >
         <p className="inline-flex items-center gap-1.5 text-[11px] font-medium text-slate-500">
           <span>Powered by</span>
           <span className="font-bold tracking-tight text-[var(--qf-primary)]">QueueFlow</span>

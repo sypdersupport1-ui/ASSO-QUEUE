@@ -16,7 +16,7 @@ import { resolveJoinability, formatWaitLabel } from '@/lib/customer-join-ux';
 import { getTicketToken, clearTicketCookie } from '@/lib/customer-ticket-cookie';
 import { quitPreviousQueueAction } from '@/app/q/actions';
 import { logger } from '@/lib/logging/logger';
-import { resolveCustomerTheme } from '@/lib/themes';
+import { resolveCustomerTheme, themeToCssVariables } from '@/lib/themes';
 import { ThemeArtwork } from '@/components/themes';
 import type { Metadata } from 'next';
 
@@ -195,25 +195,63 @@ export default async function PublicRestaurantQueuePage({
   }
 
   const activeTheme = resolveCustomerTheme(restaurant.customerThemeKey);
+  const themeStyles = themeToCssVariables(activeTheme);
+  const bgImage = activeTheme.artwork?.backgroundImage ?? null;
 
   return (
-    <main className="qf-bg relative flex min-h-[100dvh] flex-col justify-between overflow-x-hidden text-slate-100 selection:bg-emerald-500/30 selection:text-emerald-100">
+    <main
+      className="qf-bg relative flex min-h-[100dvh] flex-col justify-between overflow-x-hidden text-slate-100 selection:bg-emerald-500/30 selection:text-emerald-100"
+      data-theme={activeTheme.key}
+      style={themeStyles}
+    >
       <LandingAutoRefresh />
 
-      {/* Subtle ambient lighting */}
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-x-0 top-0 h-[380px] bg-gradient-to-b from-slate-800/25 via-slate-900/10 to-transparent"
-      />
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute top-4 left-1/2 -translate-x-1/2 h-64 w-64 rounded-full bg-emerald-500/[0.04] blur-3xl"
-      />
+      {/* ── Theme background image layer ──────────────────────────────────── */}
+      {bgImage ? (
+        <>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={bgImage}
+            alt=""
+            aria-hidden="true"
+            fetchPriority="high"
+            decoding="async"
+            className="pointer-events-none fixed inset-0 h-full w-full object-cover object-center select-none"
+            style={{ zIndex: 0 }}
+          />
+          <div
+            aria-hidden="true"
+            className="pointer-events-none fixed inset-0"
+            style={{
+              zIndex: 1,
+              background:
+                'linear-gradient(to bottom, rgba(20,6,0,0.55) 0%, rgba(20,6,0,0.20) 30%, rgba(20,6,0,0.20) 70%, rgba(20,6,0,0.60) 100%)',
+            }}
+          />
+        </>
+      ) : (
+        <>
+          {/* Subtle ambient lighting (default / non-photo themes) */}
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-x-0 top-0 h-[380px] bg-gradient-to-b from-slate-800/25 via-slate-900/10 to-transparent"
+          />
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute top-4 left-1/2 -translate-x-1/2 h-64 w-64 rounded-full bg-emerald-500/[0.04] blur-3xl"
+          />
+        </>
+      )}
 
       {/* Thematic Decorative Artwork & Motif Layer */}
-      <ThemeArtwork theme={activeTheme} variant="page" />
+      <div style={{ zIndex: bgImage ? 2 : undefined, position: bgImage ? 'relative' : undefined }}>
+        <ThemeArtwork theme={activeTheme} variant="page" />
+      </div>
 
-      <div className="relative z-10 mx-auto w-full max-w-md space-y-4 px-4 pt-[max(1.25rem,env(safe-area-inset-top))] pb-5 sm:py-7 flex-1">
+      <div
+        className="relative mx-auto w-full max-w-md space-y-4 px-4 pt-[max(1.25rem,env(safe-area-inset-top))] pb-5 sm:py-7 flex-1"
+        style={{ zIndex: bgImage ? 10 : undefined }}
+      >
         {/* Left queue confirmation banner */}
         {leftQueueParam && (
           <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-4 text-center shadow-lg animate-fadeUp">
@@ -363,7 +401,10 @@ export default async function PublicRestaurantQueuePage({
         </div>
       </div>
 
-      <footer className="relative z-10 mx-auto w-full max-w-md px-4 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-6 text-center">
+      <footer
+        className="relative mx-auto w-full max-w-md px-4 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-6 text-center"
+        style={{ zIndex: bgImage ? 10 : undefined }}
+      >
         <p className="inline-flex items-center gap-1.5 text-[11px] font-medium text-slate-500">
           <span>Powered by</span>
           <span className="font-bold tracking-tight text-[var(--qf-primary)]">QueueFlow</span>

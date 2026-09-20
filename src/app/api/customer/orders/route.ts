@@ -46,11 +46,14 @@ export async function GET(request: Request) {
       return customerJson({ error: 'Invalid or expired token.' }, 404);
     }
 
+    // Fetch the restaurant for slug validation and to include theme data.
+    let restaurantThemeKey: string | null = null;
     if (slug) {
       const restaurant = await PublicRestaurantService.getPublicRestaurantBySlug(slug);
       if (!restaurant || restaurant.id !== orderState.restaurantId) {
         return customerJson({ error: 'Invalid or expired token.' }, 404);
       }
+      restaurantThemeKey = restaurant.customerThemeKey ?? null;
     }
 
     return customerJson(
@@ -62,6 +65,7 @@ export async function GET(request: Request) {
           restaurant_id: orderState.restaurantId,
           restaurant_name: orderState.restaurantName,
           restaurant_currency: orderState.restaurantCurrency,
+          restaurant_theme_key: restaurantThemeKey,
           status: orderState.status,
           payment_status: orderState.paymentStatus,
           subtotal: orderState.subtotal,

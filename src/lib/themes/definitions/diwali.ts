@@ -1,48 +1,65 @@
 import type { CustomerTheme } from '../types';
 
 /**
- * Diwali Festival Theme.
+ * Diwali Festival Theme — Premium Immersive Edition.
  *
  * Visual Direction:
- * Luminous celebration. Deep charcoal obsidian foundation, radiant celebratory gold,
- * saffron, and warm amber glows suggesting lamps and prosperity without excessive neon.
+ * Based on the supplied reference image:
+ *   - Deep mahogany-burgundy background (#1a0800 family)
+ *   - Amber / molten-gold radial glow at centre
+ *   - Hanging diya lamps with live flame highlights
+ *   - Intricate gold mandala rangoli in corners
+ *   - Soft bokeh light particles (amber / ochre)
+ *
+ * The full-bleed reference photo is applied as the primary background layer.
+ * A translucent scrim preserves UI legibility while keeping the artwork visible.
+ *
+ * Color tokens are derived directly from the image palette so that surfaces,
+ * cards, and interactive states all harmonise with the photographic background.
  */
 export const DIWALI_THEME: CustomerTheme = {
   key: 'diwali',
   name: 'Diwali',
-  description: 'Luminous festive celebration with deep obsidian surfaces, radiant celebratory gold, and warm amber glows.',
+  description:
+    'Immersive Diwali festival atmosphere — glowing diyas, gold mandala rangoli, and warm amber bokeh set against a deep mahogany backdrop.',
   tokens: {
     surfaces: {
-      background: '#0c0d12',
-      backgroundElevated: '#141722',
-      surface: 'rgba(26, 28, 38, 0.90)',
-      surfaceSolid: '#181b24',
-      surfaceElevated: 'rgba(38, 42, 58, 0.94)',
-      surfaceInteractive: '#242838',
+      // Deep mahogany drawn directly from the image shadow regions
+      background: '#1a0800',
+      backgroundElevated: '#260d02',
+      // Semi-transparent so the photo bleeds through slightly
+      surface: 'rgba(30, 12, 3, 0.82)',
+      surfaceSolid: '#2a0e04',
+      surfaceElevated: 'rgba(42, 18, 5, 0.88)',
+      surfaceInteractive: '#381508',
     },
     accents: {
-      primary: '#f59e0b',
-      primaryHover: '#d97706',
-      primaryForeground: '#181102',
-      primaryGlow: 'rgba(245, 158, 11, 0.25)',
-      accentDineIn: '#ea580c',
-      accentDineInGlow: 'rgba(234, 88, 12, 0.22)',
-      accentTakeaway: '#eab308',
-      accentTakeawayGlow: 'rgba(234, 179, 8, 0.25)',
+      // Molten gold / amber — the lamp flame and glow colour
+      primary: '#f5a623',
+      primaryHover: '#e09210',
+      primaryForeground: '#1a0500',
+      primaryGlow: 'rgba(245, 166, 35, 0.30)',
+      // Dine-In: deep burnt orange / diya-flame colour — distinct from amber gold
+      accentDineIn: '#c2410c',
+      accentDineInGlow: 'rgba(194, 65, 12, 0.25)',
+      // Takeaway: deep amber gold (mandala highlight)
+      accentTakeaway: '#f59e0b',
+      accentTakeawayGlow: 'rgba(245, 158, 11, 0.28)',
     },
     text: {
-      text: '#fefce8',
-      textSecondary: '#cbd5e1',
-      textMuted: '#94a3b8',
+      // Warm ivory — readable on dark mahogany surfaces
+      text: '#fff8ee',
+      textSecondary: '#f3d5a3',
+      textMuted: '#c49a60',
     },
     borders: {
-      border: 'rgba(245, 158, 11, 0.20)',
-      borderSubtle: 'rgba(245, 158, 11, 0.08)',
-      borderHover: 'rgba(245, 158, 11, 0.35)',
-      borderActive: 'rgba(245, 158, 11, 0.55)',
+      border: 'rgba(245, 166, 35, 0.22)',
+      borderSubtle: 'rgba(245, 166, 35, 0.09)',
+      borderHover: 'rgba(245, 166, 35, 0.40)',
+      borderActive: 'rgba(245, 166, 35, 0.60)',
     },
     status: {
-      success: '#10b981',
+      success: '#22c55e',
       warning: '#f59e0b',
       danger: '#ef4444',
     },
@@ -51,21 +68,24 @@ export const DIWALI_THEME: CustomerTheme = {
       radiusMd: '0.875rem',
       radiusLg: '1.25rem',
       radiusXl: '1.5rem',
-      shadowSm: '0 2px 8px rgba(10, 10, 15, 0.35)',
-      shadowMd: '0 8px 24px rgba(10, 10, 15, 0.45)',
-      shadowLg: '0 16px 40px rgba(10, 10, 15, 0.55)',
+      shadowSm: '0 2px 8px rgba(0, 0, 0, 0.50)',
+      shadowMd: '0 8px 24px rgba(0, 0, 0, 0.60)',
+      shadowLg: '0 16px 48px rgba(0, 0, 0, 0.70)',
     },
   },
   metadata: {
     category: 'cultural',
     season: 'Autumn',
-    tags: ['luminous', 'gold', 'saffron', 'diwali', 'celebration', 'lamps'],
-    previewAccentColor: '#f59e0b',
-    previewSurfaceColor: '#181b24',
+    tags: ['diwali', 'festival', 'diya', 'gold', 'rangoli', 'mandala', 'amber', 'mahogany'],
+    previewAccentColor: '#f5a623',
+    previewSurfaceColor: '#2a0e04',
   },
   artwork: {
     motif: 'diwali-rangoli',
-    opacity: 0.13,
+    // The SVG motif is kept at very low opacity — the photo is the visual hero
+    opacity: 0.07,
     placement: 'top-split',
+    // Full-bleed background image: served from Next.js /public static directory
+    backgroundImage: '/themes/diwali-bg.png',
   },
 };

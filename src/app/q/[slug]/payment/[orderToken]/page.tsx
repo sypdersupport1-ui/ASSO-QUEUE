@@ -4,6 +4,8 @@ import React, { useState, useEffect, use } from 'react';
 import Link from 'next/link';
 import { CreditCard, Store, ReceiptText, Ticket } from 'lucide-react';
 import { ThemeArtwork } from '@/components/themes';
+import { THEME_REGISTRY } from '@/lib/themes/registry';
+import { themeToCssVariables } from '@/lib/themes/resolver';
 
 interface PaymentStatusState {
   status: 'IDLE' | 'PROCESSING' | 'SUCCEEDED' | 'FAILED' | 'REFUNDED';
@@ -27,6 +29,7 @@ interface OrderRecord {
   restaurant_id: string;
   restaurant_name?: string;
   restaurant_currency?: string;
+  restaurant_theme_key?: string | null;
   status: string;
   payment_status?: string;
   subtotal?: number;
@@ -169,6 +172,13 @@ export default function CustomerPaymentPage({
   const backHref = qtoken ? `/q/${slug}/status/${qtoken}` : `/q/${slug}`;
   const isPaid = order?.payment_status === 'PAID';
 
+  // Derive theme from restaurant_theme_key in the order data
+  const activeTheme = order?.restaurant_theme_key
+    ? (THEME_REGISTRY[order.restaurant_theme_key] ?? null)
+    : null;
+  const themeStyles = activeTheme ? themeToCssVariables(activeTheme) : undefined;
+  const bgImage = activeTheme?.artwork?.backgroundImage ?? null;
+
   if (loading) {
     return (
       <main className="qf-bg flex min-h-[100dvh] flex-col justify-between px-4 py-6 text-slate-100 sm:py-8" aria-label="Loading payment" role="status">
@@ -224,15 +234,50 @@ export default function CustomerPaymentPage({
   }
 
   return (
-    <main className="qf-bg relative flex min-h-[100dvh] flex-col justify-between px-4 pt-[max(1.5rem,env(safe-area-inset-top))] pb-6 text-slate-100 selection:bg-orange-500 selection:text-white sm:py-8">
-      {/* Subtle ambient lighting */}
-      <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 h-[380px] bg-gradient-to-b from-slate-800/20 via-slate-900/10 to-transparent" />
-      <div aria-hidden="true" className="pointer-events-none absolute top-4 left-1/2 -translate-x-1/2 h-64 w-64 rounded-full bg-emerald-500/[0.04] blur-3xl" />
+    <main
+      className="qf-bg relative flex min-h-[100dvh] flex-col justify-between px-4 pt-[max(1.5rem,env(safe-area-inset-top))] pb-6 text-slate-100 selection:bg-orange-500 selection:text-white sm:py-8"
+      data-theme={activeTheme?.key || 'default'}
+      style={themeStyles}
+    >
+      {/* ── Theme background image layer ──────────────────────────────────── */}
+      {bgImage ? (
+        <>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={bgImage}
+            alt=""
+            aria-hidden="true"
+            fetchPriority="high"
+            decoding="async"
+            className="pointer-events-none fixed inset-0 h-full w-full object-cover object-center select-none"
+            style={{ zIndex: 0 }}
+          />
+          <div
+            aria-hidden="true"
+            className="pointer-events-none fixed inset-0"
+            style={{
+              zIndex: 1,
+              background:
+                'linear-gradient(to bottom, rgba(20,6,0,0.55) 0%, rgba(20,6,0,0.20) 30%, rgba(20,6,0,0.20) 70%, rgba(20,6,0,0.60) 100%)',
+            }}
+          />
+        </>
+      ) : (
+        <>
+          <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 h-[380px] bg-gradient-to-b from-slate-800/20 via-slate-900/10 to-transparent" />
+          <div aria-hidden="true" className="pointer-events-none absolute top-4 left-1/2 -translate-x-1/2 h-64 w-64 rounded-full bg-emerald-500/[0.04] blur-3xl" />
+        </>
+      )}
 
       {/* Thematic Decorative Artwork & Motif Layer */}
-      <ThemeArtwork variant="page" />
+      <div style={{ zIndex: bgImage ? 2 : undefined, position: bgImage ? 'relative' : undefined }}>
+        <ThemeArtwork theme={activeTheme ?? undefined} variant="page" />
+      </div>
 
-      <div className="relative z-10 mx-auto w-full max-w-md space-y-4 sm:space-y-5">
+      <div
+        className="relative mx-auto w-full max-w-md space-y-4 sm:space-y-5"
+        style={{ zIndex: bgImage ? 10 : undefined }}
+      >
         {/* Restaurant Header */}
         <header className="flex items-center justify-between gap-3 py-2 text-left">
           <div className="flex min-w-0 flex-1 items-center gap-3">
@@ -508,7 +553,10 @@ export default function CustomerPaymentPage({
       </div>
 
       {/* Shared QueueFlow Customer Footer */}
-      <footer className="w-full max-w-md mx-auto text-center pt-8 pb-[calc(1rem+env(safe-area-inset-bottom))]">
+      <footer
+        className="w-full max-w-md mx-auto text-center pt-8 pb-[calc(1rem+env(safe-area-inset-bottom))]"
+        style={{ zIndex: bgImage ? 10 : undefined, position: bgImage ? 'relative' : undefined }}
+      >
         <div className="inline-flex items-center gap-2 text-xs font-semibold text-slate-500">
           <span>Powered by</span>
           <span className="text-emerald-400 font-bold tracking-tight">QueueFlow</span>
