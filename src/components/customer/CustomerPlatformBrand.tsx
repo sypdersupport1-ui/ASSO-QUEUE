@@ -9,20 +9,20 @@ import React from 'react';
  * - Asset: Canonical transparent asset /brand/asso/asso-customer-white.png
  * - Transparent Presentation: Floats naturally over theme atmosphere (NO black box / rectangle)
  * - Complete Lockup: Preserves ASSO wordmark, geometric A, gradient ring, and "BUSINESS MANAGEMENT & Q"
- * - Compact Height: ~24px mobile (h-6), ~28px desktop (sm:h-7)
+ * - Prominent Size: ~36px mobile (h-9), ~40px desktop (sm:h-10) for clear readability of descriptor text
  * - Accessibility: alt="ASSO — Business Management & Q", not aria-hidden
  * - Reusable across all customer themes without dynamic recoloring
  */
 export function CustomerPlatformBrand() {
   return (
-    <div className="flex items-center justify-start pt-1 pb-0.5">
+    <div className="flex items-center justify-start pt-1.5 pb-1">
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src="/brand/asso/asso-customer-white.png"
         alt="ASSO — Business Management & Q"
         width={1024}
         height={341}
-        className="h-6 sm:h-7 w-auto object-contain select-none"
+        className="h-10 sm:h-11 w-auto object-contain select-none"
         decoding="async"
       />
     </div>

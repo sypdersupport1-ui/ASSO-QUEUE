@@ -23,6 +23,7 @@
 | **Task 6** | Official ASSO Customer Branding | ✅ Completed | [`d453729`](https://github.com/sypdersupport1-ui/ASSO-QUEUE/commit/d453729) | Positioned official ASSO logo top-left outside glass cards; preserved complete lockup with `BUSINESS MANAGEMENT & Q`. |
 | **Task 7** | Transparent Logo & Luxury Serif Typography | ✅ Completed | [`ca29106`](https://github.com/sypdersupport1-ui/ASSO-QUEUE/commit/ca29106) | Removed artificial black bounding box around logo; applied `.font-luxury-serif` (`Playfair Display`, `Cormorant Garamond`) to restaurant hero; upgraded CTA to warm golden amber gradient. |
 | **Task 8** | Production Deployment & Verification | ✅ Completed | [`ca29106`](https://github.com/sypdersupport1-ui/ASSO-QUEUE/commit/ca29106) | Merged to `main`, pushed to GitHub, validated successful Vercel production build & live curl confirmation. |
+| **Task 9** | ASSO Logo Scale & Readability Optimization | ✅ Completed | Pending | Increased ASSO logo size to `h-10 sm:h-11` (~40px mobile / 44px desktop, 120px width) so the descriptor text `BUSINESS MANAGEMENT & Q` is crisp and instantly readable on mobile. |
 
 ---
 
@@ -31,6 +32,7 @@
 ### 1. Platform Brand Placement ([CustomerPlatformBrand.tsx](file:///Users/apple/Downloads/queue-management-main/src/components/customer/CustomerPlatformBrand.tsx))
 - **Logo Position**: Top-left (`justify-start`), aligned with standard 16–20px content margin.
 - **Natural Transparency**: Removed `bg-black rounded-md` from container. The native RGBA PNG floats seamlessly over the Diwali atmosphere without any rectangular black box.
+- **Scale & Readability**: Enlarged from `h-6 sm:h-7` (24px) to `h-10 sm:h-11` (40px mobile / 44px desktop, ~120px width) ensuring `BUSINESS MANAGEMENT & Q` is crisp and prominently readable on all smartphone screens.
 - **Full Brand Lockup**: Preserves ASSO wordmark, geometric icon, ring element, and the descriptor line `BUSINESS MANAGEMENT & Q`.
 
 ### 2. Luxury Restaurant Header ([RestaurantHeader.tsx](file:///Users/apple/Downloads/queue-management-main/src/components/customer/RestaurantHeader.tsx))
