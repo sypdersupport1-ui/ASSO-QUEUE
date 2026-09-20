@@ -6,8 +6,8 @@ import React from 'react';
  * Requirements:
  * - Position: Top-left aligned (justify-start), outside glass cards
  * - Alignment: Shares canonical 16–20px left content inset with customer shell
- * - Asset: Canonical static asset /brand/asso/asso-customer-white.png
- * - Black Background: Preserved on compact logo bounds (bg-black rounded-md)
+ * - Asset: Canonical transparent asset /brand/asso/asso-customer-white.png
+ * - Transparent Presentation: Floats naturally over theme atmosphere (NO black box / rectangle)
  * - Complete Lockup: Preserves ASSO wordmark, geometric A, gradient ring, and "BUSINESS MANAGEMENT & Q"
  * - Compact Height: ~24px mobile (h-6), ~28px desktop (sm:h-7)
  * - Accessibility: alt="ASSO — Business Management & Q", not aria-hidden
@@ -22,7 +22,7 @@ export function CustomerPlatformBrand() {
         alt="ASSO — Business Management & Q"
         width={1024}
         height={341}
-        className="h-6 sm:h-7 w-auto object-contain bg-black rounded-md select-none"
+        className="h-6 sm:h-7 w-auto object-contain select-none"
         decoding="async"
       />
     </div>

@@ -41,22 +41,23 @@ const MOCK_RESTAURANT: PublicRestaurantInfo = {
 
 describe('QueueFlow Canonical Mobile Customer Shell', () => {
   describe('1. Platform Brand Placement', () => {
-    it('renders the official ASSO logo in top-left position with black background and accessible alt text', () => {
+    it('renders the official ASSO logo in top-left position with transparent treatment and accessible alt text', () => {
       const html = renderToStaticMarkup(<CustomerPlatformBrand />);
       expect(html).toContain('src="/brand/asso/asso-customer-white.png"');
       expect(html).toMatch(/alt="ASSO — Business Management (&amp;|&) Q"/);
       expect(html).toContain('justify-start'); // Strictly TOP-LEFT aligned
-      expect(html).toContain('bg-black');
+      expect(html).not.toContain('bg-black'); // Strictly NO black background / box
       expect(html).not.toContain('aria-hidden="true"');
     });
   });
 
   describe('2 & 3. Restaurant Hero & Optional Tagline', () => {
-    it('renders restaurant name prominently with tagline and NO restaurant logo', () => {
+    it('renders restaurant name prominently with luxury serif typography, tagline, and NO restaurant logo', () => {
       const html = renderToStaticMarkup(
         <RestaurantHeader restaurant={MOCK_RESTAURANT} waitingCount={0} />
       );
       expect(html).toContain('Biriyani House');
+      expect(html).toContain('font-luxury-serif');
       expect(html).toContain('uppercase');
       expect(html).toContain('Good Food. Brighter Days.');
       expect(html).not.toContain('<img'); // Strictly NO restaurant logo

@@ -177,10 +177,10 @@ export function CustomerJoinFlow({
           <button
             type="button"
             onClick={handleOpenSheet}
-            className={`w-full min-h-[54px] h-14 rounded-2xl flex items-center justify-between px-5 font-black text-sm sm:text-base tracking-wide transition-all active:scale-[0.98] cursor-pointer shadow-lg select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0b0f19] ${
+            className={`w-full min-h-[54px] h-14 rounded-2xl flex items-center justify-between px-5 font-black text-sm sm:text-base tracking-wide transition-all active:scale-[0.98] cursor-pointer shadow-lg select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[#140602] ${
               isTakeaway
-                ? 'bg-[var(--qf-accent-takeaway)] hover:bg-amber-400 text-slate-950 shadow-amber-500/15 focus-visible:ring-[var(--qf-accent-takeaway)]'
-                : 'bg-[var(--qf-primary)] hover:bg-[var(--qf-primary-hover)] text-[var(--qf-primary-foreground)] shadow-black/25 focus-visible:ring-[var(--qf-primary)]'
+                ? 'bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 hover:from-amber-400 hover:to-amber-500 text-[#140602] shadow-[0_8px_25px_rgba(245,158,11,0.25)] focus-visible:ring-[var(--qf-accent-takeaway)]'
+                : 'bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 hover:from-amber-400 hover:to-amber-500 text-[#140602] shadow-[0_8px_25px_rgba(245,158,11,0.25)] focus-visible:ring-[var(--qf-primary)]'
             }`}
           >
             <span className="flex items-center gap-2.5">
@@ -196,8 +196,8 @@ export function CustomerJoinFlow({
             <ArrowRight className="h-5 w-5" aria-hidden="true" />
           </button>
 
-          <p className="text-center text-[11px] text-slate-400 pt-0.5">
-            Free · No app download needed · Instant notifications
+          <p className="text-center text-[11px] text-[#edd7be]/80 pt-0.5">
+            Free • No app download needed • Instant notifications
           </p>
         </div>
       </section>

@@ -348,6 +348,10 @@ html.light .shadow-2xl{ box-shadow: 0 8px 28px rgba(15,23,42,0.10) !important; }
   border-color: var(--qf-border-hover);
 }
 
+.font-luxury-serif {
+  font-family: 'Playfair Display', 'Cormorant Garamond', ui-serif, Georgia, Cambria, 'Times New Roman', Times, serif;
+}
+
 .qf-display {
   font-family: var(--font-ticket-display, "JetBrains Mono", monospace);
   letter-spacing: -0.03em;
