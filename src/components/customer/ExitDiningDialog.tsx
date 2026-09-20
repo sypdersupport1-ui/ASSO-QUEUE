@@ -62,10 +62,10 @@ export function ExitDiningDialog({ token, restaurantSlug }: ExitDiningDialogProp
         ref={triggerRef}
         type="button"
         onClick={() => setIsOpen(true)}
-        className="flex h-13 min-h-[52px] w-full items-center justify-center gap-2 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 text-sm font-bold text-emerald-300 transition-all hover:border-emerald-500/50 hover:bg-emerald-500/20 hover:text-white active:scale-[0.98] cursor-pointer shadow-lg shadow-emerald-500/10"
+        className="customer-glass-control flex h-13 min-h-[52px] w-full items-center justify-center gap-2 rounded-2xl border border-[var(--qf-primary)]/30 bg-[var(--qf-primary)]/10 text-sm font-bold text-[var(--qf-primary)] transition-all hover:border-[var(--qf-primary)]/50 hover:bg-[var(--qf-primary)]/20 hover:text-white active:scale-[0.98] cursor-pointer shadow-lg"
         aria-haspopup="dialog"
       >
-        <LogOut aria-hidden="true" className="h-4 w-4 text-emerald-400" />
+        <LogOut aria-hidden="true" className="h-4 w-4 text-[var(--qf-primary)]" />
         <span>Leave Queue / Done Dining</span>
       </button>
 
@@ -74,11 +74,11 @@ export function ExitDiningDialog({ token, restaurantSlug }: ExitDiningDialogProp
           role="dialog"
           aria-modal="true"
           aria-labelledby="exit-dining-title"
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
         >
-          <div className="w-full max-w-sm rounded-3xl border border-white/10 bg-slate-900/95 backdrop-blur-xl p-6 shadow-2xl animate-in fade-in zoom-in-95">
+          <div className="customer-glass-card w-full max-w-sm rounded-3xl border border-[var(--qf-border)] bg-[var(--qf-surface)]/95 backdrop-blur-xl p-6 shadow-2xl animate-in fade-in zoom-in-95">
             <div className="flex flex-col items-center text-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--qf-primary)]/15 border border-[var(--qf-primary)]/30 text-[var(--qf-primary)]">
                 <UtensilsCrossed className="h-6 w-6" />
               </div>
               <div className="flex flex-col gap-1">
@@ -103,7 +103,7 @@ export function ExitDiningDialog({ token, restaurantSlug }: ExitDiningDialogProp
                 type="button"
                 disabled={isPending}
                 onClick={() => handleExit(false)}
-                className="flex min-h-[48px] h-12 w-full items-center justify-center gap-2 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-sm font-black text-slate-950 shadow-lg shadow-emerald-500/20 active:scale-[0.99] cursor-pointer disabled:opacity-50"
+                className="customer-primary-cta flex min-h-[48px] h-12 w-full items-center justify-center gap-2 rounded-2xl text-sm font-black shadow-lg active:scale-[0.99] cursor-pointer disabled:opacity-50"
               >
                 {isPending ? (
                   <>
@@ -124,7 +124,7 @@ export function ExitDiningDialog({ token, restaurantSlug }: ExitDiningDialogProp
                 onClick={() => handleExit(true)}
                 className="flex min-h-[44px] h-11 w-full items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 text-xs font-bold text-slate-200 hover:bg-white/10 hover:text-white transition-colors cursor-pointer disabled:opacity-50"
               >
-                <PlusCircle className="h-4 w-4 text-emerald-400" />
+                <PlusCircle className="h-4 w-4 text-[var(--qf-primary)]" />
                 <span>Leave &amp; Join Again (Next Meal)</span>
               </button>
 

@@ -54,7 +54,7 @@ export function CustomerShell({
         ...themeStyles,
         ...style,
       }}
-      className={`qf-bg relative flex min-h-[100dvh] flex-col justify-between overflow-x-hidden text-slate-100 selection:bg-emerald-500/30 selection:text-emerald-100 ${className}`}
+      className={`qf-bg relative flex min-h-[100dvh] flex-col justify-between overflow-x-hidden text-slate-100 selection:bg-[var(--qf-primary)]/30 selection:text-[var(--qf-primary-foreground)] ${className}`}
     >
       {/* ── Layer 1 & 2: Theme Background & Scrim ───────────────────────────── */}
       {bgImage ? (

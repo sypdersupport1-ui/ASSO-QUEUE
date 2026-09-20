@@ -20,19 +20,19 @@ export function CustomerBadge({
   icon,
 }: CustomerBadgeProps) {
   const variantStyles = {
-    success: 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400',
-    warning: 'border-amber-500/30 bg-amber-500/10 text-amber-400',
-    info: 'border-blue-500/30 bg-blue-500/10 text-blue-400',
-    neutral: 'border-white/10 bg-white/[0.04] text-slate-300',
-    danger: 'border-rose-500/30 bg-rose-500/10 text-rose-400',
+    success: 'border-[var(--qf-success)]/30 bg-[var(--qf-success)]/10 text-[var(--qf-success)]',
+    warning: 'border-[var(--qf-warning)]/30 bg-[var(--qf-warning)]/10 text-[var(--qf-warning)]',
+    info: 'border-[var(--qf-accent-dine-in)]/30 bg-[var(--qf-accent-dine-in)]/10 text-[var(--qf-accent-dine-in)]',
+    neutral: 'border-[var(--qf-border)] bg-white/[0.04] text-slate-300',
+    danger: 'border-[var(--qf-danger)]/30 bg-[var(--qf-danger)]/10 text-[var(--qf-danger)]',
   };
 
   const dotColors = {
-    success: 'bg-emerald-400',
-    warning: 'bg-amber-400',
-    info: 'bg-blue-400',
+    success: 'bg-[var(--qf-success)]',
+    warning: 'bg-[var(--qf-warning)]',
+    info: 'bg-[var(--qf-accent-dine-in)]',
     neutral: 'bg-slate-400',
-    danger: 'bg-rose-400',
+    danger: 'bg-[var(--qf-danger)]',
   };
 
   return (

@@ -202,17 +202,19 @@ export function TakeawayTicketCard({
   return (
     <section
       aria-label={`Takeaway ticket ${ticketNo}`}
-      className="qf-card relative overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-b from-slate-900/95 via-slate-900/90 to-slate-950/95 p-5 sm:p-7 shadow-2xl text-center backdrop-blur-xl space-y-5"
+      className="customer-glass-card relative overflow-hidden p-5 sm:p-7 text-center backdrop-blur-xl space-y-5"
     >
       {/* Ambient background illumination */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute -top-24 left-1/2 -translate-x-1/2 h-60 w-60 rounded-full bg-emerald-500/15 blur-3xl"
+        className="pointer-events-none absolute -top-24 left-1/2 -translate-x-1/2 h-60 w-60 rounded-full blur-3xl opacity-30"
+        style={{ background: 'var(--qf-primary-glow)' }}
       />
       {(isCalled || isReady) && (
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute inset-0 bg-emerald-500/10 blur-2xl motion-safe:animate-pulse"
+          className="pointer-events-none absolute inset-0 blur-2xl motion-safe:animate-pulse opacity-20"
+          style={{ background: 'var(--qf-primary-glow)' }}
         />
       )}
 
@@ -224,37 +226,37 @@ export function TakeawayTicketCard({
       {/* 1. TICKET HEADER & BADGES */}
       <div className="relative z-10 space-y-2">
         <div className="flex items-center justify-center gap-2">
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/15 px-3 py-1 text-[11px] font-black uppercase tracking-wider text-emerald-400">
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-[var(--qf-accent-takeaway)]/30 bg-[var(--qf-accent-takeaway)]/15 px-3 py-1 text-[11px] font-black uppercase tracking-wider text-[var(--qf-accent-takeaway)]">
             <ShoppingBag className="h-3 w-3" />
             <span>Takeaway</span>
           </span>
 
           {currentStage === 'WAITING' && (
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] font-black uppercase tracking-wider text-slate-300">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-[var(--qf-border)] bg-white/5 px-3 py-1 text-[11px] font-black uppercase tracking-wider text-slate-300">
               <span className="relative flex h-2 w-2">
-                <span className="motion-safe:animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
+                <span className="motion-safe:animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--qf-success)] opacity-75" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-[var(--qf-success)]" />
               </span>
               <span>In Queue</span>
             </span>
           )}
 
           {currentStage === 'CALLED' && (
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/40 bg-amber-500/20 px-3 py-1 text-[11px] font-black uppercase tracking-wider text-amber-300 animate-pulse">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-[var(--qf-warning)]/40 bg-[var(--qf-warning)]/20 px-3 py-1 text-[11px] font-black uppercase tracking-wider text-[var(--qf-warning)] animate-pulse">
               <span>● Called</span>
             </span>
           )}
 
           {currentStage === 'ORDER_COMPLETED' && (
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-teal-500/40 bg-teal-500/20 px-3 py-1 text-[11px] font-black uppercase tracking-wider text-teal-300">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-[var(--qf-border)] bg-white/5 px-3 py-1 text-[11px] font-black uppercase tracking-wider text-slate-200">
               {isReady ? (
-                <span className="inline-flex items-center gap-1">
-                  <Sparkles className="h-3 w-3 text-emerald-300" aria-hidden="true" />
+                <span className="inline-flex items-center gap-1 text-[var(--qf-success)]">
+                  <Sparkles className="h-3 w-3 text-[var(--qf-success)]" aria-hidden="true" />
                   <span>Ready for Pickup</span>
                 </span>
               ) : (
-                <span className="inline-flex items-center gap-1">
-                  <Flame className="h-3 w-3 text-amber-300" aria-hidden="true" />
+                <span className="inline-flex items-center gap-1 text-[var(--qf-warning)]">
+                  <Flame className="h-3 w-3 text-[var(--qf-warning)]" aria-hidden="true" />
                   <span>Preparing</span>
                 </span>
               )}
@@ -262,8 +264,8 @@ export function TakeawayTicketCard({
           )}
 
           {currentStage === 'ITEMS_RECEIVED' && (
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/20 px-3 py-1 text-[11px] font-black uppercase tracking-wider text-emerald-300">
-              <Check className="h-3 w-3" />
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-[var(--qf-border)] bg-white/5 px-3 py-1 text-[11px] font-black uppercase tracking-wider text-[var(--qf-success)]">
+              <Check className="h-3 w-3 text-[var(--qf-success)]" />
               <span>Items Received</span>
             </span>
           )}
@@ -280,12 +282,12 @@ export function TakeawayTicketCard({
         {/* Guest & restaurant badges (NO party size) */}
         <div className="flex flex-wrap items-center justify-center gap-2 pt-0.5 text-xs">
           {restaurantName && (
-            <span className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-2.5 py-1 font-semibold text-slate-300 max-w-[220px] truncate">
+            <span className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--qf-border)] bg-white/5 px-2.5 py-1 font-semibold text-slate-300 max-w-[220px] truncate">
               {restaurantName}
             </span>
           )}
           {status.customerName && (
-            <span className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-500/25 bg-emerald-500/10 px-2.5 py-1 font-semibold text-emerald-300">
+            <span className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--qf-border)] bg-white/5 px-2.5 py-1 font-semibold text-[var(--qf-primary)]">
               <span>{status.customerName}</span>
             </span>
           )}
@@ -299,8 +301,8 @@ export function TakeawayTicketCard({
             <span
               className={
                 currentStage === 'WAITING'
-                  ? 'text-emerald-400 font-black'
-                  : 'text-emerald-400/80 font-semibold'
+                  ? 'text-[var(--qf-primary)] font-black'
+                  : 'text-[var(--qf-primary)]/80 font-semibold'
               }
             >
               {takeawayManualOrderingEnabled ? '1. In Queue' : '1. Waiting'}
@@ -308,9 +310,9 @@ export function TakeawayTicketCard({
             <span
               className={
                 currentStage === 'CALLED'
-                  ? 'text-amber-300 font-black animate-pulse'
+                  ? 'text-[var(--qf-warning)] font-black animate-pulse'
                   : ['ORDER_COMPLETED', 'ITEMS_RECEIVED'].includes(currentStage)
-                  ? 'text-emerald-400/80 font-semibold'
+                  ? 'text-[var(--qf-primary)]/80 font-semibold'
                   : 'text-slate-500 font-medium'
               }
             >
@@ -319,9 +321,9 @@ export function TakeawayTicketCard({
             <span
               className={
                 currentStage === 'ORDER_COMPLETED'
-                  ? 'text-teal-300 font-black'
+                  ? 'text-[var(--qf-primary)] font-black'
                   : currentStage === 'ITEMS_RECEIVED'
-                  ? 'text-emerald-400/80 font-semibold'
+                  ? 'text-[var(--qf-primary)]/80 font-semibold'
                   : 'text-slate-500 font-medium'
               }
             >
@@ -330,7 +332,7 @@ export function TakeawayTicketCard({
             <span
               className={
                 currentStage === 'ITEMS_RECEIVED'
-                  ? 'text-emerald-400 font-black'
+                  ? 'text-[var(--qf-primary)] font-black'
                   : 'text-slate-500 font-medium'
               }
             >
@@ -339,8 +341,9 @@ export function TakeawayTicketCard({
           </div>
           <div className="h-2 w-full bg-white/10 rounded-full overflow-hidden p-0.5">
             <div
-              className="h-full bg-gradient-to-r from-emerald-500 to-teal-400 rounded-full transition-all duration-500 shadow-sm shadow-emerald-500/50"
+              className="h-full rounded-full transition-all duration-500 shadow-sm"
               style={{
+                background: 'linear-gradient(to right, var(--qf-primary), var(--qf-accent-takeaway))',
                 width:
                   currentStage === 'WAITING'
                     ? '25%'
@@ -372,11 +375,11 @@ export function TakeawayTicketCard({
           {/* Position & Orders Ahead Grid */}
           <div className="grid grid-cols-2 gap-3">
             {/* Position */}
-            <div className="rounded-2xl border border-emerald-500/30 bg-gradient-to-br from-emerald-500/15 via-teal-500/5 to-slate-900/60 p-3.5 text-center shadow-sm">
-              <p className="text-[10px] font-black uppercase tracking-widest text-emerald-300 mb-0.5">
+            <div className="customer-glass-surface p-3.5 text-center shadow-sm">
+              <p className="text-[10px] font-black uppercase tracking-widest text-[var(--qf-primary)] mb-0.5">
                 Position
               </p>
-              <p className="font-mono text-3xl sm:text-4xl font-black text-emerald-300 tabular-nums">
+              <p className="font-mono text-3xl sm:text-4xl font-black text-[var(--qf-primary)] tabular-nums">
                 {status.position === 1 ? 'Next' : status.position ?? '—'}
               </p>
               <p className="text-[10px] font-semibold text-slate-400 mt-0.5">
@@ -385,11 +388,11 @@ export function TakeawayTicketCard({
             </div>
 
             {/* People / Orders Ahead */}
-            <div className="rounded-2xl border border-amber-500/30 bg-gradient-to-br from-amber-500/15 via-orange-500/5 to-slate-900/60 p-3.5 text-center shadow-sm">
-              <p className="text-[10px] font-black uppercase tracking-widest text-amber-300 mb-0.5">
+            <div className="customer-glass-surface p-3.5 text-center shadow-sm">
+              <p className="text-[10px] font-black uppercase tracking-widest text-[var(--qf-accent-takeaway)] mb-0.5">
                 Ahead of You
               </p>
-              <p className="font-mono text-3xl sm:text-4xl font-black text-amber-300 tabular-nums">
+              <p className="font-mono text-3xl sm:text-4xl font-black text-[var(--qf-accent-takeaway)] tabular-nums">
                 {status.peopleAhead !== null && status.peopleAhead >= 0
                   ? status.peopleAhead
                   : '0'}
@@ -408,9 +411,9 @@ export function TakeawayTicketCard({
               setBuzzerTested(true);
               setTimeout(() => setBuzzerTested(false), 2200);
             }}
-            className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl border border-amber-500/30 bg-amber-500/10 hover:bg-amber-500/20 text-amber-200 text-xs font-bold transition-all active:scale-[0.98] cursor-pointer shadow-sm"
+            className="customer-glass-control w-full flex items-center justify-center gap-2 py-2.5 px-4 text-slate-200 text-xs font-bold transition-all active:scale-[0.98] cursor-pointer shadow-sm"
           >
-            <Volume2 className="h-4 w-4 text-amber-400 shrink-0" />
+            <Volume2 className="h-4 w-4 text-[var(--qf-primary)] shrink-0" />
             <span>{buzzerTested ? 'Buzzer ringing loud! 🔊' : 'Test Loud Buzzer Sound'}</span>
           </button>
         </div>
@@ -419,11 +422,11 @@ export function TakeawayTicketCard({
       {/* STAGE 2: CALLED */}
       {currentStage === 'CALLED' && !isCancelled && !isExpired && (
         <div className="relative z-10 space-y-4 pt-1 animate-fadeUp">
-          <div className="rounded-2xl border border-amber-500/50 bg-gradient-to-br from-amber-500/25 via-emerald-950/30 to-slate-900/90 p-5 text-center shadow-xl space-y-3">
-            <div className="flex h-12 w-12 mx-auto items-center justify-center rounded-2xl bg-amber-500/20 text-amber-300 border border-amber-500/30">
-              <Megaphone className="h-6 w-6 text-amber-400" aria-hidden="true" />
+          <div className="customer-glass-surface p-5 text-center shadow-xl space-y-3">
+            <div className="flex h-12 w-12 mx-auto items-center justify-center rounded-2xl bg-[var(--qf-warning)]/20 text-[var(--qf-warning)] border border-[var(--qf-warning)]/30">
+              <Megaphone className="h-6 w-6 text-[var(--qf-warning)]" aria-hidden="true" />
             </div>
-            <h2 className="text-2xl sm:text-3xl font-black text-amber-300 tracking-tight">
+            <h2 className="text-2xl sm:text-3xl font-black text-[var(--qf-warning)] tracking-tight">
               YOUR TICKET IS CALLED
             </h2>
             <p className="text-xs sm:text-sm font-bold text-slate-200">
@@ -439,7 +442,7 @@ export function TakeawayTicketCard({
           <button
             type="button"
             onClick={handleAtCounter}
-            className="w-full flex h-13 min-h-[52px] items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-400 hover:from-emerald-400 hover:to-teal-300 text-slate-950 font-black text-sm tracking-wide shadow-xl shadow-emerald-500/20 active:scale-[0.99] cursor-pointer transition-all"
+            className="customer-primary-cta w-full flex h-13 min-h-[52px] items-center justify-center gap-2 rounded-2xl font-black text-sm tracking-wide active:scale-[0.99] cursor-pointer transition-all"
           >
             {atCounterConfirmed ? (
               <>
@@ -461,30 +464,30 @@ export function TakeawayTicketCard({
         <div className="relative z-10 space-y-4 pt-1 animate-fadeUp">
           {isReady ? (
             /* Sub-state: Order is READY for collection */
-            <div className="rounded-2xl border border-emerald-500/50 bg-gradient-to-br from-emerald-500/25 via-teal-950/30 to-slate-900/90 p-5 text-center shadow-xl space-y-3">
-              <div className="flex h-12 w-12 mx-auto items-center justify-center rounded-2xl bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                <Sparkles className="h-6 w-6 text-emerald-400" aria-hidden="true" />
+            <div className="customer-glass-card p-5 text-center shadow-xl space-y-3">
+              <div className="flex h-12 w-12 mx-auto items-center justify-center rounded-2xl bg-[var(--qf-success)]/20 text-[var(--qf-success)] border border-[var(--qf-success)]/30">
+                <Sparkles className="h-6 w-6 text-[var(--qf-success)]" aria-hidden="true" />
               </div>
-              <h2 className="text-2xl sm:text-3xl font-black text-emerald-300 tracking-tight">
+              <h2 className="text-2xl sm:text-3xl font-black text-[var(--qf-success)] tracking-tight">
                 READY FOR COLLECTION!
               </h2>
               <p className="text-xs sm:text-sm font-bold text-slate-200">
                 Ticket {ticketNo} — Your food is packed and ready!
               </p>
-              <p className="text-xs text-emerald-200/80 leading-relaxed">
+              <p className="text-xs text-slate-300 leading-relaxed">
                 Please step up to the takeaway counter to pick up your order.
               </p>
             </div>
           ) : (
             /* Sub-state: Order is PREPARING */
-            <div className="rounded-2xl border border-teal-500/40 bg-gradient-to-br from-teal-500/20 via-slate-900/90 to-slate-900/90 p-5 text-center shadow-xl space-y-2">
-              <div className="flex h-12 w-12 mx-auto items-center justify-center rounded-2xl bg-teal-500/20 text-teal-300 border border-teal-500/30">
-                <Flame className="h-6 w-6 text-amber-400 animate-pulse" />
+            <div className="customer-glass-surface p-5 text-center shadow-xl space-y-2">
+              <div className="flex h-12 w-12 mx-auto items-center justify-center rounded-2xl bg-[var(--qf-warning)]/20 text-[var(--qf-warning)] border border-[var(--qf-warning)]/30">
+                <Flame className="h-6 w-6 text-[var(--qf-warning)] animate-pulse" />
               </div>
               <h2 className="text-2xl font-black text-white tracking-tight">
                 {takeawayManualOrderingEnabled ? 'ORDER PLACED' : 'ORDER ACCEPTED & PREPARING'}
               </h2>
-              <p className="text-xs sm:text-sm font-bold text-teal-300">
+              <p className="text-xs sm:text-sm font-bold text-[var(--qf-warning)]">
                 {takeawayManualOrderingEnabled
                   ? 'Your order has been placed at the counter. Food is being prepared!'
                   : 'Counter acceptance complete. The kitchen is preparing your order.'}
@@ -500,14 +503,14 @@ export function TakeawayTicketCard({
       {/* STAGE 4: ITEMS RECEIVED */}
       {currentStage === 'ITEMS_RECEIVED' && (
         <div className="relative z-10 space-y-4 pt-1 animate-fadeUp">
-          <div className="rounded-2xl border border-emerald-500/40 bg-gradient-to-br from-emerald-500/20 to-slate-900/90 p-5 text-center shadow-xl space-y-2">
-            <div className="flex h-12 w-12 mx-auto items-center justify-center rounded-2xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-              <CheckCircle2 className="h-6 w-6" />
+          <div className="customer-glass-card p-5 text-center shadow-xl space-y-2">
+            <div className="flex h-12 w-12 mx-auto items-center justify-center rounded-2xl bg-[var(--qf-success)]/20 text-[var(--qf-success)] border border-[var(--qf-success)]/30">
+              <CheckCircle2 className="h-6 w-6 text-[var(--qf-success)]" />
             </div>
             <h2 className="text-2xl font-black text-white tracking-tight">
               ITEMS RECEIVED
             </h2>
-            <p className="text-sm font-bold text-emerald-300">
+            <p className="text-sm font-bold text-[var(--qf-success)]">
               Thanks! Your takeaway order has been completed.
             </p>
             <p className="text-xs text-slate-400">
@@ -517,7 +520,7 @@ export function TakeawayTicketCard({
 
           <Link
             href={`/q/${restaurantSlug}`}
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl border border-white/15 bg-white/5 hover:bg-white/10 text-xs font-bold text-white transition-all active:scale-[0.99]"
+            className="customer-primary-cta flex h-12 w-full items-center justify-center gap-2 rounded-2xl font-bold text-xs transition-all active:scale-[0.99]"
           >
             <span>Order Again</span>
             <ArrowRight className="h-4 w-4" />
@@ -528,8 +531,8 @@ export function TakeawayTicketCard({
       {/* CANCELLED STATE */}
       {isCancelled && (
         <div className="relative z-10 space-y-4 pt-1 animate-fadeUp">
-          <div className="rounded-2xl border border-rose-500/30 bg-rose-500/10 p-5 text-center space-y-2">
-            <div className="flex h-12 w-12 mx-auto items-center justify-center rounded-2xl bg-rose-500/20 text-rose-300 border border-rose-500/30">
+          <div className="customer-glass-surface p-5 text-center space-y-2">
+            <div className="flex h-12 w-12 mx-auto items-center justify-center rounded-2xl bg-[var(--qf-danger)]/20 text-rose-300 border border-[var(--qf-danger)]/30">
               <X className="h-6 w-6" />
             </div>
             <h2 className="text-xl font-black text-rose-200">
@@ -542,7 +545,7 @@ export function TakeawayTicketCard({
 
           <Link
             href={`/q/${restaurantSlug}`}
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs transition-all active:scale-[0.99]"
+            className="customer-primary-cta flex h-12 w-full items-center justify-center gap-2 rounded-2xl font-bold text-xs transition-all active:scale-[0.99]"
           >
             <span>Join Takeaway Queue Again</span>
             <ArrowRight className="h-4 w-4" />
@@ -553,8 +556,8 @@ export function TakeawayTicketCard({
       {/* EXPIRED / NO_SHOW STATE */}
       {isExpired && !isCancelled && (
         <div className="relative z-10 space-y-4 pt-1 animate-fadeUp">
-          <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-5 text-center space-y-2">
-            <div className="flex h-12 w-12 mx-auto items-center justify-center rounded-2xl bg-amber-500/20 text-amber-300 border border-amber-500/30">
+          <div className="customer-glass-surface p-5 text-center space-y-2">
+            <div className="flex h-12 w-12 mx-auto items-center justify-center rounded-2xl bg-[var(--qf-warning)]/20 text-[var(--qf-warning)] border border-[var(--qf-warning)]/30">
               <AlertTriangle className="h-6 w-6" />
             </div>
             <h2 className="text-xl font-black text-amber-200">
@@ -567,7 +570,7 @@ export function TakeawayTicketCard({
 
           <Link
             href={`/q/${restaurantSlug}`}
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs transition-all active:scale-[0.99]"
+            className="customer-primary-cta flex h-12 w-full items-center justify-center gap-2 rounded-2xl font-bold text-xs transition-all active:scale-[0.99]"
           >
             <span>Join Takeaway Queue Again</span>
             <ArrowRight className="h-4 w-4" />
@@ -582,13 +585,13 @@ export function TakeawayTicketCard({
             <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
               Order #{activeOrder.orderNumber}
             </span>
-            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-emerald-300">
+            <span className="inline-flex items-center gap-1 rounded-full bg-[var(--qf-success)]/15 border border-[var(--qf-success)]/30 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-[var(--qf-success)]">
               PAY AT COUNTER
             </span>
           </div>
 
           {/* Line items */}
-          <div className="rounded-2xl border border-white/10 bg-slate-950/60 p-3 divide-y divide-white/5 space-y-2">
+          <div className="rounded-2xl border border-[var(--qf-border)] bg-white/5 p-3 divide-y divide-white/5 space-y-2">
             {activeOrder.items.map((item, idx) => (
               <div key={idx} className="flex justify-between text-xs pt-1.5 first:pt-0">
                 <span className="text-slate-200 font-medium">
@@ -602,7 +605,7 @@ export function TakeawayTicketCard({
 
             <div className="flex justify-between items-baseline pt-2 text-xs font-bold text-white">
               <span>Total Amount</span>
-              <span className="font-mono text-sm text-emerald-400">
+              <span className="font-mono text-sm text-[var(--qf-primary)]">
                 {formatPrice(activeOrder.total)}
               </span>
             </div>
@@ -622,7 +625,7 @@ export function TakeawayTicketCard({
               </p>
               <Link
                 href={`/q/${restaurantSlug}/menu?qtoken=${token}&service=takeaway`}
-                className="flex min-h-[46px] h-11 w-full items-center justify-center gap-2 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 text-emerald-300 font-bold text-xs transition-all active:scale-[0.99]"
+                className="customer-glass-control flex min-h-[46px] h-11 w-full items-center justify-center gap-2 rounded-xl text-[var(--qf-primary)] font-bold text-xs transition-all active:scale-[0.99]"
               >
                 <UtensilsCrossed className="h-3.5 w-3.5" />
                 <span>Browse Menu &amp; Order Now</span>
@@ -655,7 +658,7 @@ export function TakeawayTicketCard({
       {/* Cancel Confirmation Modal */}
       {showCancelModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4 animate-in fade-in">
-          <div className="bg-slate-900 border border-white/10 rounded-3xl p-6 max-w-sm w-full space-y-4 shadow-2xl text-center animate-in zoom-in-95">
+          <div className="customer-glass-card p-6 max-w-sm w-full space-y-4 shadow-2xl text-center animate-in zoom-in-95">
             <div className="flex h-12 w-12 mx-auto items-center justify-center rounded-2xl bg-rose-500/20 text-rose-400 border border-rose-500/30">
               <AlertTriangle className="h-6 w-6" />
             </div>

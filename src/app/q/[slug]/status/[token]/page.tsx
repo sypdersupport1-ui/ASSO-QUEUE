@@ -15,8 +15,9 @@ import { CustomerQueueRealtime } from '@/components/realtime/CustomerQueueRealti
 import { CustomerErrorState } from '@/components/customer/CustomerErrorState';
 import { shouldShowNotificationBanner } from '@/lib/customer-ticket-ux';
 import { logger } from '@/lib/logging/logger';
-import { resolveCustomerTheme, themeToCssVariables } from '@/lib/themes';
-import { ThemeArtwork } from '@/components/themes';
+import { resolveCustomerTheme } from '@/lib/themes';
+import { CustomerShell } from '@/components/customer/ui/CustomerShell';
+import { CustomerPlatformBrand } from '@/components/customer/CustomerPlatformBrand';
 import type { Metadata } from 'next';
 
 export async function generateMetadata({
@@ -161,144 +162,83 @@ export default async function CustomerQueueStatusPage({
   const menuUrl = `/q/${slug}/menu?qtoken=${token}`;
 
   const activeTheme = resolveCustomerTheme(restaurant.customerThemeKey);
-  const themeStyles = themeToCssVariables(activeTheme);
-  const bgImage = activeTheme.artwork?.backgroundImage ?? null;
 
   return (
-    <main
-      className="qf-bg relative flex min-h-[100dvh] flex-col overflow-x-hidden text-slate-100 selection:bg-emerald-500/30 selection:text-emerald-100"
-      data-theme={activeTheme.key}
-      style={themeStyles}
-    >
+    <CustomerShell theme={activeTheme}>
       {/* Phase 4E: the cookie is retained for active SEATED dining, but cleared
           when dining is completed (status.completedAt) or terminal states (CANCELLED / NO_SHOW / EXPIRED). */}
       <TicketCookieSync slug={slug} token={token} isTerminal={Boolean(status.completedAt) || (isTerminal && status.status !== 'SEATED')} />
       <CustomerQueueRealtime entryId={status.entryId} isTerminal={isTerminal} />
 
-      {/* ── Theme background image layer ──────────────────────────────────── */}
-      {bgImage ? (
-        <>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={bgImage}
-            alt=""
-            aria-hidden="true"
-            fetchPriority="high"
-            decoding="async"
-            className="pointer-events-none fixed inset-0 h-full w-full object-cover object-center select-none"
-            style={{ zIndex: 0 }}
-          />
-          <div
-            aria-hidden="true"
-            className="pointer-events-none fixed inset-0"
-            style={{
-              zIndex: 1,
-              background:
-                'linear-gradient(to bottom, rgba(20,6,0,0.55) 0%, rgba(20,6,0,0.20) 30%, rgba(20,6,0,0.20) 70%, rgba(20,6,0,0.60) 100%)',
-            }}
-          />
-        </>
-      ) : (
-        <>
-          <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 h-[380px] bg-gradient-to-b from-slate-800/20 via-slate-900/10 to-transparent" />
-          <div aria-hidden="true" className="pointer-events-none absolute top-4 left-1/2 -translate-x-1/2 h-64 w-64 rounded-full bg-emerald-500/[0.04] blur-3xl" />
-        </>
-      )}
+      {/* 1. Official ASSO / QueueFlow Platform Brand */}
+      <CustomerPlatformBrand />
 
-      {/* Thematic Decorative Artwork & Motif Layer */}
-      <div style={{ zIndex: bgImage ? 2 : undefined, position: bgImage ? 'relative' : undefined }}>
-        <ThemeArtwork theme={activeTheme} variant="page" />
-      </div>
-
-      <div
-        className="relative mx-auto w-full max-w-md flex-1 space-y-4 px-4 pt-[max(1.25rem,env(safe-area-inset-top))] pb-5 sm:py-7"
-        style={{ zIndex: bgImage ? 10 : undefined }}
-      >
-        {/* Streamlined Restaurant Header */}
-        <header className="flex items-center justify-between gap-3 py-1">
-          <div className="flex min-w-0 flex-1 items-center gap-3">
-            <div
-              aria-hidden="true"
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-white/[0.12] bg-[#141c2c] text-white text-sm font-black shadow-md shadow-black/20"
-            >
-              {restaurant.name.slice(0, 1).toUpperCase()}
-            </div>
-            <div className="min-w-0">
-              <p className="truncate text-sm font-black text-white leading-tight">
-                {restaurant.name}
-              </p>
-              <p className="flex items-center gap-1.5 text-[11px] font-semibold text-[var(--qf-success)] mt-0.5">
-                <span className="relative flex h-1.5 w-1.5">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[var(--qf-success)] opacity-75" />
-                  <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-[var(--qf-success)]" />
-                </span>
-                Live Digital Ticket
-              </p>
-            </div>
-          </div>
+      {/* 2. Restaurant Header with Luxury Serif Typography */}
+      <header className="text-center pt-1 pb-1 space-y-1.5">
+        <h1 className="font-luxury-serif line-clamp-2 break-words text-2xl sm:text-3xl font-normal tracking-[0.06em] uppercase text-[#fff9f0] leading-tight px-2 drop-shadow-[0_2px_14px_rgba(245,158,11,0.20)]">
+          {restaurant.name}
+        </h1>
+        <div className="flex items-center justify-center gap-2.5">
+          <p className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-[var(--qf-success)]">
+            <span className="relative flex h-1.5 w-1.5">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[var(--qf-success)] opacity-75" />
+              <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-[var(--qf-success)]" />
+            </span>
+            Live Digital Ticket
+          </p>
           {!isTerminal && (status.queueType === 'TAKEAWAY' ? (restaurant.takeawayCustomerOrderingEnabled !== false && !restaurant.takeawayManualOrderingEnabled) : restaurant.dineInCustomerOrderingEnabled !== false) && (
             <Link
               href={menuUrl}
-              className="inline-flex min-h-[40px] h-10 items-center gap-1.5 rounded-xl border border-white/10 bg-white/[0.04] px-3.5 text-xs font-bold text-slate-200 transition-all hover:bg-white/[0.08] hover:text-white active:scale-95 shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
+              className="inline-flex min-h-[30px] h-7.5 items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.06] px-3 text-xs font-bold text-slate-200 transition-all hover:bg-white/[0.12] hover:text-white active:scale-95 shrink-0"
             >
-              <UtensilsCrossed aria-hidden="true" className="h-3.5 w-3.5 text-[var(--qf-primary)]" />
+              <UtensilsCrossed aria-hidden="true" className="h-3 w-3 text-[var(--qf-primary)]" />
               <span>Menu</span>
             </Link>
           )}
-        </header>
+        </div>
+      </header>
 
-        {/* Hero ticket */}
-        <TicketNotificationBanner notification={ticketNotification} />
-        {status.queueType === 'TAKEAWAY' ? (
-          <TakeawayTicketCard
-            status={status}
-            token={token}
-            restaurantSlug={slug}
-            restaurantName={restaurant.name}
+      {/* 3. Hero ticket */}
+      <TicketNotificationBanner notification={ticketNotification} />
+      {status.queueType === 'TAKEAWAY' ? (
+        <TakeawayTicketCard
+          status={status}
+          token={token}
+          restaurantSlug={slug}
+          restaurantName={restaurant.name}
+          orders={myOrders}
+          currency={restaurant.currency || 'INR'}
+          takeawayCustomerOrderingEnabled={restaurant.takeawayCustomerOrderingEnabled !== false}
+          takeawayManualOrderingEnabled={restaurant.takeawayManualOrderingEnabled}
+        />
+      ) : (
+        <QueueTicketCard
+          status={status}
+          token={token}
+          restaurantSlug={slug}
+          restaurantName={restaurant.name}
+          queueEnabled={restaurant.queueEnabled}
+          operatingState={restaurant.queueOperatingState || 'OPEN'}
+        />
+      )}
+
+      {!isTerminal && status.queueType !== 'TAKEAWAY' && (
+        <div className="space-y-3 pt-1">
+          <CustomerOrdersCard
             orders={myOrders}
-            currency={restaurant.currency || 'INR'}
-            takeawayCustomerOrderingEnabled={restaurant.takeawayCustomerOrderingEnabled !== false}
-            takeawayManualOrderingEnabled={restaurant.takeawayManualOrderingEnabled}
-          />
-        ) : (
-          <QueueTicketCard
-            status={status}
-            token={token}
             restaurantSlug={slug}
-            restaurantName={restaurant.name}
-            queueEnabled={restaurant.queueEnabled}
-            operatingState={restaurant.queueOperatingState || 'OPEN'}
+            queueToken={token}
           />
-        )}
-
-        {!isTerminal && status.queueType !== 'TAKEAWAY' && (
-          <div className="space-y-3 pt-1">
-            <CustomerOrdersCard
-              orders={myOrders}
+          {restaurant.dineInCustomerOrderingEnabled !== false && status.status !== 'CALLED' && (
+            <KitchenPreOrderCard
+              queueNumber={status.displayNumber || ''}
               restaurantSlug={slug}
-              queueToken={token}
+              token={token}
+              categories={menuCategories}
             />
-            {restaurant.dineInCustomerOrderingEnabled !== false && status.status !== 'CALLED' && (
-              <KitchenPreOrderCard
-                queueNumber={status.displayNumber || ''}
-                restaurantSlug={slug}
-                token={token}
-                categories={menuCategories}
-              />
-            )}
-          </div>
-        )}
-      </div>
-
-      <footer
-        className="relative mx-auto w-full max-w-md px-4 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-6 text-center"
-        style={{ zIndex: bgImage ? 10 : undefined }}
-      >
-        <p className="inline-flex items-center gap-1.5 text-[11px] font-medium text-slate-500">
-          <span>Powered by</span>
-          <span className="font-bold tracking-tight text-[var(--qf-primary)]">QueueFlow</span>
-        </p>
-      </footer>
-    </main>
+          )}
+        </div>
+      )}
+    </CustomerShell>
   );
 }

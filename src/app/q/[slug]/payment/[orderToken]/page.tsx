@@ -3,9 +3,9 @@
 import React, { useState, useEffect, use } from 'react';
 import Link from 'next/link';
 import { CreditCard, Store, ReceiptText, Ticket } from 'lucide-react';
-import { ThemeArtwork } from '@/components/themes';
-import { THEME_REGISTRY } from '@/lib/themes/registry';
-import { themeToCssVariables } from '@/lib/themes/resolver';
+import { resolveCustomerTheme } from '@/lib/themes/resolver';
+import { CustomerShell } from '@/components/customer/ui/CustomerShell';
+import { CustomerPlatformBrand } from '@/components/customer/CustomerPlatformBrand';
 
 interface PaymentStatusState {
   status: 'IDLE' | 'PROCESSING' | 'SUCCEEDED' | 'FAILED' | 'REFUNDED';
@@ -38,12 +38,8 @@ interface OrderRecord {
 }
 
 /**
- * Phase 4H / Visual Redesign V4 — customer payment screen in the shared
- * QueueFlow customer design system (dark slate, clean hierarchy, restrained emerald).
- *
- * Unchanged security model: the order bearer token authorizes every call
- * (hash → order row, server-derived ids); amounts come from the server snapshot.
- * An optional `qtoken` query param enables direct "Back to My Ticket" link.
+ * Customer payment screen in the shared QueueFlow customer design system.
+ * Unchanged security model: the order bearer token authorizes every call.
  */
 export default function CustomerPaymentPage({
   params,
@@ -86,7 +82,6 @@ export default function CustomerPaymentPage({
         const data = await res.json();
         setOrder(data.order);
       } catch {
-        // Generic: never reveal token validity or internals.
         setError('Order not found.');
       } finally {
         setLoading(false);
@@ -111,7 +106,6 @@ export default function CustomerPaymentPage({
         return;
       }
 
-      // Online payment attempt (orderToken authorizes: hash -> order row)
       const intentRes = await fetch('/api/payments/intent', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -132,7 +126,6 @@ export default function CustomerPaymentPage({
 
       const intentData = await intentRes.json();
 
-      // Trigger verification (orderToken binds the payment to its order)
       const verifyRes = await fetch('/api/payments/verify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -171,18 +164,12 @@ export default function CustomerPaymentPage({
 
   const backHref = qtoken ? `/q/${slug}/status/${qtoken}` : `/q/${slug}`;
   const isPaid = order?.payment_status === 'PAID';
-
-  // Derive theme from restaurant_theme_key in the order data
-  const activeTheme = order?.restaurant_theme_key
-    ? (THEME_REGISTRY[order.restaurant_theme_key] ?? null)
-    : null;
-  const themeStyles = activeTheme ? themeToCssVariables(activeTheme) : undefined;
-  const bgImage = activeTheme?.artwork?.backgroundImage ?? null;
+  const activeTheme = resolveCustomerTheme(order?.restaurant_theme_key);
 
   if (loading) {
     return (
-      <main className="qf-bg flex min-h-[100dvh] flex-col justify-between px-4 py-6 text-slate-100 sm:py-8" aria-label="Loading payment" role="status">
-        <div className="mx-auto w-full max-w-md space-y-4">
+      <CustomerShell theme={activeTheme}>
+        <div className="space-y-4">
           <div className="flex items-center justify-between gap-3 py-3">
             <div className="flex items-center gap-3">
               <div className="h-10 w-10 animate-pulse rounded-2xl bg-white/10" />
@@ -194,7 +181,7 @@ export default function CustomerPaymentPage({
             <div className="h-9 w-20 animate-pulse rounded-2xl bg-white/10" />
           </div>
 
-          <div className="rounded-3xl border border-white/10 bg-slate-900/90 p-6 space-y-4 shadow-2xl backdrop-blur-xl">
+          <div className="customer-glass-card rounded-3xl border border-[var(--qf-border)] bg-[var(--qf-surface)]/90 p-6 space-y-4 shadow-2xl backdrop-blur-xl">
             <div className="mx-auto h-4 w-24 animate-pulse rounded bg-white/10" />
             <div className="mx-auto h-10 w-44 animate-pulse rounded-2xl bg-white/10" />
             <div className="space-y-2 pt-2">
@@ -205,363 +192,305 @@ export default function CustomerPaymentPage({
           </div>
         </div>
         <span className="sr-only">Loading payment checkout…</span>
-      </main>
+      </CustomerShell>
     );
   }
 
   if (error || !order) {
     return (
-      <main className="qf-bg flex min-h-[100dvh] items-center justify-center px-4 py-8 text-slate-100">
-        <div role="alert" className="w-full max-w-sm rounded-3xl border border-white/10 bg-slate-900/90 p-8 text-center space-y-4 shadow-2xl backdrop-blur-xl">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-slate-400">
-            <ReceiptText className="h-7 w-7" aria-hidden="true" />
+      <CustomerShell theme={activeTheme}>
+        <div className="flex min-h-[60vh] items-center justify-center">
+          <div role="alert" className="customer-glass-card w-full max-w-sm rounded-3xl border border-[var(--qf-border)] bg-[var(--qf-surface)]/90 p-8 text-center space-y-4 shadow-2xl backdrop-blur-xl">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-slate-400">
+              <ReceiptText className="h-7 w-7" aria-hidden="true" />
+            </div>
+            <div className="space-y-1">
+              <h1 className="text-lg font-bold text-white">Order not found</h1>
+              <p className="text-xs leading-relaxed text-slate-400">
+                We couldn&apos;t find this order. Check the link, or return to your queue ticket.
+              </p>
+            </div>
+            <Link
+              href={backHref}
+              className="flex min-h-[44px] h-11 w-full items-center justify-center rounded-xl bg-white/10 text-xs font-bold text-white transition-colors hover:bg-white/15"
+            >
+              {qtoken ? '← Back to My Ticket' : '← Back to Queue'}
+            </Link>
           </div>
-          <div className="space-y-1">
-            <h1 className="text-lg font-bold text-white">Order not found</h1>
-            <p className="text-xs leading-relaxed text-slate-400">
-              We couldn&apos;t find this order. Check the link, or return to your queue ticket.
-            </p>
-          </div>
-          <Link
-            href={backHref}
-            className="flex min-h-[44px] h-11 w-full items-center justify-center rounded-xl bg-white/10 text-xs font-bold text-white transition-colors hover:bg-white/15"
-          >
-            {qtoken ? '← Back to My Ticket' : '← Back to Queue'}
-          </Link>
         </div>
-      </main>
+      </CustomerShell>
     );
   }
 
   return (
-    <main
-      className="qf-bg relative flex min-h-[100dvh] flex-col justify-between px-4 pt-[max(1.5rem,env(safe-area-inset-top))] pb-6 text-slate-100 selection:bg-orange-500 selection:text-white sm:py-8"
-      data-theme={activeTheme?.key || 'default'}
-      style={themeStyles}
-    >
-      {/* ── Theme background image layer ──────────────────────────────────── */}
-      {bgImage ? (
-        <>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={bgImage}
-            alt=""
-            aria-hidden="true"
-            fetchPriority="high"
-            decoding="async"
-            className="pointer-events-none fixed inset-0 h-full w-full object-cover object-center select-none"
-            style={{ zIndex: 0 }}
-          />
-          <div
-            aria-hidden="true"
-            className="pointer-events-none fixed inset-0"
-            style={{
-              zIndex: 1,
-              background:
-                'linear-gradient(to bottom, rgba(20,6,0,0.55) 0%, rgba(20,6,0,0.20) 30%, rgba(20,6,0,0.20) 70%, rgba(20,6,0,0.60) 100%)',
-            }}
-          />
-        </>
-      ) : (
-        <>
-          <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 h-[380px] bg-gradient-to-b from-slate-800/20 via-slate-900/10 to-transparent" />
-          <div aria-hidden="true" className="pointer-events-none absolute top-4 left-1/2 -translate-x-1/2 h-64 w-64 rounded-full bg-emerald-500/[0.04] blur-3xl" />
-        </>
-      )}
+    <CustomerShell theme={activeTheme}>
+      {/* 1. Official ASSO / QueueFlow Platform Brand */}
+      <CustomerPlatformBrand />
 
-      {/* Thematic Decorative Artwork & Motif Layer */}
-      <div style={{ zIndex: bgImage ? 2 : undefined, position: bgImage ? 'relative' : undefined }}>
-        <ThemeArtwork theme={activeTheme ?? undefined} variant="page" />
-      </div>
-
-      <div
-        className="relative mx-auto w-full max-w-md space-y-4 sm:space-y-5"
-        style={{ zIndex: bgImage ? 10 : undefined }}
-      >
-        {/* Restaurant Header */}
-        <header className="flex items-center justify-between gap-3 py-2 text-left">
-          <div className="flex min-w-0 flex-1 items-center gap-3">
-            <div
-              aria-hidden="true"
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-slate-800 text-sm font-black text-white shadow-sm"
-            >
-              {(order.restaurant_name || 'Q').slice(0, 1).toUpperCase()}
-            </div>
-            <div className="min-w-0">
-              <p className="truncate text-[15px] font-black tracking-tight text-white">
-                {order.restaurant_name || 'Restaurant'}
-              </p>
-              <p className="inline-flex items-center gap-1.5 text-[11px] font-bold text-emerald-400">
-                <span aria-hidden="true" className="relative flex h-1.5 w-1.5 shrink-0">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-                  <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-400" />
-                </span>
-                <span>Secure checkout</span>
-              </p>
-            </div>
-          </div>
+      {/* 2. Restaurant Header with Luxury Serif Typography */}
+      <header className="text-center pt-1 pb-1 space-y-1.5">
+        <h1 className="font-luxury-serif line-clamp-2 break-words text-2xl sm:text-3xl font-normal tracking-[0.06em] uppercase text-[#fff9f0] leading-tight px-2 drop-shadow-[0_2px_14px_rgba(245,158,11,0.20)]">
+          {order.restaurant_name || 'Restaurant'}
+        </h1>
+        <div className="flex items-center justify-center gap-2.5">
+          <p className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-[var(--qf-success)]">
+            <span aria-hidden="true" className="relative flex h-1.5 w-1.5 shrink-0">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[var(--qf-success)] opacity-75" />
+              <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-[var(--qf-success)]" />
+            </span>
+            <span>Secure checkout</span>
+          </p>
           <Link
             href={backHref}
-            className="inline-flex min-h-[44px] shrink-0 items-center gap-1.5 rounded-2xl border border-white/10 bg-white/5 px-3.5 text-xs font-bold text-slate-300 transition-colors hover:bg-white/10 hover:text-emerald-300"
+            className="inline-flex min-h-[30px] h-7.5 items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.06] px-3 text-xs font-bold text-slate-200 transition-all hover:bg-white/[0.12] hover:text-white active:scale-95 shrink-0"
           >
             {qtoken ? (
               <>
-                <Ticket className="h-3.5 w-3.5 text-amber-400" aria-hidden="true" />
+                <Ticket className="h-3 w-3 text-[var(--qf-warning)]" aria-hidden="true" />
                 <span>My Ticket</span>
               </>
             ) : (
               '← Back'
             )}
           </Link>
-        </header>
-
-        {/* PRIMARY PAYMENT HERO CARD */}
-        <section
-          aria-label={`Pay for order #${order.order_number || order.id.slice(0, 6)}`}
-          className="relative overflow-hidden rounded-3xl border border-white/10 bg-slate-900/90 p-5 sm:p-7 shadow-2xl backdrop-blur-xl text-center space-y-5"
-        >
-          {/* Order Header */}
-          <div className="space-y-1">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/10 border border-emerald-500/20 text-emerald-300">
-              <span>Order #{order.order_number || order.id.slice(0, 6)}</span>
-            </span>
-            <h1 className="text-xl sm:text-2xl font-black tracking-tight text-white pt-1">
-              Pay for your order
-            </h1>
-          </div>
-
-          {/* Amount Display */}
-          <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-center">
-            <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Total Amount</div>
-            <div className="font-mono text-3xl sm:text-4xl font-black tabular-nums text-white my-1">
-              {formatPrice(Number(order.total))}
-            </div>
-            <div className="text-[11px] text-slate-400">Server-confirmed from your order items</div>
-          </div>
-
-          {/* Compact Order Summary */}
-          {order.items && order.items.length > 0 && (
-            <div className="pt-3 border-t border-white/10 space-y-2 text-left">
-              <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-slate-400">
-                <span>Order Summary</span>
-                <span className="text-slate-500 font-semibold">
-                  {order.items.length} {order.items.length === 1 ? 'item' : 'items'}
-                </span>
-              </div>
-              <div className="divide-y divide-white/5 max-h-44 overflow-y-auto pr-1">
-                {order.items.map((item) => (
-                  <div key={item.id} className="flex items-center justify-between py-2 text-xs">
-                    <span className="font-semibold text-slate-200 truncate pr-2">
-                      {item.quantity} × {item.name}
-                    </span>
-                    <span className="font-mono text-slate-300 shrink-0">
-                      {formatPrice(item.totalPrice)}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Already Paid State */}
-          {isPaid && paymentState.status !== 'SUCCEEDED' && (
-            <div role="status" className="rounded-2xl border border-emerald-400/25 bg-emerald-500/10 p-5 text-center space-y-2">
-              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-400 text-xl font-bold">
-                ✓
-              </div>
-              <div className="text-base font-bold text-white">Payment completed</div>
-              <p className="text-xs text-emerald-200/90">
-                This order has already been marked as paid ({formatPrice(Number(order.total))}).
-              </p>
-              <div className="pt-2">
-                <Link
-                  href={`/q/${slug}/order/${orderToken}${qtoken ? `?qtoken=${encodeURIComponent(qtoken)}` : ''}`}
-                  className="inline-flex min-h-[44px] items-center justify-center rounded-xl bg-emerald-500 px-5 text-xs font-bold text-slate-950 transition-colors hover:bg-emerald-400"
-                >
-                  View order status →
-                </Link>
-              </div>
-            </div>
-          )}
-
-          {/* Payment Method Selection (Compact Rows) */}
-          {!isPaid && paymentState.status !== 'SUCCEEDED' && (
-            <div className="pt-3 border-t border-white/10 space-y-2.5 text-left">
-              <span id="pay-method-label" className="block text-xs font-bold uppercase tracking-wider text-slate-400">
-                Payment Method
-              </span>
-              <div className="space-y-2" role="radiogroup" aria-labelledby="pay-method-label">
-                <button
-                  type="button"
-                  role="radio"
-                  aria-checked={paymentMethod === 'ONLINE'}
-                  onClick={() => setPaymentMethod('ONLINE')}
-                  className={`w-full min-h-[64px] flex items-center justify-between p-3.5 rounded-2xl border transition-all text-left ${
-                    paymentMethod === 'ONLINE'
-                      ? 'border-emerald-500/40 bg-emerald-500/10 text-white'
-                      : 'border-white/10 bg-white/[0.02] text-slate-300 hover:border-white/20 hover:bg-white/[0.04]'
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border ${
-                      paymentMethod === 'ONLINE'
-                        ? 'border-emerald-400 bg-emerald-500 text-slate-950'
-                        : 'border-slate-500 bg-transparent'
-                    }`}>
-                      {paymentMethod === 'ONLINE' && <span className="text-[11px] font-black leading-none">✓</span>}
-                    </div>
-                    <div>
-                      <p className="text-sm font-bold text-white">Pay Online</p>
-                      <p className="text-[11px] text-slate-400">UPI, Cards, Netbanking</p>
-                    </div>
-                  </div>
-                  <CreditCard className="h-5 w-5 text-slate-400 shrink-0" aria-hidden="true" />
-                </button>
-
-                <button
-                  type="button"
-                  role="radio"
-                  aria-checked={paymentMethod === 'PAY_AT_RESTAURANT'}
-                  onClick={() => setPaymentMethod('PAY_AT_RESTAURANT')}
-                  className={`w-full min-h-[64px] flex items-center justify-between p-3.5 rounded-2xl border transition-all text-left ${
-                    paymentMethod === 'PAY_AT_RESTAURANT'
-                      ? 'border-emerald-500/40 bg-emerald-500/10 text-white'
-                      : 'border-white/10 bg-white/[0.02] text-slate-300 hover:border-white/20 hover:bg-white/[0.04]'
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border ${
-                      paymentMethod === 'PAY_AT_RESTAURANT'
-                        ? 'border-emerald-400 bg-emerald-500 text-slate-950'
-                        : 'border-slate-500 bg-transparent'
-                    }`}>
-                      {paymentMethod === 'PAY_AT_RESTAURANT' && <span className="text-[11px] font-black leading-none">✓</span>}
-                    </div>
-                    <div>
-                      <p className="text-sm font-bold text-white">Pay at Restaurant</p>
-                      <p className="text-[11px] text-slate-400">Settle bill at the counter when served</p>
-                    </div>
-                  </div>
-                  <Store className="h-5 w-5 text-slate-400 shrink-0" aria-hidden="true" />
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* Processing Feedback */}
-          {paymentState.status === 'PROCESSING' && (
-            <div role="status" className="rounded-2xl border border-amber-400/25 bg-amber-500/10 p-4 text-center space-y-1 text-amber-200">
-              <div className="inline-flex items-center gap-2 font-bold text-sm">
-                <span className="inline-block h-3.5 w-3.5 animate-spin rounded-full border-2 border-amber-300 border-t-transparent" />
-                <span>{paymentState.message || 'Processing payment…'}</span>
-              </div>
-              <p className="text-xs text-amber-300/80">Please don&apos;t close this page.</p>
-            </div>
-          )}
-
-          {/* Success Feedback */}
-          {paymentState.status === 'SUCCEEDED' && (
-            <div role="status" className="rounded-2xl border border-emerald-400/25 bg-emerald-500/10 p-5 text-center space-y-2">
-              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-400 text-xl font-bold">
-                ✓
-              </div>
-              <div className="text-base font-bold text-white">Payment successful</div>
-              <p className="text-xs text-emerald-200/90">
-                {formatPrice(Number(order.total))} verified by the server. Show this screen if asked.
-              </p>
-              {paymentState.providerRef && (
-                <p className="font-mono text-[11px] text-emerald-300">
-                  Ref: {paymentState.providerRef}
-                </p>
-              )}
-              <div className="pt-2">
-                <Link
-                  href={`/q/${slug}/order/${orderToken}${qtoken ? `?qtoken=${encodeURIComponent(qtoken)}` : ''}`}
-                  className="inline-flex min-h-[44px] items-center justify-center rounded-xl bg-emerald-500 px-5 text-xs font-bold text-slate-950 transition-colors hover:bg-emerald-400"
-                >
-                  View order status →
-                </Link>
-              </div>
-            </div>
-          )}
-
-          {/* Failure Feedback */}
-          {paymentState.status === 'FAILED' && (
-            <div role="alert" className="rounded-2xl border border-rose-400/25 bg-rose-500/10 p-4 text-center space-y-1">
-              <div className="text-sm font-bold text-rose-300">Payment wasn&apos;t completed</div>
-              <p className="text-xs leading-relaxed text-rose-200/90">{paymentState.message}</p>
-            </div>
-          )}
-
-          {/* Pay at Restaurant Confirmation Feedback */}
-          {paymentState.status === 'IDLE' && paymentState.message && (
-            <div role="status" className="rounded-2xl border border-sky-400/25 bg-sky-500/10 p-3.5 text-center text-xs text-sky-200 leading-relaxed">
-              {paymentState.message}
-            </div>
-          )}
-
-          {/* Primary Payment CTA */}
-          {!isPaid && paymentState.status !== 'SUCCEEDED' && (
-            <button
-              type="button"
-              onClick={handlePayNow}
-              disabled={processing}
-              aria-busy={processing}
-              className="flex min-h-[48px] h-12 w-full items-center justify-center gap-2 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-sm font-black transition-all shadow-lg shadow-emerald-500/20 active:scale-[0.99] disabled:opacity-60 disabled:cursor-not-allowed"
-            >
-              {processing ? (
-                <>
-                  <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-slate-950 border-t-transparent" />
-                  <span>Processing…</span>
-                </>
-              ) : paymentMethod === 'ONLINE' ? (
-                <>
-                  <span>Pay {formatPrice(Number(order.total))}</span>
-                  <span aria-hidden="true" className="font-bold">→</span>
-                </>
-              ) : (
-                <>
-                  <span>Confirm pay at restaurant</span>
-                  <span aria-hidden="true" className="font-bold">→</span>
-                </>
-              )}
-            </button>
-          )}
-
-          {/* Security Reassurance */}
-          <div className="flex items-center justify-center gap-1.5 text-[11px] text-slate-400">
-            <span aria-hidden="true">🔒</span>
-            <span>Secure payment · Protected checkout</span>
-          </div>
-
-          {/* Secondary Navigation */}
-          <div className="space-y-2 pt-2 border-t border-white/10">
-            <Link
-              href={`/q/${slug}/order/${orderToken}${qtoken ? `?qtoken=${encodeURIComponent(qtoken)}` : ''}`}
-              className="flex min-h-[44px] h-11 w-full items-center justify-center rounded-xl border border-white/10 bg-white/5 text-xs font-bold text-slate-200 hover:bg-white/10 hover:text-white transition-colors"
-            >
-              View order details
-            </Link>
-            <Link
-              href={backHref}
-              className="flex min-h-[44px] h-11 w-full items-center justify-center rounded-xl text-xs font-semibold text-slate-400 hover:text-slate-200 transition-colors"
-            >
-              {qtoken ? '← Back to My Ticket' : '← Back to Queue'}
-            </Link>
-          </div>
-        </section>
-      </div>
-
-      {/* Shared QueueFlow Customer Footer */}
-      <footer
-        className="w-full max-w-md mx-auto text-center pt-8 pb-[calc(1rem+env(safe-area-inset-bottom))]"
-        style={{ zIndex: bgImage ? 10 : undefined, position: bgImage ? 'relative' : undefined }}
-      >
-        <div className="inline-flex items-center gap-2 text-xs font-semibold text-slate-500">
-          <span>Powered by</span>
-          <span className="text-emerald-400 font-bold tracking-tight">QueueFlow</span>
         </div>
-      </footer>
-    </main>
+      </header>
+
+      {/* PRIMARY PAYMENT HERO CARD */}
+      <section
+        aria-label={`Pay for order #${order.order_number || order.id.slice(0, 6)}`}
+        className="customer-glass-card relative overflow-hidden rounded-3xl border border-[var(--qf-border)] bg-[var(--qf-surface)]/95 p-5 sm:p-7 shadow-2xl backdrop-blur-xl text-center space-y-5"
+      >
+        {/* Order Header */}
+        <div className="space-y-1">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-[var(--qf-primary)]/10 border border-[var(--qf-primary)]/20 text-[var(--qf-primary)]">
+            <span>Order #{order.order_number || order.id.slice(0, 6)}</span>
+          </span>
+          <h2 className="text-xl sm:text-2xl font-black tracking-tight text-white pt-1">
+            Pay for your order
+          </h2>
+        </div>
+
+        {/* Amount Display */}
+        <div className="customer-glass-surface rounded-2xl border border-[var(--qf-border)] p-4 text-center">
+          <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Total Amount</div>
+          <div className="font-mono text-3xl sm:text-4xl font-black tabular-nums text-white my-1">
+            {formatPrice(Number(order.total))}
+          </div>
+          <div className="text-[11px] text-slate-400">Server-confirmed from your order items</div>
+        </div>
+
+        {/* Compact Order Summary */}
+        {order.items && order.items.length > 0 && (
+          <div className="pt-3 border-t border-white/10 space-y-2 text-left">
+            <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-slate-400">
+              <span>Order Summary</span>
+              <span className="text-slate-500 font-semibold">
+                {order.items.length} {order.items.length === 1 ? 'item' : 'items'}
+              </span>
+            </div>
+            <div className="divide-y divide-white/5 max-h-44 overflow-y-auto pr-1">
+              {order.items.map((item) => (
+                <div key={item.id} className="flex items-center justify-between py-2 text-xs">
+                  <span className="font-semibold text-slate-200 truncate pr-2">
+                    {item.quantity} × {item.name}
+                  </span>
+                  <span className="font-mono text-slate-300 shrink-0">
+                    {formatPrice(item.totalPrice)}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Already Paid State */}
+        {isPaid && paymentState.status !== 'SUCCEEDED' && (
+          <div role="status" className="customer-glass-surface rounded-2xl border border-[var(--qf-primary)]/25 bg-[var(--qf-primary)]/10 p-5 text-center space-y-2">
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[var(--qf-primary)]/20 text-[var(--qf-primary)] text-xl font-bold">
+              ✓
+            </div>
+            <div className="text-base font-bold text-white">Payment completed</div>
+            <p className="text-xs text-slate-300">
+              This order has already been marked as paid ({formatPrice(Number(order.total))}).
+            </p>
+            <div className="pt-2">
+              <Link
+                href={`/q/${slug}/order/${orderToken}${qtoken ? `?qtoken=${encodeURIComponent(qtoken)}` : ''}`}
+                className="customer-primary-cta inline-flex min-h-[44px] items-center justify-center rounded-xl px-5 text-xs font-bold transition-colors"
+              >
+                View order status →
+              </Link>
+            </div>
+          </div>
+        )}
+
+        {/* Payment Method Selection (Compact Rows) */}
+        {!isPaid && paymentState.status !== 'SUCCEEDED' && (
+          <div className="pt-3 border-t border-white/10 space-y-2.5 text-left">
+            <span id="pay-method-label" className="block text-xs font-bold uppercase tracking-wider text-slate-400">
+              Payment Method
+            </span>
+            <div className="space-y-2" role="radiogroup" aria-labelledby="pay-method-label">
+              <button
+                type="button"
+                role="radio"
+                aria-checked={paymentMethod === 'ONLINE'}
+                onClick={() => setPaymentMethod('ONLINE')}
+                className={`w-full min-h-[64px] flex items-center justify-between p-3.5 rounded-2xl border transition-all text-left cursor-pointer ${
+                  paymentMethod === 'ONLINE'
+                    ? 'border-[var(--qf-primary)]/50 bg-[var(--qf-primary)]/15 text-white'
+                    : 'border-white/10 bg-white/[0.02] text-slate-300 hover:border-white/20 hover:bg-white/[0.04]'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <div className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border ${
+                    paymentMethod === 'ONLINE'
+                      ? 'border-[var(--qf-primary)] bg-[var(--qf-primary)] text-[var(--qf-primary-foreground)]'
+                      : 'border-slate-500 bg-transparent'
+                  }`}>
+                    {paymentMethod === 'ONLINE' && <span className="text-[11px] font-black leading-none">✓</span>}
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-white">Pay Online</p>
+                    <p className="text-[11px] text-slate-400">UPI, Cards, Netbanking</p>
+                  </div>
+                </div>
+                <CreditCard className="h-5 w-5 text-slate-400 shrink-0" aria-hidden="true" />
+              </button>
+
+              <button
+                type="button"
+                role="radio"
+                aria-checked={paymentMethod === 'PAY_AT_RESTAURANT'}
+                onClick={() => setPaymentMethod('PAY_AT_RESTAURANT')}
+                className={`w-full min-h-[64px] flex items-center justify-between p-3.5 rounded-2xl border transition-all text-left cursor-pointer ${
+                  paymentMethod === 'PAY_AT_RESTAURANT'
+                    ? 'border-[var(--qf-primary)]/50 bg-[var(--qf-primary)]/15 text-white'
+                    : 'border-white/10 bg-white/[0.02] text-slate-300 hover:border-white/20 hover:bg-white/[0.04]'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <div className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border ${
+                    paymentMethod === 'PAY_AT_RESTAURANT'
+                      ? 'border-[var(--qf-primary)] bg-[var(--qf-primary)] text-[var(--qf-primary-foreground)]'
+                      : 'border-slate-500 bg-transparent'
+                  }`}>
+                    {paymentMethod === 'PAY_AT_RESTAURANT' && <span className="text-[11px] font-black leading-none">✓</span>}
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-white">Pay at Restaurant</p>
+                    <p className="text-[11px] text-slate-400">Settle bill at the counter when served</p>
+                  </div>
+                </div>
+                <Store className="h-5 w-5 text-slate-400 shrink-0" aria-hidden="true" />
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Processing Feedback */}
+        {paymentState.status === 'PROCESSING' && (
+          <div role="status" className="customer-glass-surface rounded-2xl border border-[var(--qf-warning)]/25 bg-[var(--qf-warning)]/10 p-4 text-center space-y-1 text-[var(--qf-warning)]">
+            <div className="inline-flex items-center gap-2 font-bold text-sm">
+              <span className="inline-block h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-t-transparent" />
+              <span>{paymentState.message || 'Processing payment…'}</span>
+            </div>
+            <p className="text-xs opacity-80">Please don&apos;t close this page.</p>
+          </div>
+        )}
+
+        {/* Success Feedback */}
+        {paymentState.status === 'SUCCEEDED' && (
+          <div role="status" className="customer-glass-surface rounded-2xl border border-[var(--qf-success)]/25 bg-[var(--qf-success)]/10 p-5 text-center space-y-2">
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[var(--qf-success)]/20 text-[var(--qf-success)] text-xl font-bold">
+              ✓
+            </div>
+            <div className="text-base font-bold text-white">Payment successful</div>
+            <p className="text-xs text-slate-300">
+              {formatPrice(Number(order.total))} verified by the server. Show this screen if asked.
+            </p>
+            {paymentState.providerRef && (
+              <p className="font-mono text-[11px] text-[var(--qf-success)]">
+                Ref: {paymentState.providerRef}
+              </p>
+            )}
+            <div className="pt-2">
+              <Link
+                href={`/q/${slug}/order/${orderToken}${qtoken ? `?qtoken=${encodeURIComponent(qtoken)}` : ''}`}
+                className="customer-primary-cta inline-flex min-h-[44px] items-center justify-center rounded-xl px-5 text-xs font-bold transition-colors"
+              >
+                View order status →
+              </Link>
+            </div>
+          </div>
+        )}
+
+        {/* Failure Feedback */}
+        {paymentState.status === 'FAILED' && (
+          <div role="alert" className="customer-glass-surface rounded-2xl border border-[var(--qf-danger)]/25 bg-[var(--qf-danger)]/10 p-4 text-center space-y-1">
+            <div className="text-sm font-bold text-[var(--qf-danger)]">Payment wasn&apos;t completed</div>
+            <p className="text-xs leading-relaxed text-rose-200/90">{paymentState.message}</p>
+          </div>
+        )}
+
+        {/* Pay at Restaurant Confirmation Feedback */}
+        {paymentState.status === 'IDLE' && paymentState.message && (
+          <div role="status" className="customer-glass-surface rounded-2xl border border-sky-400/25 bg-sky-500/10 p-3.5 text-center text-xs text-sky-200 leading-relaxed">
+            {paymentState.message}
+          </div>
+        )}
+
+        {/* Primary Payment CTA */}
+        {!isPaid && paymentState.status !== 'SUCCEEDED' && (
+          <button
+            type="button"
+            onClick={handlePayNow}
+            disabled={processing}
+            aria-busy={processing}
+            className="customer-primary-cta flex min-h-[48px] h-12 w-full items-center justify-center gap-2 rounded-2xl text-sm font-black transition-all shadow-lg active:scale-[0.99] disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
+          >
+            {processing ? (
+              <>
+                <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                <span>Processing…</span>
+              </>
+            ) : paymentMethod === 'ONLINE' ? (
+              <>
+                <span>Pay {formatPrice(Number(order.total))}</span>
+                <span aria-hidden="true" className="font-bold">→</span>
+              </>
+            ) : (
+              <>
+                <span>Confirm pay at restaurant</span>
+                <span aria-hidden="true" className="font-bold">→</span>
+              </>
+            )}
+          </button>
+        )}
+
+        {/* Security Reassurance */}
+        <div className="flex items-center justify-center gap-1.5 text-[11px] text-slate-400">
+          <span aria-hidden="true">🔒</span>
+          <span>Secure payment · Protected checkout</span>
+        </div>
+
+        {/* Secondary Navigation */}
+        <div className="space-y-2 pt-2 border-t border-white/10">
+          <Link
+            href={`/q/${slug}/order/${orderToken}${qtoken ? `?qtoken=${encodeURIComponent(qtoken)}` : ''}`}
+            className="flex min-h-[44px] h-11 w-full items-center justify-center rounded-xl border border-white/10 bg-white/5 text-xs font-bold text-slate-200 hover:bg-white/10 hover:text-white transition-colors"
+          >
+            View order details
+          </Link>
+          <Link
+            href={backHref}
+            className="flex min-h-[44px] h-11 w-full items-center justify-center rounded-xl text-xs font-semibold text-slate-400 hover:text-slate-200 transition-colors"
+          >
+            {qtoken ? '← Back to My Ticket' : '← Back to Queue'}
+          </Link>
+        </div>
+      </section>
+    </CustomerShell>
   );
 }

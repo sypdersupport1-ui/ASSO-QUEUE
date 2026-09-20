@@ -33,15 +33,15 @@ export function QueueProgressMessage(props: QueueProgressMessageProps) {
   const Icon = level === 'ALMOST_YOUR_TURN' ? Footprints : BellRing;
   const styles =
     level === 'ALMOST_YOUR_TURN'
-      ? 'border-amber-500/30 bg-amber-500/[0.08] text-amber-200'
-      : 'border-emerald-500/25 bg-emerald-500/[0.07] text-emerald-200';
+      ? 'border-[var(--qf-warning)]/30 bg-[var(--qf-warning)]/[0.08] text-[var(--qf-warning)]'
+      : 'border-[var(--qf-primary)]/25 bg-[var(--qf-primary)]/[0.07] text-[var(--qf-primary)]';
 
   return (
     <div
       role="status"
       aria-live="polite"
       aria-label={`${copy.title}. ${copy.body}`}
-      className={`mt-4 flex items-start gap-2.5 rounded-2xl border px-3.5 py-3 ${styles}`}
+      className={`customer-glass-surface mt-4 flex items-start gap-2.5 rounded-2xl border px-3.5 py-3 ${styles}`}
     >
       <Icon aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0" />
       <div className="min-w-0">

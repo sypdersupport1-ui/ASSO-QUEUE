@@ -5,8 +5,9 @@ import { PublicRestaurantService } from '@/lib/services/public-restaurant-servic
 import { QueueService } from '@/lib/services/queue-service';
 import { RestaurantHeader } from '@/components/customer/RestaurantHeader';
 import { customerOrderStatusCopy } from '@/lib/customer-order-ux';
-import { resolveCustomerTheme, themeToCssVariables } from '@/lib/themes';
-import { ThemeArtwork } from '@/components/themes';
+import { resolveCustomerTheme } from '@/lib/themes';
+import { CustomerShell } from '@/components/customer/ui/CustomerShell';
+import { CustomerPlatformBrand } from '@/components/customer/CustomerPlatformBrand';
 import type { Metadata } from 'next';
 
 export async function generateMetadata({
@@ -63,7 +64,7 @@ export default async function CustomerOrderStatusPage({
   if (!restaurant || !orderDetails) {
     return (
       <main className="qf-bg flex min-h-[100dvh] items-center justify-center p-6 text-slate-100">
-        <div className="w-full max-w-sm rounded-3xl border border-white/10 bg-slate-900/90 p-8 text-center space-y-4 shadow-2xl backdrop-blur-xl">
+        <div className="customer-glass-card w-full max-w-sm rounded-3xl border border-[var(--qf-border)] bg-[var(--qf-surface)]/90 p-8 text-center space-y-4 shadow-2xl backdrop-blur-xl">
           <div className="text-4xl" aria-hidden="true">📦</div>
           <div className="space-y-1">
             <h1 className="text-lg font-bold text-white">Order unavailable</h1>
@@ -86,7 +87,7 @@ export default async function CustomerOrderStatusPage({
   if (orderDetails.restaurantId !== restaurant.id) {
     return (
       <main className="qf-bg flex min-h-[100dvh] items-center justify-center p-6 text-slate-100">
-        <div className="w-full max-w-sm rounded-3xl border border-rose-500/20 bg-slate-900/90 p-8 text-center space-y-4 shadow-2xl backdrop-blur-xl">
+        <div className="customer-glass-card w-full max-w-sm rounded-3xl border border-rose-500/20 bg-[var(--qf-surface)]/90 p-8 text-center space-y-4 shadow-2xl backdrop-blur-xl">
           <div className="text-4xl" aria-hidden="true">🛡️</div>
           <div className="space-y-1">
             <h1 className="text-lg font-bold text-rose-300">Access Denied</h1>
@@ -134,55 +135,14 @@ export default async function CustomerOrderStatusPage({
   const isPaid = orderDetails.paymentStatus === 'PAID';
   const isTakeaway = orderDetails.queueType === 'TAKEAWAY';
   const activeTheme = resolveCustomerTheme(restaurant.customerThemeKey);
-  const themeStyles = themeToCssVariables(activeTheme);
-  const bgImage = activeTheme.artwork?.backgroundImage ?? null;
 
   return (
-    <main
-      className="qf-bg relative flex min-h-[100dvh] flex-col justify-between px-4 pt-[max(1.5rem,env(safe-area-inset-top))] pb-6 text-slate-100 selection:bg-orange-500 selection:text-white sm:py-8"
-      data-theme={activeTheme.key}
-      style={themeStyles}
-    >
-      {/* ── Theme background image layer ──────────────────────────────────── */}
-      {bgImage ? (
-        <>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={bgImage}
-            alt=""
-            aria-hidden="true"
-            fetchPriority="high"
-            decoding="async"
-            className="pointer-events-none fixed inset-0 h-full w-full object-cover object-center select-none"
-            style={{ zIndex: 0 }}
-          />
-          <div
-            aria-hidden="true"
-            className="pointer-events-none fixed inset-0"
-            style={{
-              zIndex: 1,
-              background:
-                'linear-gradient(to bottom, rgba(20,6,0,0.55) 0%, rgba(20,6,0,0.20) 30%, rgba(20,6,0,0.20) 70%, rgba(20,6,0,0.60) 100%)',
-            }}
-          />
-        </>
-      ) : (
-        <>
-          <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 h-[380px] bg-gradient-to-b from-slate-800/20 via-slate-900/10 to-transparent" />
-          <div aria-hidden="true" className="pointer-events-none absolute top-4 left-1/2 -translate-x-1/2 h-64 w-64 rounded-full bg-emerald-500/[0.04] blur-3xl" />
-        </>
-      )}
+    <CustomerShell theme={activeTheme}>
+      {/* 1. Official ASSO / QueueFlow Platform Brand */}
+      <CustomerPlatformBrand />
 
-      {/* Thematic Decorative Artwork & Motif Layer */}
-      <div style={{ zIndex: bgImage ? 2 : undefined, position: bgImage ? 'relative' : undefined }}>
-        <ThemeArtwork theme={activeTheme} variant="page" />
-      </div>
-
-      <div
-        className="relative mx-auto w-full max-w-md space-y-4 sm:space-y-5"
-        style={{ zIndex: bgImage ? 10 : undefined }}
-      >
-        <RestaurantHeader restaurant={restaurant} />
+      {/* 2. Restaurant Hero */}
+      <RestaurantHeader restaurant={restaurant} />
 
         {/* CALLED Turn Priority Banner */}
         {queueCalled && qtoken && (
@@ -209,7 +169,7 @@ export default async function CustomerOrderStatusPage({
         {/* PRIMARY HERO CARD: ORDER STATUS & CONFIRMATION */}
         <section
           aria-label={`Order #${orderDetails.orderNumber} status`}
-          className="relative overflow-hidden rounded-3xl border border-white/10 bg-slate-900/90 p-5 sm:p-7 shadow-2xl backdrop-blur-xl text-center space-y-5"
+          className="customer-glass-card relative overflow-hidden rounded-3xl border border-[var(--qf-border)] bg-[var(--qf-surface)]/95 p-5 sm:p-7 shadow-2xl backdrop-blur-xl text-center space-y-5"
         >
           {/* Header & Order Number */}
           <div className="space-y-1.5">
@@ -221,8 +181,8 @@ export default async function CustomerOrderStatusPage({
                     : orderDetails.status === 'READY'
                     ? 'bg-sky-500/15 border border-sky-500/25 text-sky-300'
                     : orderDetails.status === 'SERVED'
-                    ? 'bg-emerald-500/15 border border-emerald-500/25 text-emerald-300'
-                    : 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-300'
+                    ? 'bg-[var(--qf-primary)]/15 border border-[var(--qf-primary)]/25 text-[var(--qf-primary)]'
+                    : 'bg-[var(--qf-primary)]/10 border border-[var(--qf-primary)]/20 text-[var(--qf-primary)]'
                 }`}
               >
                 <span>{isCancelled ? '✕' : '✓'}</span>
@@ -252,7 +212,7 @@ export default async function CustomerOrderStatusPage({
                       key={step.key}
                       className={
                         isCurrent
-                          ? 'text-emerald-300 font-extrabold'
+                          ? 'text-[var(--qf-primary)] font-extrabold'
                           : isDone
                           ? 'text-white'
                           : 'text-slate-600'
@@ -267,7 +227,7 @@ export default async function CustomerOrderStatusPage({
               {/* Smooth progress bar */}
               <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-emerald-400 rounded-full transition-all duration-500"
+                  className="h-full bg-[var(--qf-primary)] rounded-full transition-all duration-500"
                   style={{ width: `${Math.max(12, ((currentStep + 1) / ORDER_STEPS.length) * 100)}%` }}
                 />
               </div>
@@ -324,7 +284,7 @@ export default async function CustomerOrderStatusPage({
               )}
               <div className="flex justify-between items-baseline pt-2 border-t border-white/5 text-white font-bold">
                 <span className="text-sm">Total Amount</span>
-                <span className="font-mono text-xl font-black text-emerald-400">
+                <span className="font-mono text-xl font-black text-[var(--qf-primary)]">
                   {formatPrice(orderDetails.total)}
                 </span>
               </div>
@@ -334,28 +294,28 @@ export default async function CustomerOrderStatusPage({
           {/* PAYMENT STATUS & PRIMARY ACTION */}
           <div className="pt-3 border-t border-white/10 space-y-3">
             {isPaid ? (
-              <div className="flex items-center justify-between p-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-left">
+              <div className="flex items-center justify-between p-3 rounded-2xl bg-[var(--qf-primary)]/10 border border-[var(--qf-primary)]/20 text-left">
                 <div className="flex items-center gap-2.5">
-                  <span className="flex h-7 w-7 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-300 text-sm font-bold">
+                  <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[var(--qf-primary)]/20 text-[var(--qf-primary)] text-sm font-bold">
                     ✓
                   </span>
                   <div>
-                    <p className="text-xs font-bold text-emerald-300">Payment completed</p>
-                    <p className="text-[11px] text-emerald-200/70">Payment confirmed by restaurant</p>
+                    <p className="text-xs font-bold text-[var(--qf-primary)]">Payment completed</p>
+                    <p className="text-[11px] text-[var(--qf-primary)]/70">Payment confirmed by restaurant</p>
                   </div>
                 </div>
                 {!isTakeaway && (
                   <a
                     href={qtoken ? `/q/${slug}/payment/${token}?qtoken=${encodeURIComponent(qtoken)}` : `/q/${slug}/payment/${token}`}
-                    className="text-xs font-semibold text-emerald-400 hover:text-emerald-300 transition-colors"
+                    className="text-xs font-semibold text-[var(--qf-primary)] hover:underline transition-colors"
                   >
                     Receipt →
                   </a>
                 )}
               </div>
             ) : isTakeaway ? (
-              <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-4 text-center space-y-1.5">
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-black tracking-wide uppercase">
+              <div className="rounded-2xl border border-[var(--qf-primary)]/30 bg-[var(--qf-primary)]/10 p-4 text-center space-y-1.5">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[var(--qf-primary)]/20 text-[var(--qf-primary)] text-xs font-black tracking-wide uppercase">
                   💵 PAY AT COUNTER
                 </span>
                 <p className="text-xs font-bold text-slate-200">
@@ -369,7 +329,7 @@ export default async function CustomerOrderStatusPage({
               <div className="space-y-2">
                 <a
                   href={qtoken ? `/q/${slug}/payment/${token}?qtoken=${encodeURIComponent(qtoken)}` : `/q/${slug}/payment/${token}`}
-                  className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-sm font-black transition-all shadow-lg shadow-emerald-500/20 active:scale-[0.99]"
+                  className="customer-primary-cta flex h-12 w-full items-center justify-center gap-2 rounded-2xl text-sm font-black transition-all shadow-lg active:scale-[0.99]"
                 >
                   <span>Pay {formatPrice(Number(orderDetails.total))}</span>
                   <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
@@ -411,17 +371,6 @@ export default async function CustomerOrderStatusPage({
             </Link>
           </div>
         </div>
-      </div>
-
-      <footer
-        className="w-full max-w-md mx-auto text-center pt-8 pb-[calc(1rem+env(safe-area-inset-bottom))]"
-        style={{ zIndex: bgImage ? 10 : undefined, position: bgImage ? 'relative' : undefined }}
-      >
-        <div className="inline-flex items-center gap-2 text-xs font-semibold text-slate-500">
-          <span>Powered by</span>
-          <span className="text-emerald-400 font-bold tracking-tight">QueueFlow</span>
-        </div>
-      </footer>
-    </main>
+    </CustomerShell>
   );
 }

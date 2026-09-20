@@ -357,6 +357,13 @@ html.light .shadow-2xl{ box-shadow: 0 8px 28px rgba(15,23,42,0.10) !important; }
   box-shadow: 0 8px 25px var(--qf-primary-glow);
 }
 
+.customer-primary-cta:disabled,
+.customer-primary-cta[disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
 /* Diwali: Approved golden amber gradient (high contrast, zero neon) */
 [data-theme="diwali"] .customer-primary-cta {
   background: linear-gradient(to right, #f59e0b, #fbbf24, #f59e0b);

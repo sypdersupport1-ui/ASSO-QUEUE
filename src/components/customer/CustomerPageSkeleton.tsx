@@ -16,9 +16,9 @@ export function CustomerPageSkeleton() {
         <div className="h-6 w-48 animate-pulse rounded-full bg-white/10" />
         <div className="h-4 w-32 animate-pulse rounded-full bg-white/5" />
       </div>
-      <div className="h-28 animate-pulse rounded-3xl border border-white/10 bg-slate-900/90" />
-      <div className="h-96 animate-pulse rounded-3xl border border-white/10 bg-slate-900/90" />
-      <div className="h-24 animate-pulse rounded-2xl border border-white/10 bg-slate-900/90" />
+      <div className="h-28 animate-pulse rounded-3xl border border-[var(--qf-border)] bg-[var(--qf-surface)]/80 backdrop-blur-md" />
+      <div className="h-96 animate-pulse rounded-3xl border border-[var(--qf-border)] bg-[var(--qf-surface)]/80 backdrop-blur-md" />
+      <div className="h-24 animate-pulse rounded-2xl border border-[var(--qf-border)] bg-[var(--qf-surface)]/80 backdrop-blur-md" />
       <span className="sr-only">Loading restaurant queue…</span>
     </div>
   );

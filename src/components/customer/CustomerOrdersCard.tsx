@@ -25,8 +25,8 @@ const STATUS_STYLE: Record<string, string> = {
   PLACED: 'bg-amber-500/15 border-amber-500/30 text-amber-300',
   CONFIRMED: 'bg-blue-500/15 border-blue-500/30 text-blue-300',
   PREPARING: 'bg-purple-500/15 border-purple-500/30 text-purple-300',
-  READY: 'bg-emerald-500/15 border-emerald-500/30 text-emerald-300',
-  SERVED: 'bg-emerald-500/15 border-emerald-500/30 text-emerald-300',
+  READY: 'bg-[var(--qf-success)]/15 border-[var(--qf-success)]/30 text-[var(--qf-success)]',
+  SERVED: 'bg-[var(--qf-success)]/15 border-[var(--qf-success)]/30 text-[var(--qf-success)]',
   CANCELLED: 'bg-slate-500/15 border-slate-600 text-slate-400',
 };
 
@@ -42,12 +42,12 @@ export function CustomerOrdersCard({ orders, restaurantSlug, queueToken }: Custo
   return (
     <section
       aria-label={`My orders, ${orders.length} order${orders.length === 1 ? '' : 's'}`}
-      className="qf-card animate-fadeUp rounded-3xl p-5 sm:p-6"
+      className="customer-glass-card animate-fadeUp p-5 sm:p-6"
       style={{ animationDelay: '180ms' }}
     >
       <div className="flex items-center justify-between gap-2">
         <h2 className="flex items-center gap-2 text-[15px] font-black tracking-tight text-white">
-          <span aria-hidden="true" className="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-800 border border-white/10 text-emerald-400 shadow-sm">
+          <span aria-hidden="true" className="flex h-8 w-8 items-center justify-center rounded-xl bg-[var(--qf-primary)]/15 border border-[var(--qf-border)] text-[var(--qf-primary)] shadow-sm">
             <ReceiptText aria-hidden="true" className="h-4 w-4" />
           </span>
           My Orders ({orders.length})
@@ -56,7 +56,7 @@ export function CustomerOrdersCard({ orders, restaurantSlug, queueToken }: Custo
           href={menuUrl}
           className="inline-flex min-h-[40px] items-center gap-1 rounded-full border border-white/10 bg-white/5 px-3 text-xs font-bold text-slate-200 transition-colors hover:bg-white/10 hover:text-white"
         >
-          + Add more <ChevronRight aria-hidden="true" className="h-3.5 w-3.5 text-emerald-400" />
+          + Add more <ChevronRight aria-hidden="true" className="h-3.5 w-3.5 text-[var(--qf-primary)]" />
         </Link>
       </div>
 
@@ -64,7 +64,7 @@ export function CustomerOrdersCard({ orders, restaurantSlug, queueToken }: Custo
         {orders.map((o) => (
           <li
             key={o.id}
-            className="rounded-2xl border border-white/10 bg-white/[0.03] p-3.5"
+            className="rounded-2xl border border-[var(--qf-border)] bg-white/[0.04] p-3.5"
           >
             <div className="flex items-center justify-between gap-2">
               <p className="text-sm font-bold text-white">

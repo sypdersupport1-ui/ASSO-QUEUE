@@ -285,7 +285,7 @@ export function CustomerMenuBrowser({
 
   if (!categories || categories.length === 0) {
     return (
-      <div className="bg-slate-900/60 border border-white/5 rounded-3xl p-10 text-center space-y-3 backdrop-blur-md">
+      <div className="customer-glass-card border border-[var(--qf-border)] rounded-3xl p-10 text-center space-y-3 backdrop-blur-md">
         <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-white/5 border border-white/10 text-slate-400">
           <UtensilsCrossed className="h-6 w-6" aria-hidden="true" />
         </div>
@@ -332,9 +332,9 @@ export function CustomerMenuBrowser({
 
       {/* Ordering Disabled View-Only Banner */}
       {orderingDisabled && (
-        <div className="rounded-2xl border border-amber-500/35 bg-amber-500/10 p-4 text-center space-y-1">
-          <p className="text-xs font-bold text-amber-300">Viewing Menu Only</p>
-          <p className="text-[11px] text-amber-200/80 leading-relaxed">
+        <div className="customer-glass-surface rounded-2xl border border-[var(--qf-warning)]/35 bg-[var(--qf-warning)]/10 p-4 text-center space-y-1">
+          <p className="text-xs font-bold text-[var(--qf-warning)]">Viewing Menu Only</p>
+          <p className="text-[11px] text-slate-300 leading-relaxed">
             {orderingDisabledReason ||
               'Online ordering is currently unavailable for this service. You can browse our offerings here and place your order directly with the staff.'}
           </p>
@@ -350,7 +350,7 @@ export function CustomerMenuBrowser({
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search dishes…"
             aria-label="Search dishes"
-            className="h-11 w-full rounded-xl border border-white/10 bg-slate-900/60 pl-10 pr-10 text-white placeholder:text-slate-500 text-sm focus:outline-none focus:border-white/20 focus:ring-1 focus:ring-white/20 transition-all"
+            className="h-11 w-full rounded-xl border border-[var(--qf-border)] bg-[var(--qf-surface)]/80 pl-10 pr-10 text-white placeholder:text-slate-500 text-sm focus:outline-none focus:border-[var(--qf-primary)] transition-all"
           />
           {q && (
             <button
@@ -397,13 +397,13 @@ export function CustomerMenuBrowser({
 
       {/* Category Items List */}
       {filteredCategories.length === 0 ? (
-        <div className="bg-slate-900/60 border border-white/5 rounded-2xl p-8 text-center space-y-1">
+        <div className="customer-glass-surface border border-[var(--qf-border)] rounded-2xl p-8 text-center space-y-1">
           <p className="text-sm font-bold text-white">No dishes found</p>
           <p className="text-xs text-slate-400">Try searching for something else or clear filters</p>
           {q && (
             <button
               onClick={() => { setSearch(''); setActiveCategory(''); }}
-              className="mt-2 text-xs font-semibold text-emerald-400 hover:underline cursor-pointer"
+              className="mt-2 text-xs font-semibold text-[var(--qf-primary)] hover:underline cursor-pointer"
             >
               Clear filters
             </button>
@@ -428,7 +428,7 @@ export function CustomerMenuBrowser({
                 return (
                   <div
                     key={item.id}
-                    className={`rounded-2xl border border-white/5 bg-slate-900/60 p-3.5 flex items-center justify-between gap-3 transition-all ${
+                    className={`customer-glass-surface rounded-2xl border border-[var(--qf-border)] p-3.5 flex items-center justify-between gap-3 transition-all ${
                       item.available ? 'hover:border-white/15' : 'opacity-60'
                     }`}
                   >
@@ -447,7 +447,7 @@ export function CustomerMenuBrowser({
                       </div>
                       <div className="space-y-1 flex-1 min-w-0">
                         <div className="flex items-center gap-2">
-                          <h3 className="font-bold text-white text-sm leading-snug line-clamp-1 group-hover:text-emerald-300 transition-colors">
+                          <h3 className="font-bold text-white text-sm leading-snug line-clamp-1 group-hover:text-[var(--qf-primary)] transition-colors">
                             {item.name}
                           </h3>
                           {!item.available && (
@@ -499,7 +499,7 @@ export function CustomerMenuBrowser({
                               type="button"
                               aria-label={`Add one more ${item.name} to cart`}
                               onClick={() => handleUpdateQuantity(item.id, 1)}
-                              className="relative w-8 h-8 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-sm flex items-center justify-center transition-colors cursor-pointer before:absolute before:-inset-2 before:content-['']"
+                              className="customer-primary-cta relative w-8 h-8 rounded-lg font-bold text-sm flex items-center justify-center transition-colors cursor-pointer before:absolute before:-inset-2 before:content-['']"
                             >
                               +
                             </button>
@@ -527,14 +527,14 @@ export function CustomerMenuBrowser({
       {/* Floating Cart Sticky Bottom Bar */}
       {!orderingDisabled && totalItemsCount > 0 && (
         <div className="fixed bottom-4 inset-x-4 max-w-md mx-auto z-50 animate-in fade-in slide-in-from-bottom-2 duration-200">
-          <div className="flex items-center justify-between gap-3 rounded-2xl bg-slate-900/95 border border-white/15 px-4 py-3 shadow-2xl backdrop-blur-xl">
+          <div className="customer-glass-card flex items-center justify-between gap-3 rounded-2xl border border-[var(--qf-border)] bg-[var(--qf-surface)]/95 px-4 py-3 shadow-2xl backdrop-blur-xl">
             <div className="flex items-center gap-3 min-w-0">
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-500/15 text-emerald-400 border border-emerald-500/25">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[var(--qf-primary)]/15 text-[var(--qf-primary)] border border-[var(--qf-primary)]/25">
                 <span className="material-symbols-outlined text-[18px]">shopping_bag</span>
               </div>
               <div className="min-w-0">
                 <p className="text-xs font-bold text-white truncate">
-                  {totalItemsCount} {totalItemsCount === 1 ? 'item' : 'items'} · <span className="font-mono text-emerald-400">{formatPrice(cartSubtotal)}</span>
+                  {totalItemsCount} {totalItemsCount === 1 ? 'item' : 'items'} · <span className="font-mono text-[var(--qf-primary)]">{formatPrice(cartSubtotal)}</span>
                 </p>
                 <p className="text-[11px] text-slate-400 truncate">
                   Pre-ordering while waiting
@@ -545,7 +545,7 @@ export function CustomerMenuBrowser({
             <button
               type="button"
               onClick={() => setIsCartOpen(true)}
-              className="shrink-0 px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-bold transition-all flex items-center gap-1.5 active:scale-95 shadow-md shadow-emerald-500/20 cursor-pointer"
+              className="customer-primary-cta shrink-0 px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 active:scale-95 shadow-md cursor-pointer"
             >
               <span>View cart</span>
               <span className="material-symbols-outlined text-[15px]">arrow_forward</span>
@@ -561,12 +561,12 @@ export function CustomerMenuBrowser({
             role="dialog"
             aria-modal="true"
             aria-label={`Your order, ${totalItemsCount} items, total ${formatPrice(cartSubtotal)}`}
-            className="bg-slate-900 border-l border-white/10 w-full max-w-md h-full flex flex-col justify-between p-6 space-y-6 shadow-2xl overflow-y-auto animate-in slide-in-from-right"
+            className="customer-glass-card bg-[var(--qf-surface)]/95 border-l border-[var(--qf-border)] w-full max-w-md h-full flex flex-col justify-between p-6 space-y-6 shadow-2xl overflow-y-auto animate-in slide-in-from-right"
           >
             <div className="space-y-5">
               <div className="flex items-center justify-between border-b border-white/5 pb-4">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-9 h-9 rounded-xl bg-emerald-500/15 text-emerald-400 flex items-center justify-center border border-emerald-500/25">
+                  <div className="w-9 h-9 rounded-xl bg-[var(--qf-primary)]/15 text-[var(--qf-primary)] flex items-center justify-center border border-[var(--qf-primary)]/25">
                     <span className="material-symbols-outlined text-[18px]">shopping_cart</span>
                   </div>
                   <h3 className="text-lg font-bold text-white tracking-tight">Your Order</h3>
@@ -601,13 +601,13 @@ export function CustomerMenuBrowser({
               ) : queueToken ? (
                 <a
                   href={`/q/${restaurantSlug}/status/${queueToken}`}
-                  className="flex items-center justify-between gap-2 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 shadow-sm transition-all hover:bg-emerald-500/20 active:scale-[0.99]"
+                  className="flex items-center justify-between gap-2 rounded-2xl border border-[var(--qf-primary)]/30 bg-[var(--qf-primary)]/10 px-4 py-3 shadow-sm transition-all hover:bg-[var(--qf-primary)]/20 active:scale-[0.99]"
                 >
-                  <span className="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-200">
-                    <Ticket className="h-3.5 w-3.5 text-emerald-400" aria-hidden="true" />
+                  <span className="inline-flex items-center gap-1.5 text-xs font-medium text-[var(--qf-primary)]">
+                    <Ticket className="h-3.5 w-3.5 text-[var(--qf-primary)]" aria-hidden="true" />
                     <span>Ordering while you wait · spot saved</span>
                   </span>
-                  <span className="shrink-0 text-xs font-bold text-emerald-300">
+                  <span className="shrink-0 text-xs font-bold text-[var(--qf-primary)]">
                     My ticket →
                   </span>
                 </a>
@@ -640,7 +640,7 @@ export function CustomerMenuBrowser({
                       )}
                       <div className="text-xs font-mono text-slate-300">
                         {formatPrice(item.price)} × {item.quantity} ={' '}
-                        <span className="text-emerald-400 font-bold">{formatPrice(item.price * item.quantity)}</span>
+                        <span className="text-[var(--qf-primary)] font-bold">{formatPrice(item.price * item.quantity)}</span>
                       </div>
                       <p className="text-[10px] text-slate-500">Final price confirmed by the restaurant at checkout.</p>
                     </div>
@@ -661,7 +661,7 @@ export function CustomerMenuBrowser({
                         type="button"
                         aria-label={`Add one more ${item.name} to cart`}
                         onClick={() => handleUpdateQuantity(item.menuItemId, 1)}
-                        className="relative w-8 h-8 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-sm flex items-center justify-center transition-colors cursor-pointer before:absolute before:-inset-2 before:content-['']"
+                        className="customer-primary-cta relative w-8 h-8 rounded-lg font-bold text-sm flex items-center justify-center transition-colors cursor-pointer before:absolute before:-inset-2 before:content-['']"
                       >
                         +
                       </button>
@@ -686,15 +686,15 @@ export function CustomerMenuBrowser({
                 </div>
                 <div className="flex justify-between font-bold text-white pt-2.5 border-t border-white/5">
                   <span className="text-sm">Total Amount</span>
-                  <span className="font-mono text-emerald-400 text-lg">
+                  <span className="font-mono text-[var(--qf-primary)] text-lg">
                     {formatPrice(cartSubtotal)}
                   </span>
                 </div>
               </div>
 
               {isTakeaway ? (
-                <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3 text-xs space-y-1">
-                  <div className="flex items-center gap-1.5 font-bold text-emerald-400">
+                <div className="rounded-xl border border-[var(--qf-primary)]/30 bg-[var(--qf-primary)]/10 p-3 text-xs space-y-1">
+                  <div className="flex items-center gap-1.5 font-bold text-[var(--qf-primary)]">
                     <ShoppingBag className="h-4 w-4 shrink-0" />
                     <span className="uppercase tracking-wider">PAY AT COUNTER</span>
                   </div>
@@ -712,7 +712,7 @@ export function CustomerMenuBrowser({
                 <div className="space-y-2 pt-2 border-t border-white/10 text-left">
                   <div>
                     <label htmlFor="cart-takeaway-name" className="block text-[11px] font-bold uppercase tracking-wider text-slate-300 mb-1">
-                      Your Name <span className="text-emerald-400">*</span>
+                      Your Name <span className="text-[var(--qf-primary)]">*</span>
                     </label>
                     <div className="relative">
                       <User className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-500" />
@@ -723,7 +723,7 @@ export function CustomerMenuBrowser({
                         placeholder="e.g. Rahul Sharma"
                         value={takeawayCustomerName}
                         onChange={(e) => setTakeawayCustomerName(e.target.value)}
-                        className="w-full rounded-xl border border-slate-700 bg-slate-950 py-2 pl-9 pr-3 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-emerald-500"
+                        className="w-full rounded-xl border border-white/10 bg-black/40 py-2 pl-9 pr-3 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-[var(--qf-primary)]"
                       />
                     </div>
                   </div>
@@ -739,7 +739,7 @@ export function CustomerMenuBrowser({
                         placeholder="98765 43210"
                         value={takeawayCustomerPhone}
                         onChange={(e) => setTakeawayCustomerPhone(e.target.value)}
-                        className="w-full rounded-xl border border-slate-700 bg-slate-950 py-2 pl-9 pr-3 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-emerald-500"
+                        className="w-full rounded-xl border border-white/10 bg-black/40 py-2 pl-9 pr-3 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-[var(--qf-primary)]"
                       />
                     </div>
                   </div>
@@ -750,11 +750,11 @@ export function CustomerMenuBrowser({
                 type="button"
                 onClick={handlePlaceOrder}
                 disabled={isPending || cart.length === 0}
-                className="w-full h-12 rounded-xl bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-slate-950 font-bold text-sm shadow-lg shadow-emerald-500/20 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                className="customer-primary-cta w-full h-12 rounded-xl font-bold text-sm shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer"
               >
                 {isPending ? (
                   <span className="flex items-center gap-2">
-                    <div className="w-4 h-4 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />
+                    <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
                     Placing Order...
                   </span>
                 ) : isTakeaway ? (
@@ -786,7 +786,7 @@ export function CustomerMenuBrowser({
             aria-modal="true"
             aria-label={`Details for ${detailItem.name}`}
             onClick={(e) => e.stopPropagation()}
-            className="bg-slate-900 border border-white/10 w-full max-w-md rounded-t-3xl sm:rounded-3xl overflow-hidden shadow-2xl animate-in slide-in-from-bottom max-h-[90dvh] overflow-y-auto"
+            className="customer-glass-card bg-[var(--qf-surface)] border border-[var(--qf-border)] w-full max-w-md rounded-t-3xl sm:rounded-3xl overflow-hidden shadow-2xl animate-in slide-in-from-bottom max-h-[90dvh] overflow-y-auto"
           >
             <div className="relative h-48 bg-white/[0.03] border-b border-white/5 flex items-center justify-center">
               {detailItem.imageUrl ? (
@@ -803,7 +803,7 @@ export function CustomerMenuBrowser({
                 <span className="material-symbols-outlined text-[18px]">close</span>
               </button>
               {!detailItem.available && (
-                <span className="absolute bottom-3 left-3 px-3 py-1 rounded-full text-[11px] font-semibold bg-slate-900/90 border border-white/10 text-slate-300">
+                <span className="absolute bottom-3 left-3 px-3 py-1 rounded-full text-[11px] font-semibold bg-[var(--qf-surface)]/90 border border-[var(--qf-border)] text-slate-300">
                   Currently unavailable
                 </span>
               )}
@@ -844,7 +844,7 @@ export function CustomerMenuBrowser({
                     type="button"
                     aria-label={`Increase quantity of ${detailItem.name}`}
                     onClick={() => setDetailQty((q) => Math.min(99, q + 1))}
-                    className="w-11 h-11 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-lg flex items-center justify-center transition-colors cursor-pointer"
+                    className="customer-primary-cta w-11 h-11 rounded-xl font-bold text-lg flex items-center justify-center transition-colors cursor-pointer"
                   >
                     +
                   </button>
@@ -872,7 +872,7 @@ export function CustomerMenuBrowser({
                     type="button"
                     onClick={confirmDetailAdd}
                     disabled={!detailItem.available}
-                    className="w-full h-12 rounded-xl bg-emerald-500 hover:bg-emerald-400 disabled:opacity-40 text-slate-950 font-bold text-xs shadow-lg shadow-emerald-500/20 transition-all uppercase tracking-wider active:scale-[0.99] cursor-pointer"
+                    className="customer-primary-cta w-full h-12 rounded-xl font-bold text-xs shadow-lg transition-all uppercase tracking-wider active:scale-[0.99] cursor-pointer"
                   >
                     {detailItem.available
                       ? `Add ${detailQty} to cart · ${formatPrice(detailItem.price * detailQty)}`

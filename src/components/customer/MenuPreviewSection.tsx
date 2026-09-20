@@ -46,10 +46,10 @@ export function MenuPreviewSection({ categories, currency = 'INR' }: MenuPreview
   };
 
   return (
-    <div className="rounded-2xl sm:rounded-3xl border border-white/[0.08] bg-[#121826]/80 p-4 sm:p-5 space-y-4">
+    <div className="customer-glass-card rounded-2xl sm:rounded-3xl border border-[var(--qf-border)] bg-[var(--qf-surface)]/80 p-4 sm:p-5 space-y-4">
       <div className="flex items-center justify-between pb-1 border-b border-white/[0.06]">
         <div className="flex items-center gap-2">
-          <Sparkles className="h-3.5 w-3.5 text-emerald-400" aria-hidden="true" />
+          <Sparkles className="h-3.5 w-3.5 text-[var(--qf-primary)]" aria-hidden="true" />
           <h3 className="text-xs font-black uppercase tracking-widest text-slate-200">
             Menu Highlights
           </h3>
@@ -62,7 +62,7 @@ export function MenuPreviewSection({ categories, currency = 'INR' }: MenuPreview
       <div className="space-y-5">
         {categories.slice(0,3).map((cat) => (
           <div key={cat.id} className="space-y-2.5">
-            <h4 className="flex items-center justify-between border-b border-white/10 pb-1.5 text-[11px] font-black uppercase tracking-widest text-emerald-400">
+            <h4 className="flex items-center justify-between border-b border-white/10 pb-1.5 text-[11px] font-black uppercase tracking-widest text-[var(--qf-primary)]">
               <span>{cat.name}</span>
               <span className="rounded-full bg-white/5 px-2 py-0.5 font-mono font-bold text-slate-400">{cat.items.length}</span>
             </h4>
@@ -71,11 +71,11 @@ export function MenuPreviewSection({ categories, currency = 'INR' }: MenuPreview
               {cat.items.slice(0,4).map((item) => (
                 <div
                   key={item.id}
-                  className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.04] p-3 transition-all hover:border-emerald-500/30 hover:bg-white/[0.06] active:scale-[0.99]"
+                  className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.04] p-3 transition-all hover:border-[var(--qf-primary)]/30 hover:bg-white/[0.06] active:scale-[0.99]"
                 >
                   <div
                     aria-hidden="true"
-                    className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/[0.04] border border-white/10 text-emerald-400 font-black text-xs shadow-sm"
+                    className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/[0.04] border border-white/10 text-[var(--qf-primary)] font-black text-xs shadow-sm"
                   >
                     <UtensilsCrossed className="h-4 w-4" />
                   </div>
@@ -88,7 +88,7 @@ export function MenuPreviewSection({ categories, currency = 'INR' }: MenuPreview
                     )}
                   </div>
                   {item.available ? (
-                    <span className="shrink-0 rounded-lg bg-emerald-500/15 px-2 py-1 text-xs font-black text-emerald-300">
+                    <span className="shrink-0 rounded-lg bg-[var(--qf-primary)]/15 px-2 py-1 text-xs font-black text-[var(--qf-primary)]">
                       {formatPrice(item.price)}
                     </span>
                   ) : (
