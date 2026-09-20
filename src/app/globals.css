@@ -396,6 +396,28 @@ html.light .shadow-2xl{ box-shadow: 0 8px 28px rgba(15,23,42,0.10) !important; }
   box-shadow: 0 8px 28px rgba(3, 7, 18, 0.50), 0 0 12px rgba(99, 102, 241, 0.08);
 }
 
+/* Durga Puja: Rich vermilion & deep festive red with warm antique gold accent */
+[data-theme="durga-puja"] .customer-primary-cta {
+  background: linear-gradient(135deg, #b91c1c 0%, #dc2626 50%, #d97706 100%);
+  color: #fffbf2;
+  box-shadow: 0 8px 28px rgba(185, 28, 28, 0.35), 0 0 15px rgba(217, 119, 6, 0.20);
+}
+[data-theme="durga-puja"] .customer-primary-cta:hover {
+  background: linear-gradient(135deg, #dc2626 0%, #ef4444 50%, #f59e0b 100%);
+  box-shadow: 0 8px 32px rgba(220, 38, 38, 0.45), 0 0 20px rgba(245, 158, 11, 0.25);
+}
+
+/* Durga Puja Glass Accents & Atmospheric Depth */
+[data-theme="durga-puja"] .customer-glass-status {
+  box-shadow: 0 4px 20px rgba(22, 4, 6, 0.65), 0 0 15px rgba(217, 119, 6, 0.12);
+}
+[data-theme="durga-puja"] .customer-glass-card {
+  box-shadow: 0 12px 36px -4px rgba(22, 4, 6, 0.65), 0 0 20px rgba(185, 28, 28, 0.12), 0 0 0 1px var(--qf-border-subtle);
+}
+[data-theme="durga-puja"] .customer-glass-surface {
+  box-shadow: 0 8px 28px rgba(22, 4, 6, 0.55), 0 0 12px rgba(217, 119, 6, 0.08);
+}
+
 .font-luxury-serif {
   font-family: 'Playfair Display', 'Cormorant Garamond', ui-serif, Georgia, Cambria, 'Times New Roman', Times, serif;
 }

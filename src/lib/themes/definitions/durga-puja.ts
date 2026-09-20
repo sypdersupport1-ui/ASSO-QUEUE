@@ -1,46 +1,53 @@
 import type { CustomerTheme } from '../types';
 
 /**
- * Durga Puja Festival Theme.
+ * Durga Puja Festival Theme — Luxury Bengali Heritage Edition.
  *
  * Visual Direction:
- * Rich Bengali festive hospitality. Warm royal vermilion, radiant festive gold,
- * and ivory cream on a deep crimson-slate foundation.
- * Restrained traditional warmth without literal religious posters or theatrical deity art.
+ * Based on the approved Durga Puja background asset and Bengali festive heritage:
+ *   - Deep oxblood, maroon, and dark wine foundations (#160406 / #24090d)
+ *   - Translucent dark burgundy/wine glass surfaces (rgba(38, 10, 14, 0.82))
+ *   - Rich vermilion & festive crimson Dine-In highlights (#dc2626)
+ *   - Radiant antique saffron gold CTA & Takeaway highlights (#d97706 / #f59e0b)
+ *   - Subtle antique gold & warm cream borders (rgba(245, 158, 11, 0.18))
+ *   - Warm ivory/cream typography (#fffbf2) with strict WCAG AA contrast (>= 7:1)
+ *   - High-resolution local background asset (/themes/durga-puja-bg.jpg)
+ *   - Custom warm burgundy scrim preserving edge brass diyas, dhak, and floral frame
  */
 export const DURGA_PUJA_THEME: CustomerTheme = {
   key: 'durga-puja',
   name: 'Durga Puja',
-  description: 'Rich Bengali festive hospitality with deep vermilion foundations, radiant warm gold, and refined ivory accents.',
+  description:
+    'Majestic Durga Puja festival atmosphere — glowing brass diyas, festive red florals, and dhak artistry with rich burgundy glass surfaces and antique gold accents.',
   tokens: {
     surfaces: {
-      background: '#1a0709',
-      backgroundElevated: '#240d10',
-      surface: 'rgba(42, 14, 18, 0.88)',
-      surfaceSolid: '#2a0f13',
-      surfaceElevated: 'rgba(58, 20, 25, 0.94)',
-      surfaceInteractive: '#38141a',
+      background: '#160406',
+      backgroundElevated: '#22080c',
+      surface: 'rgba(38, 10, 14, 0.82)',
+      surfaceSolid: '#24090d',
+      surfaceElevated: 'rgba(52, 14, 20, 0.90)',
+      surfaceInteractive: '#361118',
     },
     accents: {
-      primary: '#d97706',
-      primaryHover: '#b45309',
-      primaryForeground: '#1a0709',
-      primaryGlow: 'rgba(217, 119, 6, 0.22)',
+      primary: '#b91c1c',
+      primaryHover: '#991b1b',
+      primaryForeground: '#fffbf2',
+      primaryGlow: 'rgba(185, 28, 28, 0.35)',
       accentDineIn: '#dc2626',
       accentDineInGlow: 'rgba(220, 38, 38, 0.22)',
       accentTakeaway: '#f59e0b',
       accentTakeawayGlow: 'rgba(245, 158, 11, 0.22)',
     },
     text: {
-      text: '#fffbf5',
-      textSecondary: '#e8d5c4',
-      textMuted: '#b39a82',
+      text: '#fffbf2',
+      textSecondary: '#e8d7c5',
+      textMuted: '#b8a18d',
     },
     borders: {
-      border: 'rgba(234, 179, 8, 0.18)',
-      borderSubtle: 'rgba(234, 179, 8, 0.08)',
-      borderHover: 'rgba(234, 179, 8, 0.32)',
-      borderActive: 'rgba(234, 179, 8, 0.50)',
+      border: 'rgba(245, 158, 11, 0.18)',
+      borderSubtle: 'rgba(245, 158, 11, 0.08)',
+      borderHover: 'rgba(245, 158, 11, 0.36)',
+      borderActive: 'rgba(217, 119, 6, 0.55)',
     },
     status: {
       success: '#10b981',
@@ -52,21 +59,24 @@ export const DURGA_PUJA_THEME: CustomerTheme = {
       radiusMd: '0.875rem',
       radiusLg: '1.25rem',
       radiusXl: '1.5rem',
-      shadowSm: '0 2px 8px rgba(35, 6, 9, 0.35)',
-      shadowMd: '0 8px 24px rgba(35, 6, 9, 0.45)',
-      shadowLg: '0 16px 40px rgba(35, 6, 9, 0.55)',
+      shadowSm: '0 2px 8px rgba(22, 4, 6, 0.45)',
+      shadowMd: '0 8px 24px rgba(22, 4, 6, 0.55)',
+      shadowLg: '0 16px 48px rgba(22, 4, 6, 0.65)',
     },
   },
   metadata: {
     category: 'cultural',
     season: 'Autumn',
-    tags: ['festive', 'bengali', 'durga-puja', 'gold', 'vermilion', 'autumn'],
+    tags: ['durga-puja', 'festival', 'bengali', 'oxblood', 'gold', 'vermilion', 'autumn', 'heritage'],
     previewAccentColor: '#dc2626',
-    previewSurfaceColor: '#2a0f13',
+    previewSurfaceColor: '#24090d',
   },
   artwork: {
     motif: 'alpana',
-    opacity: 0.12,
+    opacity: 0.08,
     placement: 'top-right',
+    backgroundImage: '/themes/durga-puja-bg.jpg',
+    scrim:
+      'linear-gradient(to bottom, rgba(22, 4, 6, 0.65) 0%, rgba(22, 4, 6, 0.20) 22%, rgba(22, 4, 6, 0.12) 50%, rgba(22, 4, 6, 0.35) 80%, rgba(18, 3, 5, 0.82) 100%)',
   },
 };
