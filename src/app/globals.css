@@ -348,6 +348,47 @@ html.light .shadow-2xl{ box-shadow: 0 8px 28px rgba(15,23,42,0.10) !important; }
   border-color: var(--qf-border-hover);
 }
 
+/* ==========================================================================
+   CUSTOMER PRIMARY ACTION BUTTON (Theme Aware)
+   ========================================================================== */
+.customer-primary-cta {
+  background: linear-gradient(135deg, var(--qf-primary) 0%, var(--qf-primary-hover) 100%);
+  color: var(--qf-primary-foreground);
+  box-shadow: 0 8px 25px var(--qf-primary-glow);
+}
+
+/* Diwali: Approved golden amber gradient (high contrast, zero neon) */
+[data-theme="diwali"] .customer-primary-cta {
+  background: linear-gradient(to right, #f59e0b, #fbbf24, #f59e0b);
+  color: #140602;
+  box-shadow: 0 8px 25px rgba(245, 158, 11, 0.25);
+}
+[data-theme="diwali"] .customer-primary-cta:hover {
+  background: linear-gradient(to right, #fbbf24, #f59e0b, #fbbf24);
+}
+
+/* Kali Puja: Refined luminous deep violet -> electric indigo -> subtle blue highlight */
+[data-theme="kali-puja"] .customer-primary-cta {
+  background: linear-gradient(135deg, #7c3aed 0%, #4f46e5 50%, #2563eb 100%);
+  color: #ffffff;
+  box-shadow: 0 8px 28px rgba(124, 58, 237, 0.35);
+}
+[data-theme="kali-puja"] .customer-primary-cta:hover {
+  background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 50%, #3b82f6 100%);
+  box-shadow: 0 8px 32px rgba(124, 58, 237, 0.45);
+}
+
+/* Kali Puja Glass Accents & Atmospheric Depth */
+[data-theme="kali-puja"] .customer-glass-status {
+  box-shadow: 0 4px 20px rgba(7, 11, 20, 0.60), 0 0 15px rgba(124, 58, 237, 0.12);
+}
+[data-theme="kali-puja"] .customer-glass-card {
+  box-shadow: 0 12px 36px -4px rgba(3, 7, 18, 0.60), 0 0 20px rgba(99, 102, 241, 0.10), 0 0 0 1px var(--qf-border-subtle);
+}
+[data-theme="kali-puja"] .customer-glass-surface {
+  box-shadow: 0 8px 28px rgba(3, 7, 18, 0.50), 0 0 12px rgba(99, 102, 241, 0.08);
+}
+
 .font-luxury-serif {
   font-family: 'Playfair Display', 'Cormorant Garamond', ui-serif, Georgia, Cambria, 'Times New Roman', Times, serif;
 }

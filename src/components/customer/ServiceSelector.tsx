@@ -25,7 +25,7 @@ export function ServiceSelector({
         <h2 className="font-luxury-serif text-lg sm:text-xl font-normal tracking-wide text-[#fff9f0]">
           How would you like to dine?
         </h2>
-        <p className="text-xs text-[#edd7be]/85 font-normal">
+        <p className="text-xs text-[var(--qf-text-secondary)]/85 font-normal">
           Choose a service below to save your spot in line.
         </p>
       </div>
@@ -66,7 +66,7 @@ export function ServiceSelector({
           <span className="text-xs sm:text-sm font-black tracking-wider uppercase">
             Dine-In
           </span>
-          <span className="text-[11px] text-[#edd7be]/75 mt-0.5 leading-tight">
+          <span className="text-[11px] text-[var(--qf-text-secondary)]/75 mt-0.5 leading-tight">
             Table service inside
           </span>
         </button>
@@ -102,7 +102,7 @@ export function ServiceSelector({
           <span className="text-xs sm:text-sm font-black tracking-wider uppercase">
             Takeaway
           </span>
-          <span className="text-[11px] text-[#edd7be]/75 mt-0.5 leading-tight">
+          <span className="text-[11px] text-[var(--qf-text-secondary)]/75 mt-0.5 leading-tight">
             Order &amp; collect
           </span>
         </button>
