@@ -1,14 +1,17 @@
 import React from 'react';
 import Link from 'next/link';
-import { ChevronRight, Phone, UtensilsCrossed, LogOut } from 'lucide-react';
+import { Phone, UtensilsCrossed, LogOut } from 'lucide-react';
 import { PublicRestaurantService, PublicRestaurantInfo } from '@/lib/services/public-restaurant-service';
 import { QueueService } from '@/lib/services/queue-service';
 import { ETAService } from '@/lib/services/eta-service';
 import { QueueScheduleService } from '@/lib/services/queue-schedule-service';
+import { CustomerShell } from '@/components/customer/ui/CustomerShell';
+import { CustomerPlatformBrand } from '@/components/customer/CustomerPlatformBrand';
 import { RestaurantHeader } from '@/components/customer/RestaurantHeader';
 import { QueueStatusCard } from '@/components/customer/QueueStatusCard';
 import { CustomerJoinFlow } from '@/components/customer/CustomerJoinFlow'; // Hosts QueueJoinForm & TakeawayJoinCard
-import { MenuPreviewSection } from '@/components/customer/MenuPreviewSection';
+import { HospitalityFeatureRow } from '@/components/customer/HospitalityFeatureRow';
+import { SignatureDishesCard } from '@/components/customer/SignatureDishesCard';
 import { TicketResumeBanner } from '@/components/customer/TicketResumeBanner';
 import { LandingAutoRefresh } from '@/components/customer/LandingAutoRefresh';
 import { CustomerErrorState } from '@/components/customer/CustomerErrorState';
@@ -16,8 +19,7 @@ import { resolveJoinability, formatWaitLabel } from '@/lib/customer-join-ux';
 import { getTicketToken, clearTicketCookie } from '@/lib/customer-ticket-cookie';
 import { quitPreviousQueueAction } from '@/app/q/actions';
 import { logger } from '@/lib/logging/logger';
-import { resolveCustomerTheme, themeToCssVariables } from '@/lib/themes';
-import { ThemeArtwork } from '@/components/themes';
+import { resolveCustomerTheme } from '@/lib/themes';
 import type { Metadata } from 'next';
 
 export async function generateMetadata({
@@ -195,221 +197,157 @@ export default async function PublicRestaurantQueuePage({
   }
 
   const activeTheme = resolveCustomerTheme(restaurant.customerThemeKey);
-  const themeStyles = themeToCssVariables(activeTheme);
-  const bgImage = activeTheme.artwork?.backgroundImage ?? null;
 
   return (
-    <main
-      className="qf-bg relative flex min-h-[100dvh] flex-col justify-between overflow-x-hidden text-slate-100 selection:bg-emerald-500/30 selection:text-emerald-100"
-      data-theme={activeTheme.key}
-      style={themeStyles}
-    >
+    <CustomerShell theme={activeTheme}>
       <LandingAutoRefresh />
 
-      {/* ── Theme background image layer ──────────────────────────────────── */}
-      {bgImage ? (
-        <>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={bgImage}
-            alt=""
-            aria-hidden="true"
-            fetchPriority="high"
-            decoding="async"
-            className="pointer-events-none fixed inset-0 h-full w-full object-cover object-center select-none"
-            style={{ zIndex: 0 }}
-          />
-          <div
-            aria-hidden="true"
-            className="pointer-events-none fixed inset-0"
-            style={{
-              zIndex: 1,
-              background:
-                'linear-gradient(to bottom, rgba(20,6,0,0.55) 0%, rgba(20,6,0,0.20) 30%, rgba(20,6,0,0.20) 70%, rgba(20,6,0,0.60) 100%)',
-            }}
-          />
-        </>
-      ) : (
-        <>
-          {/* Subtle ambient lighting (default / non-photo themes) */}
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-x-0 top-0 h-[380px] bg-gradient-to-b from-slate-800/25 via-slate-900/10 to-transparent"
-          />
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute top-4 left-1/2 -translate-x-1/2 h-64 w-64 rounded-full bg-emerald-500/[0.04] blur-3xl"
-          />
-        </>
+      {/* 1. ASSO / QueueFlow Platform Brand */}
+      <CustomerPlatformBrand />
+
+      {/* 2 & 3. Restaurant Name & Optional Tagline */}
+      <RestaurantHeader restaurant={restaurant} waitingCount={waitingCount} />
+
+      {/* Left queue confirmation banner */}
+      {leftQueueParam && (
+        <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-3.5 text-center shadow-lg animate-fadeUp">
+          <p className="text-xs font-bold text-emerald-300">You have left the queue</p>
+          <p className="mt-0.5 text-[11px] text-slate-300">
+            Thank you for visiting. Choose an option below whenever you are ready to join again.
+          </p>
+        </div>
       )}
 
-      {/* Thematic Decorative Artwork & Motif Layer */}
-      <div style={{ zIndex: bgImage ? 2 : undefined, position: bgImage ? 'relative' : undefined }}>
-        <ThemeArtwork theme={activeTheme} variant="page" />
-      </div>
+      {/* Resume banner (server cookie, only for active waiting/called tickets) */}
+      {!leftQueueParam && !freshParam && <TicketResumeBanner slug={slug} />}
 
-      <div
-        className="relative mx-auto w-full max-w-md space-y-4 px-4 pt-[max(1.25rem,env(safe-area-inset-top))] pb-5 sm:py-7 flex-1"
-        style={{ zIndex: bgImage ? 10 : undefined }}
-      >
-        {/* Left queue confirmation banner */}
-        {leftQueueParam && (
-          <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-4 text-center shadow-lg animate-fadeUp">
-            <p className="text-xs font-bold text-emerald-300">You have left the queue</p>
-            <p className="mt-1 text-[11px] text-slate-300">Thank you for visiting. Whenever you return, choose an option below to join again.</p>
-          </div>
-        )}
+      {/* 4. Queue / Wait Status Card */}
+      <QueueStatusCard
+        state={landingState}
+        waitingCount={waitingCount}
+        waitLabel={waitingCount === 0 && canJoin ? 'No wait' : waitLabel}
+        nextOpening={nextOpening}
+        capacity={{ active: activeQueueCount, max: restaurant.maxQueueCapacity }}
+      />
 
-        {/* Resume banner (server cookie, only for active waiting/called tickets) */}
-        {!leftQueueParam && !freshParam && <TicketResumeBanner slug={slug} />}
-
-        <RestaurantHeader restaurant={restaurant} waitingCount={waitingCount} />
-
-        <QueueStatusCard
-          state={landingState}
-          waitingCount={waitingCount}
-          waitLabel={waitingCount === 0 && canJoin ? 'No wait' : waitLabel}
-          nextOpening={nextOpening}
-          capacity={{ active: activeQueueCount, max: restaurant.maxQueueCapacity }}
-        />
-
-        <div className="animate-fadeUp space-y-4" style={{ animationDelay: '150ms' }}>
-        {/* Seated guest banner — allows rejoining while keeping previous ticket accessible */}
-        {seatedTicket && (
-          <div className="rounded-2xl border border-emerald-500/30 bg-[#121826]/95 p-4 shadow-xl backdrop-blur-md space-y-3">
-            <div className="flex items-start gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
-                <UtensilsCrossed className="h-5 w-5" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="inline-flex items-center gap-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-300">
-                  Seated Guest · {seatedTicket.displayNumber ? `Ticket Q-${seatedTicket.displayNumber.replace(/^#+/, '')}` : 'Table Ready'}
-                </div>
-                <p className="mt-1 text-xs font-bold text-white">
-                  Welcome back {seatedTicket.customerName}! Hope you enjoyed your meal.
-                </p>
-                <p className="text-[11px] text-slate-400 leading-relaxed">
-                  Visiting again today? Fill in the form below to get a new ticket, or release your previous table.
-                </p>
-              </div>
+      {/* Seated guest banner — allows rejoining while keeping previous ticket accessible */}
+      {seatedTicket && (
+        <div className="rounded-2xl border border-emerald-500/30 bg-[#121826]/95 p-4 shadow-xl backdrop-blur-md space-y-3 animate-fadeUp">
+          <div className="flex items-start gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+              <UtensilsCrossed className="h-5 w-5" />
             </div>
-            <div className="flex items-center gap-2 pt-1">
-              <Link
-                href={`/q/${slug}/status/${seatedTicket.token}`}
-                className="flex-1 text-center py-2.5 px-3 rounded-xl border border-white/15 bg-white/5 text-xs font-bold text-slate-200 hover:bg-white/10 active:scale-95 transition-all"
-              >
-                View Seated Ticket →
-              </Link>
-              <form action={quitPreviousQueueAction.bind(null, slug)} className="flex-1">
-                <button
-                  type="submit"
-                  className="w-full py-2.5 px-3 rounded-xl border border-emerald-500/30 bg-emerald-500/15 text-xs font-bold text-emerald-300 hover:bg-emerald-500/25 active:scale-95 transition-all cursor-pointer flex items-center justify-center gap-1.5"
-                >
-                  <LogOut className="h-3.5 w-3.5" />
-                  <span>Quit Previous Ticket</span>
-                </button>
-              </form>
+            <div className="min-w-0 flex-1">
+              <div className="inline-flex items-center gap-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-300">
+                Seated Guest · {seatedTicket.displayNumber ? `Ticket Q-${seatedTicket.displayNumber.replace(/^#+/, '')}` : 'Table Ready'}
+              </div>
+              <p className="mt-1 text-xs font-bold text-white">
+                Welcome back {seatedTicket.customerName}! Hope you enjoyed your meal.
+              </p>
+              <p className="text-[11px] text-slate-400 leading-relaxed">
+                Visiting again today? Fill in the form below to get a new ticket, or release your previous table.
+              </p>
             </div>
           </div>
-        )}
-
-        {activeTicketToken ? (
-          <section
-            aria-label="Already in queue"
-            className="rounded-2xl border border-[var(--qf-primary)]/30 bg-[var(--qf-surface-solid)]/95 p-5 text-center shadow-xl backdrop-blur-md"
-          >
-            <p className="inline-flex items-center gap-1.5 rounded-full border border-[var(--qf-primary)]/30 bg-[var(--qf-primary-glow)] px-3 py-1 text-[11px] font-bold uppercase tracking-widest text-[var(--qf-primary)]">
-              <span aria-hidden="true" className="relative flex h-2 w-2">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[var(--qf-primary)] opacity-75" />
-                <span className="relative inline-flex h-2 w-2 rounded-full bg-[var(--qf-primary)]" />
-              </span>
-              Spot Saved
-            </p>
-            <p className="mt-2 text-base font-black tracking-tight text-white">
-              {activeTicketState === 'CALLED'
-                ? 'Your turn is being called'
-                : "You're already in the queue"}
-            </p>
-            <p className="mt-1 text-xs leading-relaxed text-slate-300">
-              {activeTicketState === 'CALLED'
-                ? 'Please return to the restaurant now — your ticket is live below.'
-                : 'No need to fill the form again — your spot is secured.'}
-            </p>
+          <div className="flex items-center gap-2 pt-1">
             <Link
-              href={`/q/${slug}/status/${activeTicketToken}`}
-              className="mt-3.5 flex h-12 min-h-[48px] items-center justify-center gap-2 rounded-2xl bg-[var(--qf-primary)] hover:bg-[var(--qf-primary-hover)] text-sm font-black text-[var(--qf-primary-foreground)] shadow-lg shadow-black/20 transition-all active:scale-[0.98]"
+              href={`/q/${slug}/status/${seatedTicket.token}`}
+              className="flex-1 text-center py-2.5 px-3 rounded-xl border border-white/15 bg-white/5 text-xs font-bold text-slate-200 hover:bg-white/10 active:scale-95 transition-all"
             >
-              View My Ticket →
+              View Seated Ticket →
             </Link>
-            <div className="mt-3 pt-3 border-t border-white/10 flex flex-col items-center gap-2">
-              <form action={quitPreviousQueueAction.bind(null, slug)} className="w-full">
-                <button
-                  type="submit"
-                  className="w-full flex h-10 items-center justify-center gap-2 rounded-xl border border-rose-500/30 bg-rose-500/10 text-xs font-bold text-rose-300 hover:bg-rose-500/20 active:scale-95 transition-all cursor-pointer"
-                >
-                  <LogOut className="h-3.5 w-3.5" />
-                  <span>Quit Queue & Start New Ticket</span>
-                </button>
-              </form>
-              <p className="text-[10px] text-slate-500">
-                Returning for another meal or joining as a different guest? Tap above to start fresh.
-              </p>
-            </div>
-          </section>
-        ) : canJoin ? (
-          <CustomerJoinFlow restaurant={restaurant} initialService={initialService} />
-        ) : (
-          <p className="px-2 text-center text-xs text-slate-400">
-            {landingState === 'FULL'
-              ? 'This page updates automatically — no need to refresh.'
-              : 'Please check with the host if you require assistance.'}
+            <form action={quitPreviousQueueAction.bind(null, slug)} className="flex-1">
+              <button
+                type="submit"
+                className="w-full py-2.5 px-3 rounded-xl border border-emerald-500/30 bg-emerald-500/15 text-xs font-bold text-emerald-300 hover:bg-emerald-500/25 active:scale-95 transition-all cursor-pointer flex items-center justify-center gap-1.5"
+              >
+                <LogOut className="h-3.5 w-3.5" />
+                <span>Quit Previous Ticket</span>
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Active Ticket Banner */}
+      {activeTicketToken ? (
+        <section
+          aria-label="Already in queue"
+          className="customer-glass-card p-5 text-center space-y-3 animate-fadeUp"
+        >
+          <p className="inline-flex items-center gap-1.5 rounded-full border border-[var(--qf-primary)]/30 bg-[var(--qf-primary-glow)] px-3 py-1 text-[11px] font-bold uppercase tracking-widest text-[var(--qf-primary)]">
+            <span aria-hidden="true" className="relative flex h-2 w-2">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[var(--qf-primary)] opacity-75" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-[var(--qf-primary)]" />
+            </span>
+            Spot Saved
           </p>
-        )}
-        </div>
-
-        {/* Contact + location (only when data exists) */}
-        {(restaurant.phone || restaurant.address) && (
-          <section aria-label="Restaurant information" className="rounded-2xl border border-white/[0.08] bg-[#121826]/80 p-4 space-y-2">
-            {restaurant.address && (
-              <p className="text-center text-xs text-slate-300">
-                {restaurant.address}{restaurant.city ? `, ${restaurant.city}` : ''}
-              </p>
-            )}
-            {restaurant.phone && (
-              <p className="text-center">
-                <a
-                  href={`tel:${restaurant.phone.replace(/\s/g, '')}`}
-                  className="inline-flex min-h-[44px] items-center gap-1.5 rounded-full px-3 text-xs font-semibold text-[var(--qf-primary)] hover:opacity-80"
-                >
-                  <Phone aria-hidden="true" className="h-3.5 w-3.5" />
-                  {restaurant.phone}
-                </a>
-              </p>
-            )}
-          </section>
-        )}
-
-        <div className="animate-fadeUp pt-1" style={{ animationDelay: '220ms' }}>
-          <MenuPreviewSection categories={menuCategories} />
+          <p className="text-base font-black tracking-tight text-white">
+            {activeTicketState === 'CALLED'
+              ? 'Your turn is being called'
+              : "You're already in the queue"}
+          </p>
+          <p className="text-xs leading-relaxed text-slate-300">
+            {activeTicketState === 'CALLED'
+              ? 'Please return to the restaurant now — your ticket is live below.'
+              : 'No need to fill the form again — your spot is secured.'}
+          </p>
           <Link
-            href={`/q/${slug}/menu`}
-            className="mt-2.5 flex min-h-[48px] h-12 items-center justify-center gap-1.5 rounded-2xl border border-white/10 bg-white/[0.04] text-xs font-bold text-slate-200 transition-all hover:bg-white/[0.08] hover:text-white active:scale-[0.98]"
+            href={`/q/${slug}/status/${activeTicketToken}`}
+            className="flex h-12 min-h-[48px] items-center justify-center gap-2 rounded-2xl bg-[var(--qf-primary)] hover:bg-[var(--qf-primary-hover)] text-sm font-black text-[var(--qf-primary-foreground)] shadow-lg shadow-black/20 transition-all active:scale-[0.98]"
           >
-            <span>View full menu</span>
-            <ChevronRight aria-hidden="true" className="h-4 w-4 text-[var(--qf-primary)]" />
+            View My Ticket →
           </Link>
-        </div>
-      </div>
-
-      <footer
-        className="relative mx-auto w-full max-w-md px-4 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-6 text-center"
-        style={{ zIndex: bgImage ? 10 : undefined }}
-      >
-        <p className="inline-flex items-center gap-1.5 text-[11px] font-medium text-slate-500">
-          <span>Powered by</span>
-          <span className="font-bold tracking-tight text-[var(--qf-primary)]">QueueFlow</span>
+          <div className="mt-2 pt-2.5 border-t border-white/10 flex flex-col items-center gap-2">
+            <form action={quitPreviousQueueAction.bind(null, slug)} className="w-full">
+              <button
+                type="submit"
+                className="w-full flex h-10 items-center justify-center gap-2 rounded-xl border border-rose-500/30 bg-rose-500/10 text-xs font-bold text-rose-300 hover:bg-rose-500/20 active:scale-95 transition-all cursor-pointer"
+              >
+                <LogOut className="h-3.5 w-3.5" />
+                <span>Quit Queue & Start New Ticket</span>
+              </button>
+            </form>
+          </div>
+        </section>
+      ) : canJoin ? (
+        /* 5, 6, 7, 8. Service Selection ("How would you like to dine?"), Party Size & Join Queue CTA */
+        <CustomerJoinFlow restaurant={restaurant} initialService={initialService} />
+      ) : (
+        <p className="px-2 text-center text-xs text-slate-400 py-2">
+          {landingState === 'FULL'
+            ? 'This page updates automatically — no need to refresh.'
+            : 'Please check with the host if you require assistance.'}
         </p>
-      </footer>
-    </main>
+      )}
+
+      {/* 9. Hospitality Feature Row */}
+      <HospitalityFeatureRow />
+
+      {/* 10. Signature Dishes / Menu Entry */}
+      <SignatureDishesCard slug={slug} categories={menuCategories} />
+
+      {/* Contact + location (only when data exists) */}
+      {(restaurant.phone || restaurant.address) && (
+        <section aria-label="Restaurant information" className="customer-glass-surface p-3.5 sm:p-4 space-y-1 text-center">
+          {restaurant.address && (
+            <p className="text-xs text-slate-300">
+              {restaurant.address}{restaurant.city ? `, ${restaurant.city}` : ''}
+            </p>
+          )}
+          {restaurant.phone && (
+            <p>
+              <a
+                href={`tel:${restaurant.phone.replace(/\s/g, '')}`}
+                className="inline-flex min-h-[44px] items-center gap-1.5 rounded-full px-3 text-xs font-semibold text-[var(--qf-primary)] hover:opacity-80"
+              >
+                <Phone aria-hidden="true" className="h-3.5 w-3.5" />
+                {restaurant.phone}
+              </a>
+            </p>
+          )}
+        </section>
+      )}
+    </CustomerShell>
   );
 }

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Clock, CirclePause, CircleX, Users, Timer } from 'lucide-react';
+import { CirclePause, CircleX, Users, Timer } from 'lucide-react';
 import type { QueueLandingState } from '@/lib/customer-join-ux';
 import { CustomerSurface } from './ui/CustomerSurface';
 import { CustomerBadge } from './ui/CustomerBadge';
@@ -31,28 +31,33 @@ export function QueueStatusCard({
   capacity,
 }: QueueStatusCardProps) {
   if (state === 'OPEN' || state === 'CLOSING_SOON') {
+    const isNoWait = waitingCount === 0;
+
     return (
-      <CustomerSurface
+      <div
+        role="region"
         aria-label="Live queue status"
-        variant="subtle"
-        className="flex items-center justify-between gap-3 px-3.5 py-2.5 sm:px-4 sm:py-3 text-xs"
+        className="customer-glass-status p-3.5 sm:p-4 text-center space-y-0.5"
       >
-        <div className="flex items-center gap-2.5 min-w-0">
-          <span className="relative flex h-2 w-2 shrink-0">
+        <div className="inline-flex items-center gap-2">
+          <span className="relative flex h-2.5 w-2.5 shrink-0">
             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-            <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
+            <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-400 shadow-sm shadow-emerald-500/50" />
           </span>
-          <span className="truncate font-semibold text-slate-200">
-            {waitingCount === 0
+          <span className="text-sm sm:text-base font-black tracking-tight text-white">
+            {isNoWait
               ? 'No wait right now'
               : `${waitingCount} ${waitingCount === 1 ? 'party' : 'parties'} waiting in line`}
           </span>
         </div>
-        <div className="flex items-center gap-1.5 font-mono text-[12px] font-bold text-amber-300 shrink-0">
-          <Clock aria-hidden="true" className="h-3.5 w-3.5 text-amber-400" />
-          <span>{waitLabel ?? 'Immediate'}</span>
-        </div>
-      </CustomerSurface>
+        <p className="text-xs text-slate-300 font-medium">
+          {isNoWait
+            ? 'Great time to dine!'
+            : waitLabel
+              ? `Estimated wait: ${waitLabel}`
+              : 'Tables turning quickly'}
+        </p>
+      </div>
     );
   }
 

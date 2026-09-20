@@ -84,10 +84,20 @@ export interface CustomerThemeArtwork {
   subtleGlow?: string;
   /**
    * Optional full-bleed background image asset path (relative to /public).
+   * Supports local image or local SVG path.
    * When provided, this image is rendered as a fixed full-viewport background layer.
    * A translucent scrim is applied automatically to preserve content legibility.
    */
   backgroundImage?: string;
+  /**
+   * Optional CSS background definition (e.g. radial/linear gradient).
+   */
+  cssBackground?: string;
+  /**
+   * Optional custom scrim overlay (e.g. linear-gradient(...)).
+   * If omitted, the canonical theme-aware scrim is automatically calculated.
+   */
+  scrim?: string;
 }
 
 export interface CustomerTheme {

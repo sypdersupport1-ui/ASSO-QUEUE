@@ -2,7 +2,6 @@
 
 import React from 'react';
 import { UtensilsCrossed, ShoppingBag } from 'lucide-react';
-import { CustomerSurface } from './ui/CustomerSurface';
 
 interface ServiceSelectorProps {
   /** null = no selection yet (initial state for plain QR scans) */
@@ -21,17 +20,13 @@ export function ServiceSelector({
   onSelectService,
 }: ServiceSelectorProps) {
   return (
-    <CustomerSurface
-      aria-label="Choose dining service"
-      variant="card"
-      className="space-y-3.5 sm:space-y-4"
-    >
+    <div className="space-y-3">
       <div className="text-center space-y-1">
         <h2 className="text-base sm:text-lg font-black tracking-tight text-white">
-          How would you like to dine today?
+          How would you like to dine?
         </h2>
         <p className="text-xs text-slate-400">
-          Choose a service below to save your spot in line
+          Choose a service below to save your spot in line.
         </p>
       </div>
 
@@ -112,7 +107,7 @@ export function ServiceSelector({
           </span>
         </button>
       </div>
-    </CustomerSurface>
+    </div>
   );
 }
 
