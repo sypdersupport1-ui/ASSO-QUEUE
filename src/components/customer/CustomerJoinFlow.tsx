@@ -180,7 +180,7 @@ export function CustomerJoinFlow({
             className={`w-full min-h-[54px] h-14 rounded-2xl flex items-center justify-between px-5 font-black text-sm sm:text-base tracking-wide transition-all active:scale-[0.98] cursor-pointer shadow-lg select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0b0f19] ${
               isTakeaway
                 ? 'bg-[var(--qf-accent-takeaway)] hover:bg-amber-400 text-slate-950 shadow-amber-500/15 focus-visible:ring-[var(--qf-accent-takeaway)]'
-                : 'bg-[var(--qf-primary)] hover:bg-[var(--qf-primary-hover)] text-[var(--qf-primary-foreground)] shadow-emerald-500/15 focus-visible:ring-[var(--qf-primary)]'
+                : 'bg-[var(--qf-primary)] hover:bg-[var(--qf-primary-hover)] text-[var(--qf-primary-foreground)] shadow-black/25 focus-visible:ring-[var(--qf-primary)]'
             }`}
           >
             <span className="flex items-center gap-2.5">

@@ -39,7 +39,7 @@ export function CustomerButton({
 
   const variantStyles = {
     primary:
-      'bg-[var(--qf-primary)] hover:bg-[var(--qf-primary-hover)] text-[var(--qf-primary-foreground)] font-black shadow-lg shadow-emerald-500/15 focus-visible:ring-[var(--qf-primary)]',
+      'bg-[var(--qf-primary)] hover:bg-[var(--qf-primary-hover)] text-[var(--qf-primary-foreground)] font-black shadow-lg shadow-black/25 focus-visible:ring-[var(--qf-primary)]',
     takeaway:
       'bg-[var(--qf-accent-takeaway)] hover:opacity-95 text-slate-950 font-black shadow-lg shadow-amber-500/15 focus-visible:ring-[var(--qf-accent-takeaway)]',
     dine_in:
