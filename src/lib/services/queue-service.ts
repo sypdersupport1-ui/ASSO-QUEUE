@@ -1893,7 +1893,24 @@ export class QueueService {
     const safeDelay = Math.min(60, Math.max(1, Number(delayMinutes) || 10));
     const safeNote = String(note || '').slice(0, 300);
 
-    // 1. Insert CUSTOMER_LATE event
+    const nowIso = new Date().toISOString();
+
+    // 1. Update queue_entries to record delay response and touch updated_at for Realtime broadcast
+    try {
+      await supabase
+        .from('queue_entries')
+        .update({
+          call_response: 'DELAY_REQUESTED',
+          call_responded_at: nowIso,
+          call_delay_minutes: safeDelay,
+          updated_at: nowIso,
+        })
+        .eq('id', entry.id);
+    } catch {
+      // Non-blocking fallback
+    }
+
+    // 2. Insert CUSTOMER_LATE event
     await supabase.from('queue_events').insert({
       restaurant_id: entry.restaurant_id,
       queue_entry_id: entry.id,
@@ -1901,11 +1918,11 @@ export class QueueService {
       metadata: {
         delayMinutes: safeDelay,
         note: safeNote,
-        reportedAt: new Date().toISOString(),
+        reportedAt: nowIso,
       },
     });
 
-    // 2. Insert chat message announcement
+    // 3. Insert chat message announcement
     const chatMsg = `Customer reported running ~${safeDelay}m late${safeNote ? `: "${safeNote}"` : ''}`;
     await supabase.from('queue_events').insert({
       restaurant_id: entry.restaurant_id,
@@ -1915,7 +1932,7 @@ export class QueueService {
         sender: 'customer',
         senderName: entry.customer_name || 'Guest',
         message: chatMsg,
-        createdAt: new Date().toISOString(),
+        createdAt: nowIso,
       },
     });
 
@@ -2163,6 +2180,8 @@ export class QueueService {
       throw new Error('EMPTY_MESSAGE');
     }
 
+    const nowIso = new Date().toISOString();
+
     const { data: inserted, error } = await supabase
       .from('queue_events')
       .insert({
@@ -2174,7 +2193,7 @@ export class QueueService {
           sender: params.sender,
           senderName: senderName || (params.sender === 'staff' ? 'Host Stand' : 'Guest'),
           message: cleanMessage,
-          createdAt: new Date().toISOString(),
+          createdAt: nowIso,
         },
       })
       .select('id, created_at')
@@ -2182,6 +2201,16 @@ export class QueueService {
 
     if (error) {
       throw new Error(`Failed to send message: ${error.message}`);
+    }
+
+    // Touch updated_at on queue_entries so Postgres Realtime fires immediately for all clients
+    try {
+      await supabase
+        .from('queue_entries')
+        .update({ updated_at: nowIso })
+        .eq('id', entryId);
+    } catch {
+      // Non-blocking fallback
     }
 
     return {

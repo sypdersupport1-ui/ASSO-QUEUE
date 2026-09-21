@@ -70,7 +70,7 @@ export function StaffQueueChatModal({
     };
 
     fetchFromEntries();
-    const interval = setInterval(fetchFromEntries, 3000);
+    const interval = setInterval(fetchFromEntries, 1500);
     return () => clearInterval(interval);
   }, [isOpen, queueEntryId]);
 

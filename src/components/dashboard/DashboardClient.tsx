@@ -36,6 +36,7 @@ export function DashboardClient({
   const [noShowReason, setNoShowReason] = useState('STAFF_MARKED_NO_SHOW');
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [chatEntry, setChatEntry] = useState<any | null>(null);
+  const [readChatEntries, setReadChatEntries] = useState<Set<string>>(new Set());
   const [nowTick, setNowTick] = useState<number>(Date.now());
 
   // 1-second ticker for live timers
@@ -305,19 +306,23 @@ export function DashboardClient({
                   ? (rawNum.startsWith('T-') ? rawNum : `T-${rawNum.replace(/^[#QT-]+/, '')}`)
                   : (rawNum.startsWith('Q-') ? rawNum : `Q-${rawNum.replace(/^#+/, '')}`);
 
-                // Elapsed wait time
                 const joinedTimestamp = new Date(entry.joined_at || entry.created_at).getTime();
                 const waitMins = Math.max(0, Math.floor((Date.now() - joinedTimestamp) / 60000));
+
+                const hasGuestMessage = (entry.chatMessages || []).some((m: { sender?: string }) => m.sender === 'customer') || entry.call_response === 'DELAY_REQUESTED' || !!entry.lateInfo?.isLate;
+                const isUnreadMessage = hasGuestMessage && !readChatEntries.has(entry.id);
 
                 return (
                   <div
                     key={entry.id}
-                    className={`relative p-4 sm:p-5 rounded-2xl border flex flex-col gap-3.5 overflow-hidden transition-all duration-200 group ${cardTheme.container} ${
-                      loading ? 'opacity-50 pointer-events-none' : ''
-                    }`}
+                    className={`relative p-4 sm:p-5 rounded-2xl border flex flex-col gap-3.5 overflow-hidden transition-all duration-200 group ${
+                      isUnreadMessage
+                        ? 'border-2 border-amber-400 bg-gradient-to-r from-amber-950/50 via-slate-900 to-amber-950/40 shadow-[0_0_35px_rgba(245,158,11,0.6)] animate-pulse'
+                        : cardTheme.container
+                    } ${loading ? 'opacity-50 pointer-events-none' : ''}`}
                   >
                     {/* Glowing status indicator ribbon on left */}
-                    <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${cardTheme.accentLine}`} />
+                    <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${isUnreadMessage ? 'bg-amber-400' : cardTheme.accentLine}`} />
 
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 pl-1.5">
                       <div className="flex items-center gap-3.5 min-w-0 flex-1">
@@ -796,7 +801,10 @@ export function DashboardClient({
                       {/* Chat Button */}
                       <button
                         type="button"
-                        onClick={() => setChatEntry(entry)}
+                        onClick={() => {
+                          setChatEntry(entry);
+                          setReadChatEntries((prev) => new Set(prev).add(entry.id));
+                        }}
                         className="h-11 px-3.5 rounded-xl bg-white/[0.04] hover:bg-cyan-500/20 text-slate-300 hover:text-cyan-300 border border-white/5 hover:border-cyan-500/30 flex items-center justify-center gap-1.5 text-xs font-bold transition-all active:scale-95 cursor-pointer shrink-0"
                         title="Chat with customer"
                       >

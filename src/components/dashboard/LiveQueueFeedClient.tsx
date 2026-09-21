@@ -54,6 +54,7 @@ export function LiveQueueFeedClient({
   const [noShowReason, setNoShowReason] = useState('STAFF_MARKED_NO_SHOW');
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [chatEntry, setChatEntry] = useState<any | null>(null);
+  const [readChatEntries, setReadChatEntries] = useState<Set<string>>(new Set());
   const [statusFilter, setStatusFilter] = useState<string>(initialStatusFilter);
   const [searchTerm, setSearchTerm] = useState<string>(initialSearchTerm);
   const [nowTick, setNowTick] = useState<number>(Date.now());
@@ -620,15 +621,20 @@ export function LiveQueueFeedClient({
             const joinedTimestamp = new Date(entry.joined_at || entry.created_at).getTime();
             const waitMins = Math.max(0, Math.floor((Date.now() - joinedTimestamp) / 60000));
 
+            const hasGuestMessage = (entry.chatMessages || []).some((m: { sender?: string }) => m.sender === 'customer') || entry.call_response === 'DELAY_REQUESTED' || !!entry.lateInfo?.isLate;
+            const isUnreadMessage = hasGuestMessage && !readChatEntries.has(entry.id);
+
             return (
               <div
                 key={entry.id}
                 className={`relative overflow-hidden rounded-2xl p-3 sm:p-4 transition-all duration-300 group ${
-                  cardTheme.container
+                  isUnreadMessage
+                    ? 'border-2 border-amber-400 bg-gradient-to-r from-amber-950/50 via-slate-900 to-amber-950/40 shadow-[0_0_35px_rgba(245,158,11,0.6)] animate-pulse'
+                    : cardTheme.container
                 } ${loading ? 'opacity-50 pointer-events-none' : ''}`}
               >
                 {/* Glowing status indicator ribbon on left */}
-                <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${cardTheme.accentLine}`} />
+                <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${isUnreadMessage ? 'bg-amber-400' : cardTheme.accentLine}`} />
 
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 pl-1.5">
                   <div className="flex items-center gap-3.5 min-w-0 flex-1">
@@ -1279,7 +1285,10 @@ export function LiveQueueFeedClient({
                         {/* Chat with Customer button */}
                         <button
                           type="button"
-                          onClick={() => setChatEntry(entry)}
+                          onClick={() => {
+                            setChatEntry(entry);
+                            setReadChatEntries((prev) => new Set(prev).add(entry.id));
+                          }}
                           className="h-11 px-3 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-slate-300 hover:text-white border border-white/10 flex items-center justify-center gap-1.5 text-xs font-bold transition-colors cursor-pointer"
                           title="Chat with customer"
                         >

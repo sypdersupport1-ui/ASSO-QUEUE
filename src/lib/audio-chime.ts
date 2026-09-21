@@ -121,6 +121,13 @@ class AudioChimeEngine {
   }
 
   /**
+   * Alias for customer notification chime.
+   */
+  playNotificationChime() {
+    this.playBuzzerSound();
+  }
+
+  /**
    * Soothing 3-note hotel bell notification chime for customer devices.
    * Uses a warm C5→E5→G5 major triad (pure sine waves) with soft attack
    * and long musical decay — pleasant and attention-getting without being alarming.

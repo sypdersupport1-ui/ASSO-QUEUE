@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { Clock, MessageSquare, Send, X, Check, Car, AlertCircle } from 'lucide-react';
 import type { QueueLateInfo, QueueChatMessage } from '@/lib/services/queue-service';
 import { calculateDelayCountdown } from '@/lib/delay-timer';
+import { chimeEngine } from '@/lib/audio-chime';
 
 interface CustomerLateModalProps {
   token: string;
@@ -32,6 +33,16 @@ export function CustomerLateModal({
   const [isSendingChat, setIsSendingChat] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [nowMs, setNowMs] = useState<number>(Date.now());
+  const prevStaffMsgCountRef = React.useRef<number>(0);
+
+  // Sound chime when a new message from staff arrives
+  React.useEffect(() => {
+    const staffMsgs = messages.filter((m) => m.sender === 'staff');
+    if (staffMsgs.length > prevStaffMsgCountRef.current && prevStaffMsgCountRef.current > 0) {
+      chimeEngine.playNotificationChime();
+    }
+    prevStaffMsgCountRef.current = staffMsgs.length;
+  }, [messages]);
 
   // Tick timer every second
   React.useEffect(() => {
@@ -63,7 +74,7 @@ export function CustomerLateModal({
     };
 
     fetchLatestMessages();
-    const interval = setInterval(fetchLatestMessages, 3000);
+    const interval = setInterval(fetchLatestMessages, 1500);
 
     const onQueueUpdate = () => {
       fetchLatestMessages();
@@ -231,34 +242,64 @@ export function CustomerLateModal({
       );
     })()
   ) : (
-        <button
-          type="button"
-          onClick={() => {
-            setActiveTab(messages.length > 0 ? 'chat' : 'delay');
-            setIsOpen(true);
-          }}
-          className="customer-glass-control w-full flex items-center justify-between gap-2 p-3 rounded-2xl border border-[var(--qf-warning)]/30 bg-[var(--qf-warning)]/10 hover:bg-[var(--qf-warning)]/15 text-[var(--qf-warning)] transition-all cursor-pointer group shadow-sm active:scale-[0.99]"
-        >
-          <div className="flex items-center gap-2.5">
-            <div className="h-7 w-7 rounded-lg bg-[var(--qf-warning)]/20 flex items-center justify-center text-[var(--qf-warning)] shrink-0">
-              {messages.length > 0 ? <MessageSquare className="h-4 w-4" /> : <Clock className="h-4 w-4" />}
-            </div>
-            <div className="text-left">
-              <span className="text-xs font-bold text-white block group-hover:text-[var(--qf-warning)] transition-colors">
-                {messages.length > 0 ? 'Host Stand Messages' : 'Running late? Let the host know'}
+        (() => {
+          const staffMsgs = messages.filter((m) => m.sender === 'staff');
+          const hasStaffMsg = staffMsgs.length > 0;
+          return (
+            <button
+              type="button"
+              onClick={() => {
+                setActiveTab(messages.length > 0 ? 'chat' : 'delay');
+                setIsOpen(true);
+              }}
+              className={`customer-glass-control w-full flex items-center justify-between gap-2 p-3.5 rounded-2xl transition-all cursor-pointer group active:scale-[0.99] ${
+                hasStaffMsg
+                  ? 'border-2 border-cyan-400 bg-gradient-to-r from-cyan-950/80 via-slate-900 to-cyan-950/60 shadow-[0_0_30px_rgba(59,130,246,0.7)] animate-pulse'
+                  : 'border border-[var(--qf-warning)]/30 bg-[var(--qf-warning)]/10 hover:bg-[var(--qf-warning)]/15 text-[var(--qf-warning)] shadow-sm'
+              }`}
+            >
+              <div className="flex items-center gap-2.5">
+                <div
+                  className={`h-8 w-8 rounded-xl flex items-center justify-center shrink-0 ${
+                    hasStaffMsg
+                      ? 'bg-cyan-500/25 text-cyan-300 border border-cyan-400/50 shadow-md'
+                      : 'bg-[var(--qf-warning)]/20 text-[var(--qf-warning)]'
+                  }`}
+                >
+                  {hasStaffMsg ? (
+                    <MessageSquare className="h-4 w-4 animate-bounce text-cyan-300" />
+                  ) : messages.length > 0 ? (
+                    <MessageSquare className="h-4 w-4" />
+                  ) : (
+                    <Clock className="h-4 w-4" />
+                  )}
+                </div>
+                <div className="text-left">
+                  <span className={`text-xs font-black block ${hasStaffMsg ? 'text-cyan-200' : 'text-white'}`}>
+                    {hasStaffMsg ? '💬 Host Stand Sent a Message!' : messages.length > 0 ? 'Host Stand Messages' : 'Running late? Let the host know'}
+                  </span>
+                  <span className="text-[10px] text-slate-300 block leading-tight">
+                    {hasStaffMsg
+                      ? `"${staffMsgs[staffMsgs.length - 1]?.message || ''}"`
+                      : messages.length > 0
+                      ? `${messages.length} message${messages.length === 1 ? '' : 's'} with restaurant host`
+                      : 'We will hold your spot and seat next guest'}
+                  </span>
+                </div>
+              </div>
+              <span
+                className={`text-xs font-black font-mono px-2.5 py-1 rounded-xl shrink-0 flex items-center gap-1 ${
+                  hasStaffMsg
+                    ? 'bg-cyan-500/30 border border-cyan-400/60 text-cyan-200 shadow-md'
+                    : 'bg-[var(--qf-warning)]/20 border border-[var(--qf-warning)]/30 text-[var(--qf-warning)]'
+                }`}
+              >
+                <MessageSquare className="h-3 w-3" />
+                <span>{messages.length > 0 ? `Chat (${messages.length})` : "I'll be late →"}</span>
               </span>
-              <span className="text-[10px] text-slate-400">
-                {messages.length > 0
-                  ? `${messages.length} message${messages.length === 1 ? '' : 's'} with restaurant host`
-                  : 'We will hold your spot and seat next guest'}
-              </span>
-            </div>
-          </div>
-          <span className="text-xs font-black text-[var(--qf-warning)] font-mono px-2 py-1 rounded-lg bg-[var(--qf-warning)]/20 border border-[var(--qf-warning)]/30 shrink-0 flex items-center gap-1">
-            <MessageSquare className="h-3 w-3" />
-            <span>{messages.length > 0 ? `Chat (${messages.length})` : "I'll be late →"}</span>
-          </span>
-        </button>
+            </button>
+          );
+        })()
       )}
 
       {/* Modal Dialog */}
