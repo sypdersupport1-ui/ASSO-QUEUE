@@ -226,7 +226,7 @@ export function LiveQueueFeedClient({
   // Action Handlers with optimistic UI updates and chime sound
   const handleNotify = async (entryId: string) => {
     setIsProcessing(entryId);
-    chimeEngine.playCallChime();
+    chimeEngine.playRingingSound();
 
     setEntries((prev) =>
       prev.map((e) => (e.id === entryId ? { ...e, status: 'NOTIFIED', notified_at: new Date().toISOString() } : e))
@@ -245,7 +245,7 @@ export function LiveQueueFeedClient({
 
   const handleCall = async (entryId: string) => {
     setIsProcessing(entryId);
-    chimeEngine.playCallChime();
+    chimeEngine.playRingingSound();
 
     setEntries((prev) => {
       const next = prev.map((e) =>
@@ -282,6 +282,7 @@ export function LiveQueueFeedClient({
 
   const handleNoShow = async (entryId: string, reason: string) => {
     setIsProcessing(entryId);
+    chimeEngine.playAlertChime();
     setEntries((prev) => prev.filter((e) => e.id !== entryId));
     setNoShowMenuId(null);
 
@@ -299,6 +300,7 @@ export function LiveQueueFeedClient({
   const handleCancel = async (entryId: string) => {
     if (!confirm('Are you sure you want to cancel this guest from the queue?')) return;
     setIsProcessing(entryId);
+    chimeEngine.playAlertChime();
 
     setEntries((prev) => prev.filter((e) => e.id !== entryId));
 
