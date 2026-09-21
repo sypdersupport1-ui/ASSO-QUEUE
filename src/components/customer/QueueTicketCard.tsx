@@ -46,7 +46,7 @@ interface QueueTicketCardProps {
 }
 
 export function QueueTicketCard({
-  status,
+  status: initialStatus,
   token,
   restaurantSlug,
   restaurantName,
@@ -54,6 +54,12 @@ export function QueueTicketCard({
   operatingState = 'OPEN',
 }: QueueTicketCardProps) {
   const router = useRouter();
+  const [status, setStatus] = useState<PublicQueueStatusResponse>(initialStatus);
+
+  useEffect(() => {
+    setStatus(initialStatus);
+  }, [initialStatus]);
+
   const meta = ticketStateMeta(status.status);
   const ticketNo = formatTicketNumber(status.displayNumber, status.entryId);
   const waitLabel = meta.showWaitInfo ? formatWaitLabel(status.estimatedWaitMins) : null;
@@ -230,6 +236,9 @@ export function QueueTicketCard({
         const fresh = data?.status;
         if (!fresh || !isMounted) return;
 
+        // Authoritatively update component state so UI instantly reflects live server truth
+        setStatus(fresh);
+
         // Authoritative status transition detected in background or foreground
         if (fresh.status !== prevStatusRef.current) {
           const newStatus = fresh.status;
@@ -264,6 +273,22 @@ export function QueueTicketCard({
           } else if (newStatus === 'SEATED') {
             chimeEngine.playSeatChime();
             setLiveAnnouncement('You are seated. Enjoy your meal.');
+          } else if (newStatus === 'NO_SHOW') {
+            chimeEngine.playAlertChime();
+            triggerBackgroundTicketNotification(
+              'Queue Status Update',
+              'You have been marked as no-show by the restaurant.',
+              typeof window !== 'undefined' ? window.location.href : undefined
+            );
+            setLiveAnnouncement('We missed you. You have been marked as no-show.');
+          } else if (newStatus === 'CANCELLED') {
+            chimeEngine.playAlertChime();
+            triggerBackgroundTicketNotification(
+              'Queue Ticket Cancelled',
+              'Your queue ticket has been cancelled.',
+              typeof window !== 'undefined' ? window.location.href : undefined
+            );
+            setLiveAnnouncement('Your queue ticket has been cancelled.');
           }
 
           router.refresh();
@@ -287,7 +312,13 @@ export function QueueTicketCard({
       router.refresh();
     };
 
+    const onLiveEvent = () => {
+      checkLiveStatus();
+    };
+
     window.addEventListener('focus', onWake);
+    window.addEventListener('queue_update', onLiveEvent);
+    window.addEventListener('queue_poll_tick', onLiveEvent);
     const onVisibilityChange = () => {
       if (document.visibilityState === 'visible') onWake();
     };
@@ -297,7 +328,9 @@ export function QueueTicketCard({
       isMounted = false;
       clearInterval(pollerId);
       window.removeEventListener('focus', onWake);
-      document.removeEventListener('visibilitychange', onVisibilityChange);
+      window.removeEventListener('visibilitychange', onVisibilityChange);
+      window.removeEventListener('queue_update', onLiveEvent);
+      window.removeEventListener('queue_poll_tick', onLiveEvent);
     };
   }, [token, restaurantSlug, isTerminal, router, status.partySize]);
 

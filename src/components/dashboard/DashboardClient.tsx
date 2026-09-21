@@ -137,11 +137,7 @@ export function DashboardClient({
     setFeed((prev) => prev.filter((e) => e.id !== entryId));
 
     try {
-      const formData = new FormData();
-      formData.append('entryId', entryId);
-      formData.append('reason', reason);
-      if (userId) formData.append('actorUserId', userId);
-      await markNoShowAction(formData);
+      await markNoShowAction(entryId, reason, userId);
       await broadcastCustomerQueueUpdate(entryId);
     } catch (e) {
       console.error('Failed to mark no-show:', e);

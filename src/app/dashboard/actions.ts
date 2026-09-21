@@ -612,10 +612,25 @@ export async function updateQueueStatusAction(entryId: string, newStatus: QueueS
   revalidatePath('/dashboard', 'layout');
 }
 
-export async function markNoShowAction(formData: FormData): Promise<void> {
-  const entryId = formData.get('entryId') as string;
-  const reason = (formData.get('reason') as string) || 'STAFF_MARKED_NO_SHOW';
-  const actorUserId = formData.get('actorUserId') as string | undefined;
+export async function markNoShowAction(
+  input: FormData | string,
+  maybeReason?: string,
+  maybeActorUserId?: string
+): Promise<void> {
+  let entryId: string;
+  let reason: string;
+  let actorUserId: string | undefined;
+
+  if (typeof input === 'string') {
+    entryId = input;
+    reason = maybeReason || 'STAFF_MARKED_NO_SHOW';
+    actorUserId = maybeActorUserId;
+  } else {
+    entryId = input.get('entryId') as string;
+    reason = (input.get('reason') as string) || 'STAFF_MARKED_NO_SHOW';
+    actorUserId = (input.get('actorUserId') as string) || undefined;
+  }
+
   await updateQueueStatusAction(entryId, 'NO_SHOW', actorUserId, reason);
 }
 

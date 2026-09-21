@@ -45,6 +45,9 @@ export function useCustomerQueueRealtime(entryId: string, enabled = true) {
 
     channel.on('broadcast', { event: 'queue_update' }, () => {
       if (!isMounted) return;
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('queue_update'));
+      }
       revalidate();
     });
 
@@ -66,7 +69,12 @@ export function useCustomerQueueRealtime(entryId: string, enabled = true) {
 
     // Fallback: 2s when active (customer needs near-realtime response upon staff notification)
     const fallback = setInterval(() => {
-      if (document.visibilityState === 'visible' && navigator.onLine) revalidate();
+      if (navigator.onLine) {
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('queue_poll_tick'));
+        }
+        if (document.visibilityState === 'visible') revalidate();
+      }
     }, 2000);
 
     // Phase 4E: return-to-tab / reconnect recovery. One shared timestamp

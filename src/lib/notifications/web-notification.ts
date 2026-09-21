@@ -117,11 +117,12 @@ export async function triggerBackgroundTicketNotification(
   if (perm !== 'granted') return;
 
   try {
+    const uniqueTag = `asso-queue-alert-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
     const options: NotificationOptions & { renotify?: boolean; vibrate?: number[]; silent?: boolean; sound?: string } = {
       body,
       icon: '/brand/asso/asso-customer-white.png',
       badge: '/brand/asso/asso-customer-white.png',
-      tag: 'asso-queue-alert',
+      tag: uniqueTag,
       renotify: true,
       requireInteraction: true,
       silent: false,
@@ -136,12 +137,20 @@ export async function triggerBackgroundTicketNotification(
     // 1. Primary: Service Worker showNotification (works on lock-screen and Android Chrome)
     if ('serviceWorker' in navigator) {
       try {
-        let reg: ServiceWorkerRegistration | null | undefined = await navigator.serviceWorker.getRegistration();
+        let reg: ServiceWorkerRegistration | null | undefined = null;
+        if ('ready' in navigator.serviceWorker) {
+          try {
+            reg = await Promise.race([
+              navigator.serviceWorker.ready,
+              new Promise<null>((r) => setTimeout(() => r(null), 600)),
+            ]);
+          } catch {}
+        }
+        if (!reg) {
+          reg = await navigator.serviceWorker.getRegistration();
+        }
         if (!reg) {
           reg = await registerServiceWorker();
-        }
-        if (!reg && navigator.serviceWorker.ready) {
-          reg = await navigator.serviceWorker.ready;
         }
 
         if (reg && typeof reg.showNotification === 'function') {

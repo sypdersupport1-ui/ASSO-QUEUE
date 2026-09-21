@@ -286,11 +286,7 @@ export function LiveQueueFeedClient({
     setNoShowMenuId(null);
 
     try {
-      await markNoShowAction(new FormData(Object.assign(document.createElement('form'), {
-        entryId,
-        actorUserId: userId,
-        reason,
-      } as unknown as HTMLFormElement)));
+      await markNoShowAction(entryId, reason, userId);
       await broadcastCustomerQueueUpdate(entryId);
     } catch (e) {
       console.error('Failed to mark no-show:', e);

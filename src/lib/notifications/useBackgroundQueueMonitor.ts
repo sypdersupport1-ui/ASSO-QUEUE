@@ -16,6 +16,7 @@ interface UseBackgroundQueueMonitorProps {
   partySize?: number;
   ticketNo?: string;
   isTerminal?: boolean;
+  onStatusUpdate?: (fresh: import('@/lib/services/queue-service').PublicQueueStatusResponse) => void;
 }
 
 /**
@@ -33,6 +34,7 @@ export function useBackgroundQueueMonitor({
   partySize = 1,
   ticketNo,
   isTerminal = false,
+  onStatusUpdate,
 }: UseBackgroundQueueMonitorProps) {
   const router = useRouter();
   const lastStatusRef = useRef(initialStatus);
@@ -48,10 +50,7 @@ export function useBackgroundQueueMonitor({
     registerServiceWorker().catch(() => {});
     startBackgroundKeeper();
 
-    // Active polling interval (2.5s):
-    // Crucial: NOT restricted to document.visibilityState === 'visible'
-    // so background tabs and locked phones receive the status transition in real-time.
-    const interval = setInterval(async () => {
+    const checkStatus = async () => {
       try {
         if (typeof navigator !== 'undefined' && !navigator.onLine) return;
 
@@ -67,8 +66,13 @@ export function useBackgroundQueueMonitor({
 
         if (!res.ok) return;
         const data = await res.json();
-        const serverStatus = data?.status?.status;
+        const fresh = data?.status;
+        const serverStatus = fresh?.status;
         if (!serverStatus) return;
+
+        if (onStatusUpdate) {
+          onStatusUpdate(fresh);
+        }
 
         const prev = lastStatusRef.current;
         if (prev && prev !== serverStatus) {
@@ -81,7 +85,7 @@ export function useBackgroundQueueMonitor({
               '⚡ YOUR TABLE IS READY!',
               ticketNo
                 ? `Ticket #${ticketNo} is called! Please proceed to the restaurant host now.`
-                : `Party of ${data.status?.partySize || partySize} — please return to the restaurant now!`,
+                : `Party of ${fresh?.partySize || partySize} — please return to the restaurant now!`,
               currentUrl
             );
             chimeEngine.playBuzzerSound();
@@ -104,6 +108,20 @@ export function useBackgroundQueueMonitor({
               currentUrl
             );
             chimeEngine.playSeatChime();
+          } else if (serverStatus === 'NO_SHOW') {
+            triggerBackgroundTicketNotification(
+              'Queue Status Update',
+              'You have been marked as no-show by the restaurant.',
+              currentUrl
+            );
+            chimeEngine.playAlertChime();
+          } else if (serverStatus === 'CANCELLED') {
+            triggerBackgroundTicketNotification(
+              'Queue Ticket Cancelled',
+              'Your queue ticket has been cancelled.',
+              currentUrl
+            );
+            chimeEngine.playAlertChime();
           }
 
           try {
@@ -113,10 +131,32 @@ export function useBackgroundQueueMonitor({
       } catch {
         // Silently continue on next tick
       }
-    }, 2500);
+    };
+
+    // Active polling interval (2s):
+    // Crucial: NOT restricted to document.visibilityState === 'visible'
+    // so background tabs and locked phones receive the status transition in real-time.
+    const interval = setInterval(checkStatus, 2000);
+
+    const onWake = () => {
+      checkStatus();
+      try { router.refresh(); } catch {}
+    };
+
+    window.addEventListener('focus', onWake);
+    window.addEventListener('queue_update', onWake);
+    window.addEventListener('queue_poll_tick', onWake);
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') onWake();
+    };
+    document.addEventListener('visibilitychange', onVisibilityChange);
 
     return () => {
       clearInterval(interval);
+      window.removeEventListener('focus', onWake);
+      window.removeEventListener('queue_update', onWake);
+      window.removeEventListener('queue_poll_tick', onWake);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
     };
-  }, [token, restaurantSlug, partySize, ticketNo, isTerminal, router]);
+  }, [token, restaurantSlug, partySize, ticketNo, isTerminal, router, onStatusUpdate]);
 }

@@ -67,7 +67,7 @@ interface TakeawayTicketCardProps {
  * - Seating / Seated / Floor
  */
 export function TakeawayTicketCard({
-  status,
+  status: initialStatus,
   token,
   restaurantSlug,
   restaurantName,
@@ -77,6 +77,12 @@ export function TakeawayTicketCard({
   takeawayManualOrderingEnabled = false,
 }: TakeawayTicketCardProps) {
   const router = useRouter();
+  const [status, setStatus] = useState<PublicQueueStatusResponse>(initialStatus);
+
+  useEffect(() => {
+    setStatus(initialStatus);
+  }, [initialStatus]);
+
   const ticketNo = formatTakeawayTicketNumber(status.displayNumber, status.entryId);
 
   // Primary active order (if any)
@@ -123,6 +129,7 @@ export function TakeawayTicketCard({
     partySize: 1,
     ticketNo,
     isTerminal: isCancelled || isExpired,
+    onStatusUpdate: (fresh) => setStatus(fresh),
   });
 
   useEffect(() => {
