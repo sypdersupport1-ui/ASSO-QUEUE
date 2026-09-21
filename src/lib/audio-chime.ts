@@ -121,61 +121,77 @@ class AudioChimeEngine {
   }
 
   /**
-   * Ultra-Loud, High-Attention Restaurant Pager Buzzer Sound for customer devices.
-   * Engineered with 6 urgent, piercing multi-harmonic piezo pulses (1174Hz - 2093Hz)
-   * matching peak human ear sensitivity and mobile loudspeaker resonance.
-   * Coupled with HTML5 Audio (/brand/pager-chime.wav) and heavy vibration pattern.
+   * Soothing 3-note hotel bell notification chime for customer devices.
+   * Uses a warm C5→E5→G5 major triad (pure sine waves) with soft attack
+   * and long musical decay — pleasant and attention-getting without being alarming.
+   * Like a luxury hotel guest notification bell.
    */
   playBuzzerSound() {
-    // 1. Heavy tactile hardware vibration pattern for mobile phones
-    this.triggerPhoneVibration([600, 150, 600, 150, 800, 200, 1000]);
+    // 1. Gentle double-pulse vibration (not jarring)
+    this.triggerPhoneVibration([200, 100, 200]);
 
-    // 2. Play newly remastered high-power pager WAV directly through HTML5 Audio
-    try {
-      if (typeof window !== 'undefined' && typeof Audio !== 'undefined') {
-        const directAudio = new Audio('/brand/pager-chime.wav');
-        directAudio.volume = 0.75;
-        const p = directAudio.play();
-        if (p) p.catch(() => {});
-      }
-    } catch {}
-
-    // 3. Ultra-loud multi-harmonic synthetic piezo buzzer directly to audio output
+    // 2. Soothing synthesized hotel bell chime — 3 notes of a major triad
     const synthesize = (ctx: AudioContext) => {
       try {
         const now = ctx.currentTime;
 
-        // 6 urgent high-decibel pulses matching authentic restaurant pager alarm
-        const pulses = [
-          { start: 0.00, dur: 0.25, freq: 1174.66 }, // D6
-          { start: 0.32, dur: 0.25, freq: 1567.98 }, // G6
-          { start: 0.64, dur: 0.25, freq: 1174.66 }, // D6
-          { start: 0.96, dur: 0.25, freq: 1567.98 }, // G6
-          { start: 1.28, dur: 0.25, freq: 1760.00 }, // A6
-          { start: 1.68, dur: 1.70, freq: 2093.00 }, // C7 sustained high alarm
+        // C5 → E5 → G5: a warm, pleasant major triad arpeggio
+        // Each note has a sine wave fundamental + soft sine overtone for bell-like warmth
+        const notes = [
+          { start: 0.00, freq: 523.25 },  // C5
+          { start: 0.22, freq: 659.25 },  // E5
+          { start: 0.44, freq: 783.99 },  // G5
         ];
 
-        pulses.forEach(({ start, dur, freq }) => {
-          // Fundamental + 3rd harmonic for piezo buzzer penetration
-          [freq, freq * 1.5].forEach((f, idx) => {
-            const osc = ctx.createOscillator();
-            const gain = ctx.createGain();
+        notes.forEach(({ start, freq }) => {
+          // Fundamental sine wave — soft and warm
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, now + start);
 
-            osc.type = idx === 0 ? 'triangle' : 'sine';
-            osc.frequency.setValueAtTime(f, now + start);
+          // Soft attack (15ms), long musical bell decay (1.2s)
+          gain.gain.setValueAtTime(0.0001, now + start);
+          gain.gain.linearRampToValueAtTime(0.38, now + start + 0.015);
+          gain.gain.exponentialRampToValueAtTime(0.0001, now + start + 1.2);
 
-            const peakVol = idx === 0 ? 0.55 : 0.38;
-            gain.gain.setValueAtTime(0.01, now + start);
-            gain.gain.linearRampToValueAtTime(peakVol, now + start + 0.008);
-            gain.gain.setValueAtTime(peakVol, now + start + dur - 0.02);
-            gain.gain.exponentialRampToValueAtTime(0.0001, now + start + dur);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now + start);
+          osc.stop(now + start + 1.25);
 
-            osc.connect(gain);
-            gain.connect(ctx.destination);
+          // Warm octave overtone for bell richness (half the volume)
+          const osc2 = ctx.createOscillator();
+          const gain2 = ctx.createGain();
+          osc2.type = 'sine';
+          osc2.frequency.setValueAtTime(freq * 2, now + start);
 
-            osc.start(now + start);
-            osc.stop(now + start + dur + 0.05);
-          });
+          gain2.gain.setValueAtTime(0.0001, now + start);
+          gain2.gain.linearRampToValueAtTime(0.15, now + start + 0.012);
+          gain2.gain.exponentialRampToValueAtTime(0.0001, now + start + 0.8);
+
+          osc2.connect(gain2);
+          gain2.connect(ctx.destination);
+          osc2.start(now + start);
+          osc2.stop(now + start + 0.85);
+        });
+
+        // Repeat the 3-note sequence once more after a brief pause (double chime)
+        notes.forEach(({ start, freq }) => {
+          const repeatStart = start + 0.90;
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, now + repeatStart);
+
+          gain.gain.setValueAtTime(0.0001, now + repeatStart);
+          gain.gain.linearRampToValueAtTime(0.28, now + repeatStart + 0.015);
+          gain.gain.exponentialRampToValueAtTime(0.0001, now + repeatStart + 1.0);
+
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now + repeatStart);
+          osc.stop(now + repeatStart + 1.05);
         });
       } catch {}
     };
