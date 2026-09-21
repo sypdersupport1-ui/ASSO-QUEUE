@@ -1,5 +1,5 @@
 import 'server-only';
-import { checkRateLimit, RateLimitEndpointClass, fingerprintQueueToken } from '@/lib/rate-limit';
+import { checkRateLimit, RateLimitEndpointClass, RateLimitLimit, fingerprintQueueToken } from '@/lib/rate-limit';
 import { customerJson } from '@/lib/customer-response';
 import { QueueService } from '@/lib/services/queue-service';
 import { PublicRestaurantService } from '@/lib/services/public-restaurant-service';
@@ -25,7 +25,7 @@ export async function GET(request: Request) {
 
     const rateLimitConfig = {
       identifier,
-      limit: 30, // RateLimitLimit.QUEUE_STATUS
+      limit: RateLimitLimit.QUEUE_STATUS,
       windowSeconds: 60,
       endpointClass: RateLimitEndpointClass.TOKEN_AUTHENTICATED,
     };

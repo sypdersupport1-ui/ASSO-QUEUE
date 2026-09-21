@@ -64,10 +64,10 @@ export function useCustomerQueueRealtime(entryId: string, enabled = true) {
 
     channelRef.current = channel as unknown as typeof channelRef.current;
 
-    // Fallback: 3s when active (customer needs near-realtime response upon staff notification)
+    // Fallback: 2s when active (customer needs near-realtime response upon staff notification)
     const fallback = setInterval(() => {
       if (document.visibilityState === 'visible' && navigator.onLine) revalidate();
-    }, 3000);
+    }, 2000);
 
     // Phase 4E: return-to-tab / reconnect recovery. One shared timestamp
     // guard (not a timer) so rapid hidden→visible toggles or online flaps
@@ -76,7 +76,7 @@ export function useCustomerQueueRealtime(entryId: string, enabled = true) {
     const lastRecoveryRef = { at: 0 };
     const recover = (reason: 'visible' | 'online') => {
       const now = Date.now();
-      if (now - lastRecoveryRef.at < 2000) return;
+      if (now - lastRecoveryRef.at < 500) return;
       lastRecoveryRef.at = now;
       if (reason === 'visible' && document.visibilityState !== 'visible') return;
       revalidate();
@@ -85,12 +85,14 @@ export function useCustomerQueueRealtime(entryId: string, enabled = true) {
     const onOnline = () => { recover('online'); };
     document.addEventListener('visibilitychange', onVisibility);
     window.addEventListener('online', onOnline);
+    window.addEventListener('focus', onVisibility);
 
     return () => {
       isMounted = false;
       clearInterval(fallback);
       document.removeEventListener('visibilitychange', onVisibility);
       window.removeEventListener('online', onOnline);
+      window.removeEventListener('focus', onVisibility);
       if (channelRef.current) {
         supabase.removeChannel(channelRef.current as unknown as never);
         channelRef.current = null;
@@ -109,9 +111,11 @@ export function useCustomerQueueRealtime(entryId: string, enabled = true) {
 export async function broadcastCustomerQueueUpdate(entryId: string) {
   try {
     const supabase = createBrowserClient();
-    const channel = supabase.channel(`customer-queue:${entryId}`);
+    const channel = supabase.channel(`customer-queue:${entryId}`, {
+      config: { broadcast: { self: true, ack: false } },
+    });
     await new Promise<void>((resolve, reject) => {
-      const timeout = setTimeout(() => reject(new Error('subscribe timeout')), 5000);
+      const timeout = setTimeout(() => reject(new Error('subscribe timeout')), 2000);
       channel.subscribe((status: string) => {
         if (status === 'SUBSCRIBED') {
           clearTimeout(timeout);

@@ -230,6 +230,97 @@ export function QueueTicketCard({
     status.partySize,
   ]);
 
+  // Active background & foreground real-time poller for instantaneous updates and lock-screen alerts
+  useEffect(() => {
+    if (isTerminal || !token) return;
+
+    let isMounted = true;
+
+    const checkLiveStatus = async () => {
+      try {
+        const queryParams = new URLSearchParams({ token });
+        if (restaurantSlug) queryParams.set('restaurantSlug', restaurantSlug);
+
+        const res = await fetch(`/api/q/status?${queryParams.toString()}`, {
+          cache: 'no-store',
+        });
+        if (!res.ok) return;
+
+        const data = await res.json();
+        const fresh = data?.status;
+        if (!fresh || !isMounted) return;
+
+        // Authoritative status transition detected in background or foreground
+        if (fresh.status !== prevStatusRef.current) {
+          const newStatus = fresh.status;
+          prevStatusRef.current = newStatus;
+
+          if (newStatus === 'NOTIFIED') {
+            chimeEngine.playBuzzerSound();
+            try {
+              if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+                navigator.vibrate([300, 150, 300, 150, 450]);
+              }
+            } catch {}
+            triggerBackgroundTicketNotification(
+              "⚡ You're Getting Close! Table Preparing",
+              `Party of ${fresh.partySize || status.partySize} — The host is preparing your table! Please head towards the restaurant.`,
+              typeof window !== 'undefined' ? window.location.href : undefined
+            );
+            setLiveAnnouncement('Your table is being prepared. Please start heading to the restaurant.');
+          } else if (newStatus === 'CALLED') {
+            chimeEngine.playBuzzerSound();
+            try {
+              if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+                navigator.vibrate([400, 150, 400, 150, 600]);
+              }
+            } catch {}
+            triggerBackgroundTicketNotification(
+              '⚡ YOUR TABLE IS READY!',
+              `Party of ${fresh.partySize || status.partySize} — Please return to the restaurant now!`,
+              typeof window !== 'undefined' ? window.location.href : undefined
+            );
+            setLiveAnnouncement('Your table is being called. Please return to the restaurant now.');
+          } else if (newStatus === 'SEATED') {
+            chimeEngine.playSeatChime();
+            setLiveAnnouncement('You are seated. Enjoy your meal.');
+          }
+
+          router.refresh();
+        } else if (
+          (fresh.position !== null && fresh.position !== prevPositionRef.current) ||
+          (fresh.nowCallingNumber && fresh.nowCallingNumber !== prevNowCallingRef.current) ||
+          (fresh.isAlmostYourTurn !== prevAlmostYourTurnRef.current)
+        ) {
+          prevPositionRef.current = fresh.position;
+          prevNowCallingRef.current = fresh.nowCallingNumber;
+          prevAlmostYourTurnRef.current = fresh.isAlmostYourTurn;
+          router.refresh();
+        }
+      } catch {}
+    };
+
+    const pollerId = setInterval(checkLiveStatus, 2000);
+
+    const onWake = () => {
+      checkLiveStatus();
+      router.refresh();
+    };
+
+    window.addEventListener('focus', onWake);
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') onWake();
+    };
+    document.addEventListener('visibilitychange', onVisibilityChange);
+
+    return () => {
+      isMounted = false;
+      clearInterval(pollerId);
+      window.removeEventListener('focus', onWake);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+    };
+  }, [token, restaurantSlug, isTerminal, router, status.partySize]);
+
   const handleRespond = async (
     response: 'ACCEPTED' | 'DELAY_REQUESTED' | 'DECLINED',
     delayMinutes?: number
@@ -348,6 +439,33 @@ export function QueueTicketCard({
       <div aria-live="polite" aria-atomic="true" className="sr-only">
         {liveAnnouncement}
       </div>
+
+      {/* 0. PROMINENT BACKGROUND ALERT OPT-IN PROMPT */}
+      {!alertsEnabled && !isTerminal && (
+        <div
+          onClick={handleEnableAlerts}
+          className="relative z-10 mb-3 p-3 rounded-2xl border border-amber-400/40 bg-gradient-to-r from-amber-500/20 via-amber-400/10 to-amber-500/20 shadow-md shadow-amber-500/10 cursor-pointer transition-all active:scale-[0.98] motion-safe:animate-pulse"
+          role="button"
+          tabIndex={0}
+        >
+          <div className="flex items-center gap-3 text-left">
+            <div className="w-8 h-8 rounded-xl bg-amber-500/30 border border-amber-400/50 flex items-center justify-center shrink-0">
+              <Bell className="w-4 h-4 text-amber-300 motion-safe:animate-bounce" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-black uppercase tracking-wider text-amber-200">
+                Turn On Lock-Screen Alerts 🔔
+              </p>
+              <p className="text-[11px] text-amber-100/80 leading-snug">
+                Tap here so your phone buzzes & notifies you even when you switch apps or lock your screen!
+              </p>
+            </div>
+            <span className="shrink-0 text-xs font-black text-amber-950 bg-amber-400 px-2.5 py-1 rounded-lg shadow-sm">
+              ALLOW
+            </span>
+          </div>
+        </div>
+      )}
 
       {/* 1. HERO QUEUE PASS & GUEST IDENTITY */}
       <div className="relative z-10 space-y-2">

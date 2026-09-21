@@ -28,8 +28,8 @@ export enum RateLimitLimit {
   QUEUE_JOIN = 5,
   /** Queue cancel: ~10 requests/minute/IP/token */
   QUEUE_CANCEL = 10,
-  /** Queue status: ~30 requests/minute/token or IP+restaurant */
-  QUEUE_STATUS = 30,
+  /** Queue status: ~65 requests/minute/token or IP+restaurant (fast real-time sync) */
+  QUEUE_STATUS = 65,
   /** Order creation: ~5 requests/minute/token/IP */
   ORDER_CREATION = 7,
   /** Payment initiation: ~5 requests/minute/token/IP */
