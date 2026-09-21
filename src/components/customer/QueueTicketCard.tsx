@@ -517,6 +517,31 @@ export function QueueTicketCard({
             </span>
           </span>
         </div>
+
+        {/* LIVE BUZZER TEST BUTTON — Always visible on ticket pass */}
+        {!isTerminal && (
+          <div className="pt-2">
+            <button
+              type="button"
+              onClick={() => {
+                chimeEngine.playBuzzerSound();
+                setBuzzerTested(true);
+                setTimeout(() => setBuzzerTested(false), 2400);
+              }}
+              className={`inline-flex items-center justify-center gap-2 py-1.5 px-4 rounded-full text-xs font-bold transition-all active:scale-95 cursor-pointer shadow-sm border backdrop-blur-md ${
+                buzzerTested
+                  ? 'border-amber-400 bg-amber-400/25 text-amber-200 shadow-amber-500/30 motion-safe:animate-pulse ring-2 ring-amber-400/40'
+                  : 'customer-glass-control text-slate-200 hover:text-white'
+              }`}
+              title="Test the loud restaurant pager buzzer sound on this phone"
+            >
+              <Volume2 className={`h-3.5 w-3.5 shrink-0 ${buzzerTested ? 'text-amber-300 motion-safe:animate-bounce' : 'text-[var(--qf-primary)]'}`} />
+              <span>
+                {buzzerTested ? '🔊 Buzzer Ringing Loud! 🔊' : '🔊 Live Buzzer Test'}
+              </span>
+            </button>
+          </div>
+        )}
       </div>
 
       {/* 2. STATE PRESENTATION */}
@@ -777,12 +802,16 @@ export function QueueTicketCard({
               onClick={() => {
                 chimeEngine.playBuzzerSound();
                 setBuzzerTested(true);
-                setTimeout(() => setBuzzerTested(false), 2200);
+                setTimeout(() => setBuzzerTested(false), 2400);
               }}
-              className="customer-glass-control w-full flex items-center justify-center gap-2 py-2.5 px-4 text-slate-200 text-xs font-bold transition-all active:scale-[0.98] cursor-pointer shadow-sm"
+              className={`customer-glass-control w-full flex items-center justify-center gap-2 py-2.5 px-4 text-xs font-bold transition-all active:scale-[0.98] cursor-pointer shadow-sm border ${
+                buzzerTested
+                  ? 'border-amber-400 bg-amber-400/25 text-amber-200 shadow-amber-500/30 motion-safe:animate-pulse ring-2 ring-amber-400/40'
+                  : 'text-slate-200 hover:text-white'
+              }`}
             >
-              <Volume2 className="h-4 w-4 text-[var(--qf-primary)] shrink-0" />
-              <span>{buzzerTested ? 'Buzzer ringing loud! 🔊' : 'Test Loud Pager Buzzer Sound'}</span>
+              <Volume2 className={`h-4 w-4 shrink-0 ${buzzerTested ? 'text-amber-300 motion-safe:animate-bounce' : 'text-[var(--qf-primary)]'}`} />
+              <span>{buzzerTested ? '🔊 Buzzer Ringing Loud! 🔊' : '🔊 Test Loud Pager Buzzer Sound'}</span>
             </button>
             <p className="text-[10px] text-slate-400">
               Rings loudly &amp; alerts lock-screen even if you switch apps or lock your phone.
@@ -984,12 +1013,16 @@ export function QueueTicketCard({
                   onClick={() => {
                     chimeEngine.playBuzzerSound();
                     setBuzzerTested(true);
-                    setTimeout(() => setBuzzerTested(false), 2000);
+                    setTimeout(() => setBuzzerTested(false), 2400);
                   }}
-                  className="inline-flex items-center gap-1.5 text-[11px] font-medium text-slate-400 hover:text-slate-200 transition-colors cursor-pointer"
+                  className={`w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl text-xs font-bold transition-all active:scale-[0.98] cursor-pointer shadow-sm border ${
+                    buzzerTested
+                      ? 'border-amber-400 bg-amber-400/25 text-amber-200 shadow-amber-500/30 motion-safe:animate-pulse ring-2 ring-amber-400/40'
+                      : 'customer-glass-control text-slate-200 hover:text-white'
+                  }`}
                 >
-                  <Volume2 className="h-3.5 w-3.5 text-[var(--qf-primary)]" />
-                  <span>{buzzerTested ? 'Buzzer ringing loud! 🔊' : 'Test Pager Buzzer Sound'}</span>
+                  <Volume2 className={`h-3.5 w-3.5 shrink-0 ${buzzerTested ? 'text-amber-300 motion-safe:animate-bounce' : 'text-[var(--qf-primary)]'}`} />
+                  <span>{buzzerTested ? '🔊 Buzzer Ringing Loud! 🔊' : '🔊 Re-test Pager Buzzer Sound'}</span>
                 </button>
               </div>
             </div>
