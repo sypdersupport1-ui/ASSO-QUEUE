@@ -31,6 +31,60 @@ export async function registerServiceWorker(): Promise<ServiceWorkerRegistration
 }
 
 /**
+ * Tells the Service Worker to start its own background polling loop for this ticket.
+ * The SW polls independently of the page JS — so notifications work even when the
+ * browser tab is suspended by the OS (phone locked / switched apps).
+ */
+export async function registerBackgroundPoll(
+  token: string,
+  restaurantSlug: string,
+  currentStatus: string,
+  currentUrl?: string
+): Promise<void> {
+  if (typeof window === 'undefined' || !('serviceWorker' in navigator)) return;
+  try {
+    let reg: ServiceWorkerRegistration | null | undefined = null;
+    try {
+      reg = await Promise.race([
+        navigator.serviceWorker.ready,
+        new Promise<null>((r) => setTimeout(() => r(null), 1000)),
+      ]);
+    } catch {}
+    if (!reg) reg = await navigator.serviceWorker.getRegistration();
+    if (!reg) reg = await registerServiceWorker();
+
+    const sw = reg?.active || reg?.installing || reg?.waiting;
+    if (sw) {
+      sw.postMessage({
+        type: 'REGISTER_BG_POLL',
+        token,
+        restaurantSlug,
+        status: currentStatus,
+        currentUrl: currentUrl || window.location.href,
+      });
+    }
+  } catch {
+    // Non-blocking — polling will still work from the page JS
+  }
+}
+
+/**
+ * Tells the Service Worker to stop background polling for this ticket.
+ * Call when the ticket reaches a terminal state (SEATED, CANCELLED, etc.).
+ */
+export async function stopBackgroundPoll(): Promise<void> {
+  if (typeof window === 'undefined' || !('serviceWorker' in navigator)) return;
+  try {
+    const reg = await navigator.serviceWorker.getRegistration();
+    const sw = reg?.active;
+    if (sw) {
+      sw.postMessage({ type: 'STOP_BG_POLL' });
+    }
+  } catch {}
+}
+
+
+/**
  * Universal browser-compatible notification permission request.
  * Handles both modern Promise-based and older callback-based APIs (Safari/iOS).
  */

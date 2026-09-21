@@ -27,6 +27,7 @@ import { syncTicketCookieAction } from '@/app/q/actions';
 import {
   registerServiceWorker,
   triggerBackgroundTicketNotification,
+  registerBackgroundPoll,
 } from '@/lib/notifications/web-notification';
 import { startBackgroundKeeper } from '@/lib/audio-background-keeper';
 import {
@@ -96,7 +97,9 @@ export function QueueTicketCard({
   useEffect(() => {
     registerServiceWorker();
     startBackgroundKeeper();
-  }, []);
+    // Also register SW background polling so notifications work when page JS is throttled
+    registerBackgroundPoll(token, restaurantSlug, status.status).catch(() => {});
+  }, [token, restaurantSlug, status.status]);
 
   // Sync prop changes to local response state
   useEffect(() => {

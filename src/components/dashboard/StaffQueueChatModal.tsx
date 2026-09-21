@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { MessageSquare, Send, X, ArrowRightCircle, Clock, AlertTriangle } from 'lucide-react';
 import { sendQueueChatMessageAction, passTableToNextAction } from '@/app/dashboard/actions';
 import { broadcastCustomerQueueUpdate } from '@/lib/realtime/useCustomerQueueRealtime';
@@ -31,6 +31,44 @@ export function StaffQueueChatModal({
   const [inputText, setInputText] = useState('');
   const [isSending, setIsSending] = useState(false);
   const [isPassingTable, setIsPassingTable] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Sync messages from parent when props change (4s router.refresh cycle)
+  useEffect(() => {
+    if (initialMessages && initialMessages.length > 0) {
+      setMessages(initialMessages);
+    }
+  }, [initialMessages]);
+
+  // Live poll for new messages every 3s while modal is open
+  useEffect(() => {
+    if (!isOpen || !queueEntryId) return;
+
+    // Fetch via dedicated chat endpoint which returns all CHAT_MESSAGE events
+    const fetchFromEntries = async () => {
+      try {
+        const res = await fetch(
+          `/api/staff/queue-chat?entryId=${encodeURIComponent(queueEntryId)}`,
+          { cache: 'no-store' }
+        );
+        if (!res.ok) return;
+        const data = await res.json();
+        const fresh: QueueChatMessage[] | undefined = data?.messages;
+        if (fresh && Array.isArray(fresh)) {
+          setMessages(fresh);
+        }
+      } catch {}
+    };
+
+    fetchFromEntries();
+    const interval = setInterval(fetchFromEntries, 3000);
+    return () => clearInterval(interval);
+  }, [isOpen, queueEntryId]);
+
+  // Auto-scroll to latest message
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
 
   if (!isOpen) return null;
 
@@ -175,29 +213,32 @@ export function StaffQueueChatModal({
               <p className="text-xs text-slate-500 mt-1">Send a greeting or arrival instructions to the guest.</p>
             </div>
           ) : (
-            messages.map((m) => {
-              const isStaff = m.sender === 'staff';
-              return (
-                <div
-                  key={m.id}
-                  className={`flex flex-col ${isStaff ? 'items-end' : 'items-start'}`}
-                >
-                  <span className="text-[10px] text-slate-500 mb-1 px-1">
-                    {isStaff ? 'Host Stand (You)' : customerName} ·{' '}
-                    {new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                  </span>
+            <>
+              {messages.map((m) => {
+                const isStaff = m.sender === 'staff';
+                return (
                   <div
-                    className={`max-w-[85%] px-3.5 py-2.5 rounded-2xl text-xs leading-relaxed ${
-                      isStaff
-                        ? 'bg-gradient-to-r from-blue-600 to-cyan-600 text-white font-medium rounded-tr-none shadow-md'
-                        : 'bg-[#1E293B] border border-white/10 text-slate-100 rounded-tl-none'
-                    }`}
+                    key={m.id}
+                    className={`flex flex-col ${isStaff ? 'items-end' : 'items-start'}`}
                   >
-                    {m.message}
+                    <span className="text-[10px] text-slate-500 mb-1 px-1">
+                      {isStaff ? 'Host Stand (You)' : customerName} ·{' '}
+                      {new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                    <div
+                      className={`max-w-[85%] px-3.5 py-2.5 rounded-2xl text-xs leading-relaxed ${
+                        isStaff
+                          ? 'bg-gradient-to-r from-blue-600 to-cyan-600 text-white font-medium rounded-tr-none shadow-md'
+                          : 'bg-[#1E293B] border border-white/10 text-slate-100 rounded-tl-none'
+                      }`}
+                    >
+                      {m.message}
+                    </div>
                   </div>
-                </div>
-              );
-            })
+                );
+              })}
+              <div ref={messagesEndRef} />
+            </>
           )}
         </div>
 

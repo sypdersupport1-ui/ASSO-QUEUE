@@ -7,6 +7,8 @@ import { startBackgroundKeeper } from '@/lib/audio-background-keeper';
 import {
   registerServiceWorker,
   triggerBackgroundTicketNotification,
+  registerBackgroundPoll,
+  stopBackgroundPoll,
 } from './web-notification';
 
 interface UseBackgroundQueueMonitorProps {
@@ -49,6 +51,9 @@ export function useBackgroundQueueMonitor({
     // Ensure Service Worker is registered and mobile background keeper is running
     registerServiceWorker().catch(() => {});
     startBackgroundKeeper();
+
+    // Register SW-level background polling — works even when page JS is throttled/suspended
+    registerBackgroundPoll(token, restaurantSlug, initialStatus).catch(() => {});
 
     const checkStatus = async () => {
       try {
@@ -127,6 +132,11 @@ export function useBackgroundQueueMonitor({
           try {
             router.refresh();
           } catch {}
+
+          // Stop SW background polling when ticket reaches terminal state
+          if (['SEATED', 'CANCELLED', 'NO_SHOW', 'EXPIRED'].includes(serverStatus)) {
+            stopBackgroundPoll().catch(() => {});
+          }
         }
       } catch {
         // Silently continue on next tick
