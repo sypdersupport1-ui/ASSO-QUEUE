@@ -38,13 +38,43 @@ class AudioChimeEngine {
   }
 
   /**
-   * Loud, energetic multi-pulse ringing bell sound.
-   * Produces an unmistakable loud telephone/restaurant pager ring with
-   * dual-frequency bell harmonics and 18Hz hammer tremolo modulation.
+   * Two-tone modern button click chime (D5 -> A5)
+   * The beloved snappy click/chime sound for restaurant dashboard buttons.
    */
-  playRingingSound(bursts = 2) {
-    // 1. Strong hardware tactile vibration
-    this.triggerPhoneVibration([500, 150, 500, 150, 800, 200, 800]);
+  playCallChime() {
+    try {
+      const ctx = this.getContext();
+      if (!ctx) return;
+      const now = ctx.currentTime;
+
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(587.33, now); // D5
+      osc.frequency.exponentialRampToValueAtTime(880, now + 0.15); // A5
+
+      gain.gain.setValueAtTime(0.001, now);
+      gain.gain.linearRampToValueAtTime(0.35, now + 0.04);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.45);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start(now);
+      osc.stop(now + 0.45);
+    } catch {}
+  }
+
+  /**
+   * Ultra-Loud, High-Attention Restaurant Pager Buzzer Sound for customer devices.
+   * Engineered with piercing dual-harmonic bursts (1046Hz - 3136Hz) matching the
+   * peak sensitivity of the human ear and mobile phone speaker transducers.
+   * Produces a loud, continuous, attention-demanding alert that cuts through noise.
+   */
+  playBuzzerSound() {
+    // 1. Strong tactile hardware vibration pattern
+    this.triggerPhoneVibration([600, 150, 600, 150, 800, 200, 1000]);
 
     // 2. Play HTML5 Audio asset directly as backup through native audio channel
     try {
@@ -56,63 +86,41 @@ class AudioChimeEngine {
       }
     } catch {}
 
-    // 3. High-volume Web Audio synthetic bell ring with dynamics limiter
+    // 3. High-volume piercing harmonic synthesizer directly to destination (no muffling compressor)
     const synthesize = (ctx: AudioContext) => {
       try {
         const now = ctx.currentTime;
 
-        // Limiter/compressor to maximize loudness without digital distortion
-        const comp = ctx.createDynamicsCompressor();
-        comp.threshold.setValueAtTime(-14, now);
-        comp.knee.setValueAtTime(6, now);
-        comp.ratio.setValueAtTime(14, now);
-        comp.attack.setValueAtTime(0.002, now);
-        comp.release.setValueAtTime(0.2, now);
-        comp.connect(ctx.destination);
+        // 5 distinct loud piercing pager bursts across 2.2 seconds
+        const bursts = [
+          { start: 0.00, dur: 0.22, chord: [1046.5, 2093.0, 3136.0] },
+          { start: 0.26, dur: 0.22, chord: [1046.5, 2093.0, 3136.0] },
+          { start: 0.54, dur: 0.24, chord: [1318.5, 2637.0, 3951.0] },
+          { start: 0.84, dur: 0.24, chord: [1318.5, 2637.0, 3951.0] },
+          { start: 1.18, dur: 0.90, chord: [1567.98, 2093.0, 3136.0] },
+        ];
 
-        const burstDuration = 0.42;
-        const burstGap = 0.16;
-
-        for (let b = 0; b < bursts; b++) {
-          const burstStart = now + b * (burstDuration + burstGap);
-
-          // Canonical ringing bell harmonics: G5 (784Hz) + B5 (988Hz) + E6 (1319Hz) + G6 (1568Hz)
-          const notes = [
-            { freq: 783.99, type: 'sine' as const, vol: 0.85 },
-            { freq: 987.77, type: 'triangle' as const, vol: 0.90 },
-            { freq: 1318.51, type: 'sine' as const, vol: 0.75 },
-            { freq: 1567.98, type: 'triangle' as const, vol: 0.60 },
-          ];
-
-          notes.forEach(({ freq, type, vol }) => {
+        bursts.forEach(({ start, dur, chord }) => {
+          chord.forEach((freq, idx) => {
             const osc = ctx.createOscillator();
             const gain = ctx.createGain();
 
-            // 18Hz tremolo bell hammer flutter (creates the classic mechanical telephone/service bell ring)
-            const tremolo = ctx.createOscillator();
-            const tremoloGain = ctx.createGain();
-            tremolo.frequency.setValueAtTime(18, burstStart);
-            tremoloGain.gain.setValueAtTime(0.35, burstStart);
+            // Triangle & Sine mix for rich acoustic penetration on phone speakers
+            osc.type = idx === 0 ? 'triangle' : 'sine';
+            osc.frequency.setValueAtTime(freq, now + start);
 
-            osc.type = type;
-            osc.frequency.setValueAtTime(freq, burstStart);
-            osc.frequency.exponentialRampToValueAtTime(freq * 0.995, burstStart + burstDuration);
+            const peakVol = idx === 0 ? 0.95 : 0.70;
+            gain.gain.setValueAtTime(0.01, now + start);
+            gain.gain.linearRampToValueAtTime(peakVol, now + start + 0.012);
+            gain.gain.exponentialRampToValueAtTime(0.0001, now + start + dur);
 
-            // Punchy attack, sustained energetic ringing, crisp decay
-            gain.gain.setValueAtTime(0.01, burstStart);
-            gain.gain.linearRampToValueAtTime(vol, burstStart + 0.02);
-            gain.gain.exponentialRampToValueAtTime(0.001, burstStart + burstDuration);
-
-            tremolo.connect(tremoloGain.gain);
             osc.connect(gain);
-            gain.connect(comp);
+            gain.connect(ctx.destination);
 
-            osc.start(burstStart);
-            osc.stop(burstStart + burstDuration + 0.05);
-            tremolo.start(burstStart);
-            tremolo.stop(burstStart + burstDuration + 0.05);
+            osc.start(now + start);
+            osc.stop(now + start + dur + 0.05);
           });
-        }
+        });
       } catch {}
     };
 
@@ -128,18 +136,10 @@ class AudioChimeEngine {
   }
 
   /**
-   * Loud, High-Attention Restaurant Pager Buzzer Sound for customer devices.
-   * Plays 3 loud ringing bell bursts for high urgency.
+   * Loud ringing bell sound utility.
    */
-  playBuzzerSound() {
-    this.playRingingSound(3);
-  }
-
-  /**
-   * Immediate loud ringing chime for staff action buttons (Call, Notify).
-   */
-  playCallChime() {
-    this.playRingingSound(1);
+  playRingingSound() {
+    this.playBuzzerSound();
   }
 
   /**

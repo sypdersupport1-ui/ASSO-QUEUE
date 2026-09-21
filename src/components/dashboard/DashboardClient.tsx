@@ -58,7 +58,7 @@ export function DashboardClient({
   // - no-show: broadcastCustomerQueueUpdate(entryId)
   const handleNotify = async (entryId: string) => {
     setIsProcessing(entryId);
-    chimeEngine.playRingingSound();
+    chimeEngine.playCallChime();
 
     // Optimistic UI update: instantly elevate entry to NOTIFIED
     setFeed((prev) =>
@@ -78,7 +78,7 @@ export function DashboardClient({
 
   const handleCall = async (entryId: string) => {
     setIsProcessing(entryId);
-    chimeEngine.playRingingSound();
+    chimeEngine.playCallChime();
 
     // Optimistic UI update: instantly elevate entry to CALLED and resort to top priority
     setFeed((prev) => {
@@ -131,7 +131,7 @@ export function DashboardClient({
 
   const handleNoShow = async (entryId: string, reason: string) => {
     setIsProcessing(entryId);
-    chimeEngine.playAlertChime();
+    chimeEngine.playCallChime();
     setNoShowMenuId(null);
 
     // Optimistic UI update: remove from active queue
@@ -151,7 +151,7 @@ export function DashboardClient({
   const handleCancel = async (entryId: string) => {
     if (!confirm('Are you sure you want to cancel this guest from the queue?')) return;
     setIsProcessing(entryId);
-    chimeEngine.playAlertChime();
+    chimeEngine.playCallChime();
 
     // Optimistic UI update: instantly remove from feed
     setFeed((prev) => prev.filter((e) => e.id !== entryId));
