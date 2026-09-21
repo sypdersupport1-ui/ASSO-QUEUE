@@ -22,6 +22,7 @@ import { AddQueueGuestModal } from '@/components/dashboard/AddQueueGuestModal';
 import { LiveQueueFeedClient } from '@/components/dashboard/LiveQueueFeedClient';
 import { QueueOperationsAccordion } from '@/components/dashboard/QueueOperationsAccordion';
 import { ConfirmSubmitButton } from '@/components/dashboard/ConfirmSubmitButton';
+import { NotifyNextHeroButton } from '@/components/dashboard/NotifyNextHeroButton';
 import { logger } from '@/lib/logging/logger';
 import Link from 'next/link';
 
@@ -506,13 +507,7 @@ export default async function QueueManagementPage({
 
                 {/* Direct Action Button */}
                 <form action={updateQueueStatusAction.bind(null, nextUp.id, 'NOTIFIED', userId)}>
-                  <button
-                    type="submit"
-                    className="w-full py-3 rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-600 hover:brightness-110 active:scale-95 text-white font-black text-xs shadow-lg shadow-blue-500/25 transition-all flex items-center justify-center gap-2 cursor-pointer border border-blue-400/30"
-                  >
-                    <span className="material-symbols-outlined text-[16px]">notifications_active</span>
-                    <span>Notify Next — Table Almost Ready</span>
-                  </button>
+                  <NotifyNextHeroButton />
                 </form>
               </div>
             ) : (

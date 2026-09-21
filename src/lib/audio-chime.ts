@@ -38,45 +38,73 @@ class AudioChimeEngine {
   }
 
   /**
-   * Two-tone modern button click chime (D5 -> A5)
-   * The beloved snappy click/chime sound for restaurant dashboard buttons.
+   * Snappy button click chime (Tactile micro-click + D5 -> A5 melodic rise).
+   * The signature pleasant button click sound for restaurant dashboard staff buttons.
+   * Reliably plays even if AudioContext was suspended prior to the click.
    */
   playCallChime() {
     try {
+      const play = (ctx: AudioContext) => {
+        const now = ctx.currentTime;
+
+        // 1. Instant tactile mechanical click transient (30ms)
+        const clickOsc = ctx.createOscillator();
+        const clickGain = ctx.createGain();
+        clickOsc.type = 'triangle';
+        clickOsc.frequency.setValueAtTime(1400, now);
+        clickOsc.frequency.exponentialRampToValueAtTime(250, now + 0.025);
+        clickGain.gain.setValueAtTime(0.35, now);
+        clickGain.gain.exponentialRampToValueAtTime(0.001, now + 0.025);
+        clickOsc.connect(clickGain);
+        clickGain.connect(ctx.destination);
+        clickOsc.start(now);
+        clickOsc.stop(now + 0.03);
+
+        // 2. Signature upward melodic chime (D5 587Hz -> A5 880Hz)
+        const chimeOsc = ctx.createOscillator();
+        const chimeGain = ctx.createGain();
+        chimeOsc.type = 'sine';
+        chimeOsc.frequency.setValueAtTime(587.33, now);
+        chimeOsc.frequency.exponentialRampToValueAtTime(880.00, now + 0.12);
+
+        chimeGain.gain.setValueAtTime(0.001, now);
+        chimeGain.gain.linearRampToValueAtTime(0.40, now + 0.025);
+        chimeGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.45);
+
+        chimeOsc.connect(chimeGain);
+        chimeGain.connect(ctx.destination);
+        chimeOsc.start(now);
+        chimeOsc.stop(now + 0.45);
+      };
+
       const ctx = this.getContext();
       if (!ctx) return;
-      const now = ctx.currentTime;
-
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(587.33, now); // D5
-      osc.frequency.exponentialRampToValueAtTime(880, now + 0.15); // A5
-
-      gain.gain.setValueAtTime(0.001, now);
-      gain.gain.linearRampToValueAtTime(0.35, now + 0.04);
-      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.45);
-
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-
-      osc.start(now);
-      osc.stop(now + 0.45);
+      if (ctx.state === 'suspended') {
+        ctx.resume().then(() => play(ctx)).catch(() => {});
+      } else {
+        play(ctx);
+      }
     } catch {}
   }
 
   /**
+   * Alias for button click feedback.
+   */
+  playButtonClick() {
+    this.playCallChime();
+  }
+
+  /**
    * Ultra-Loud, High-Attention Restaurant Pager Buzzer Sound for customer devices.
-   * Engineered with piercing dual-harmonic bursts (1046Hz - 3136Hz) matching the
-   * peak sensitivity of the human ear and mobile phone speaker transducers.
-   * Produces a loud, continuous, attention-demanding alert that cuts through noise.
+   * Engineered with 6 urgent, piercing multi-harmonic piezo pulses (1174Hz - 2093Hz)
+   * matching peak human ear sensitivity and mobile loudspeaker resonance.
+   * Coupled with HTML5 Audio (/brand/pager-chime.wav) and heavy vibration pattern.
    */
   playBuzzerSound() {
-    // 1. Strong tactile hardware vibration pattern
+    // 1. Heavy tactile hardware vibration pattern for mobile phones
     this.triggerPhoneVibration([600, 150, 600, 150, 800, 200, 1000]);
 
-    // 2. Play HTML5 Audio asset directly as backup through native audio channel
+    // 2. Play newly remastered high-power pager WAV directly through HTML5 Audio
     try {
       if (typeof window !== 'undefined' && typeof Audio !== 'undefined') {
         const directAudio = new Audio('/brand/pager-chime.wav');
@@ -86,32 +114,34 @@ class AudioChimeEngine {
       }
     } catch {}
 
-    // 3. High-volume piercing harmonic synthesizer directly to destination (no muffling compressor)
+    // 3. Ultra-loud multi-harmonic synthetic piezo buzzer directly to audio output
     const synthesize = (ctx: AudioContext) => {
       try {
         const now = ctx.currentTime;
 
-        // 5 distinct loud piercing pager bursts across 2.2 seconds
-        const bursts = [
-          { start: 0.00, dur: 0.22, chord: [1046.5, 2093.0, 3136.0] },
-          { start: 0.26, dur: 0.22, chord: [1046.5, 2093.0, 3136.0] },
-          { start: 0.54, dur: 0.24, chord: [1318.5, 2637.0, 3951.0] },
-          { start: 0.84, dur: 0.24, chord: [1318.5, 2637.0, 3951.0] },
-          { start: 1.18, dur: 0.90, chord: [1567.98, 2093.0, 3136.0] },
+        // 6 urgent high-decibel pulses matching authentic restaurant pager alarm
+        const pulses = [
+          { start: 0.00, dur: 0.25, freq: 1174.66 }, // D6
+          { start: 0.32, dur: 0.25, freq: 1567.98 }, // G6
+          { start: 0.64, dur: 0.25, freq: 1174.66 }, // D6
+          { start: 0.96, dur: 0.25, freq: 1567.98 }, // G6
+          { start: 1.28, dur: 0.25, freq: 1760.00 }, // A6
+          { start: 1.68, dur: 1.70, freq: 2093.00 }, // C7 sustained high alarm
         ];
 
-        bursts.forEach(({ start, dur, chord }) => {
-          chord.forEach((freq, idx) => {
+        pulses.forEach(({ start, dur, freq }) => {
+          // Fundamental + 3rd harmonic for piezo buzzer penetration
+          [freq, freq * 1.5].forEach((f, idx) => {
             const osc = ctx.createOscillator();
             const gain = ctx.createGain();
 
-            // Triangle & Sine mix for rich acoustic penetration on phone speakers
             osc.type = idx === 0 ? 'triangle' : 'sine';
-            osc.frequency.setValueAtTime(freq, now + start);
+            osc.frequency.setValueAtTime(f, now + start);
 
-            const peakVol = idx === 0 ? 0.95 : 0.70;
+            const peakVol = idx === 0 ? 0.98 : 0.65;
             gain.gain.setValueAtTime(0.01, now + start);
-            gain.gain.linearRampToValueAtTime(peakVol, now + start + 0.012);
+            gain.gain.linearRampToValueAtTime(peakVol, now + start + 0.008);
+            gain.gain.setValueAtTime(peakVol, now + start + dur - 0.02);
             gain.gain.exponentialRampToValueAtTime(0.0001, now + start + dur);
 
             osc.connect(gain);
