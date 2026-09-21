@@ -64,10 +64,10 @@ export function useCustomerQueueRealtime(entryId: string, enabled = true) {
 
     channelRef.current = channel as unknown as typeof channelRef.current;
 
-    // Fallback: 10s when active (customer needs near-realtime), 30s otherwise
+    // Fallback: 3s when active (customer needs near-realtime response upon staff notification)
     const fallback = setInterval(() => {
       if (document.visibilityState === 'visible' && navigator.onLine) revalidate();
-    }, 10000);
+    }, 3000);
 
     // Phase 4E: return-to-tab / reconnect recovery. One shared timestamp
     // guard (not a timer) so rapid hidden→visible toggles or online flaps

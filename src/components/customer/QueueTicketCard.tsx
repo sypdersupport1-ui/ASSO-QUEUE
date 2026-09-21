@@ -15,6 +15,7 @@ import {
   X,
   Loader2,
   AlertTriangle,
+  Bell,
 } from 'lucide-react';
 import type { PublicQueueStatusResponse } from '@/lib/services/queue-service';
 import { CancelQueueDialog } from './CancelQueueDialog';
@@ -23,6 +24,7 @@ import { CallDelaySheet } from './CallDelaySheet';
 import { formatWaitLabel } from '@/lib/customer-join-ux';
 import { chimeEngine } from '@/lib/audio-chime';
 import { broadcastCustomerQueueUpdate } from '@/lib/realtime/useCustomerQueueRealtime';
+import { syncTicketCookieAction } from '@/app/q/actions';
 import {
   ticketStateMeta,
   formatTicketNumber,
@@ -53,6 +55,7 @@ export function QueueTicketCard({
   const waitLabel = meta.showWaitInfo ? formatWaitLabel(status.estimatedWaitMins) : null;
   const operatingNote = operatingNoteForTicket(status.status, queueEnabled, operatingState);
   const isCalled = status.status === 'CALLED';
+  const isNotified = status.status === 'NOTIFIED';
   const isCompleted = !!status.completedAt;
   const isSeated = status.status === 'SEATED';
   const isTerminal =
@@ -121,9 +124,19 @@ export function QueueTicketCard({
     if (prevStatusRef.current !== status.status) {
       if (status.status === 'CALLED') {
         chimeEngine.playBuzzerSound();
+        try {
+          if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+            navigator.vibrate([300, 150, 300, 150, 450]);
+          }
+        } catch {}
         setLiveAnnouncement('Your table is being called. Please return to the restaurant now.');
       } else if (status.status === 'NOTIFIED') {
         chimeEngine.playBuzzerSound();
+        try {
+          if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+            navigator.vibrate([250, 100, 250, 100, 350]);
+          }
+        } catch {}
         setLiveAnnouncement('Your table is being prepared. Please start heading to the restaurant.');
       } else if (status.status === 'SEATED') {
         chimeEngine.playSeatChime();
@@ -220,6 +233,23 @@ export function QueueTicketCard({
           return;
         }
         console.error('Call response error:', data);
+        // Fallback for resilient quit: if declining call errored, call cancel endpoint
+        if (response === 'DECLINED') {
+          try {
+            await fetch('/api/q/cancel', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ token, restaurantSlug }),
+            });
+          } catch {}
+        }
+      }
+
+      // If declined, automatically clear the ticket cookie so user completely exits the queue
+      if (response === 'DECLINED') {
+        try {
+          await syncTicketCookieAction(restaurantSlug, token, true);
+        } catch {}
       }
 
       // Notify staff immediately via realtime narrow channel
@@ -230,6 +260,11 @@ export function QueueTicketCard({
       router.refresh();
     } catch (err) {
       console.error('Failed to submit call response:', err);
+      if (response === 'DECLINED') {
+        try {
+          await syncTicketCookieAction(restaurantSlug, token, true);
+        } catch {}
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -246,6 +281,13 @@ export function QueueTicketCard({
         className="pointer-events-none absolute -top-24 left-1/2 -translate-x-1/2 h-60 w-60 rounded-full blur-3xl opacity-30"
         style={{ background: 'var(--qf-primary-glow)' }}
       />
+      {isNotified && (
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 rounded-3xl blur-3xl motion-safe:animate-pulse opacity-50"
+          style={{ background: 'radial-gradient(circle at 50% 25%, rgba(245, 158, 11, 0.45), rgba(234, 88, 12, 0.3), transparent 75%)' }}
+        />
+      )}
       {isCalled && (
         <div
           aria-hidden="true"
@@ -273,12 +315,26 @@ export function QueueTicketCard({
       <div className="relative z-10 space-y-2">
         {/* Sleek live badge */}
         <div>
-          <span className="inline-flex items-center gap-2 rounded-full border border-[var(--qf-border)] bg-white/5 px-3 py-1 text-[11px] font-extrabold uppercase tracking-widest text-slate-300 shadow-sm backdrop-blur-md">
+          <span
+            className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[11px] font-extrabold uppercase tracking-widest shadow-sm backdrop-blur-md transition-all ${
+              isNotified
+                ? 'border-amber-400/60 bg-amber-500/20 text-amber-200 shadow-amber-500/20'
+                : 'border-[var(--qf-border)] bg-white/5 text-slate-300'
+            }`}
+          >
             <span className="relative flex h-2 w-2">
-              <span className="motion-safe:animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--qf-success)] opacity-75" />
-              <span className="relative inline-flex h-2 w-2 rounded-full bg-[var(--qf-success)]" />
+              <span
+                className={`motion-safe:animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${
+                  isNotified ? 'bg-amber-400' : 'bg-[var(--qf-success)]'
+                }`}
+              />
+              <span
+                className={`relative inline-flex h-2 w-2 rounded-full ${
+                  isNotified ? 'bg-amber-400' : 'bg-[var(--qf-success)]'
+                }`}
+              />
             </span>
-            <span>Live Queue Pass</span>
+            <span>{isNotified ? '⚡ Notified · Preparing' : 'Live Queue Pass'}</span>
           </span>
         </div>
 
@@ -312,6 +368,42 @@ export function QueueTicketCard({
       {/* STATE A: WAITING / NOTIFIED */}
       {!isCalled && !isSeated && !isTerminal && (
         <div className="relative z-10 space-y-4 pt-4">
+          {/* FLASHY NOTIFIED HERO ALERT: Eye-catching announcement for customer */}
+          {isNotified && (
+            <div className="relative overflow-hidden rounded-2xl border-2 border-amber-400 bg-gradient-to-br from-amber-500/30 via-amber-950/50 to-orange-950/40 p-4 sm:p-5 text-center shadow-[0_0_35px_rgba(245,158,11,0.5)] motion-safe:animate-bounce-short">
+              {/* Shimmering diagonal highlight beam */}
+              <div
+                aria-hidden="true"
+                className="pointer-events-none absolute -inset-full top-0 block -rotate-45 bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-70 animate-[shimmer_2.5s_infinite]"
+              />
+
+              <div className="flex items-center justify-center gap-2 mb-2">
+                <span className="relative flex h-3.5 w-3.5">
+                  <span className="motion-safe:animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-90" />
+                  <span className="relative inline-flex h-3.5 w-3.5 rounded-full bg-amber-400 shadow-md shadow-amber-500/60" />
+                </span>
+                <span className="inline-flex items-center gap-1.5 text-xs font-black uppercase tracking-widest text-amber-300 drop-shadow">
+                  <Bell className="h-3.5 w-3.5 text-amber-300 animate-bounce" />
+                  HOST NOTIFIED YOU · GETTING CLOSE!
+                </span>
+              </div>
+
+              <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight drop-shadow-md">
+                Your Table is Being Prepared!
+              </h2>
+
+              <p className="text-xs sm:text-sm text-amber-100 font-semibold leading-relaxed max-w-[320px] mx-auto mt-1.5">
+                The restaurant host is preparing your table. Please start heading back to the entrance now!
+              </p>
+
+              <div className="mt-3 flex items-center justify-center gap-2">
+                <div className="inline-flex items-center gap-2 rounded-full border border-amber-400/50 bg-amber-500/25 px-4 py-1.5 text-xs font-black text-amber-200 shadow-sm">
+                  <span className="inline-block animate-pulse text-sm">🚶</span>
+                  <span>Heading toward Host Stand</span>
+                </div>
+              </div>
+            </div>
+          )}
           {/* STANDOUT LIVE CALLING BOARD */}
           <div className="customer-glass-surface p-3.5 sm:p-4 shadow-xl">
             <div className="flex items-center justify-between mb-2.5 px-0.5">
@@ -374,12 +466,40 @@ export function QueueTicketCard({
           {/* VIBRANT QUEUE METRIC PODS */}
           <div className="grid grid-cols-2 gap-3">
             {/* Position / Turn Pod */}
-            <div className="customer-glass-surface p-3 text-center shadow-sm">
-              <p className="text-[10px] font-black uppercase tracking-widest text-[var(--qf-primary)] mb-0.5">
-                {status.position === 1 ? 'Queue Status' : 'Parties Ahead'}
+            <div
+              className={`customer-glass-surface p-3 text-center shadow-sm transition-all ${
+                isNotified ? 'border border-amber-400/50 bg-amber-500/15 shadow-[0_0_15px_rgba(245,158,11,0.2)]' : ''
+              }`}
+            >
+              <p
+                className={`text-[10px] font-black uppercase tracking-widest mb-0.5 ${
+                  isNotified
+                    ? 'text-amber-300 flex items-center justify-center gap-1.5'
+                    : 'text-[var(--qf-primary)]'
+                }`}
+              >
+                {isNotified ? (
+                  <>
+                    <span className="relative flex h-2 w-2">
+                      <span className="motion-safe:animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
+                      <span className="relative inline-flex h-2 w-2 rounded-full bg-amber-400" />
+                    </span>
+                    <span>Queue Status</span>
+                  </>
+                ) : status.position === 1 ? (
+                  'Queue Status'
+                ) : (
+                  'Parties Ahead'
+                )}
               </p>
-              <p className="font-mono text-3xl sm:text-4xl font-black text-[var(--qf-primary)] tabular-nums">
-                {status.position === 1 ? (
+              <p
+                className={`font-mono text-3xl sm:text-4xl font-black tabular-nums ${
+                  isNotified ? 'text-amber-300 drop-shadow' : 'text-[var(--qf-primary)]'
+                }`}
+              >
+                {isNotified ? (
+                  <span className="text-2xl sm:text-3xl font-black tracking-wide">NOTIFIED</span>
+                ) : status.position === 1 ? (
                   <span className="text-[var(--qf-primary)]">Next</span>
                 ) : status.peopleAhead !== null && status.peopleAhead >= 0 ? (
                   status.peopleAhead
@@ -387,8 +507,16 @@ export function QueueTicketCard({
                   '—'
                 )}
               </p>
-              <p className="text-[10px] font-semibold text-slate-400 mt-0.5">
-                {status.position === 1 ? 'You are first in line' : 'Ahead of your party'}
+              <p
+                className={`text-[10px] font-semibold mt-0.5 ${
+                  isNotified ? 'text-amber-200/90 font-bold' : 'text-slate-400'
+                }`}
+              >
+                {isNotified
+                  ? 'Table being prepared'
+                  : status.position === 1
+                  ? 'You are first in line'
+                  : 'Ahead of your party'}
               </p>
             </div>
 
@@ -408,16 +536,44 @@ export function QueueTicketCard({
           {/* COLORFUL LINEAR STEPPER */}
           <div className="pt-1">
             <div className="flex items-center justify-between text-[11px] font-bold mb-1.5 px-0.5">
-              <span className="inline-flex items-center gap-1 font-extrabold text-[var(--qf-primary)]">
-                <span className="h-2 w-2 rounded-full bg-[var(--qf-primary)]" /> Waiting
+              <span
+                className={`inline-flex items-center gap-1 font-extrabold ${
+                  isNotified ? 'text-emerald-400' : 'text-[var(--qf-primary)]'
+                }`}
+              >
+                <span
+                  className={`h-2 w-2 rounded-full ${
+                    isNotified ? 'bg-emerald-400' : 'bg-[var(--qf-primary)]'
+                  }`}
+                />{' '}
+                Waiting
+              </span>
+              <span
+                className={`inline-flex items-center gap-1 font-extrabold ${
+                  isNotified ? 'text-amber-300' : 'text-slate-500'
+                }`}
+              >
+                {isNotified && (
+                  <span className="relative flex h-2 w-2">
+                    <span className="motion-safe:animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
+                    <span className="relative inline-flex h-2 w-2 rounded-full bg-amber-400" />
+                  </span>
+                )}
+                Notified
               </span>
               <span className="text-slate-500">Called</span>
               <span className="text-slate-500">Seated</span>
             </div>
             <div className="h-2 w-full bg-white/10 rounded-full overflow-hidden p-0.5">
               <div
-                className="h-full rounded-full w-1/3 transition-all duration-500 shadow-sm"
-                style={{ background: 'linear-gradient(to right, var(--qf-primary), var(--qf-accent-dine-in))' }}
+                className={`h-full rounded-full transition-all duration-500 shadow-sm ${
+                  isNotified ? 'w-3/5 shadow-amber-500/50' : 'w-1/3'
+                }`}
+                style={{
+                  background: isNotified
+                    ? 'linear-gradient(to right, #10b981, #f59e0b)'
+                    : 'linear-gradient(to right, var(--qf-primary), var(--qf-accent-dine-in))',
+                }}
               />
             </div>
           </div>
@@ -630,12 +786,16 @@ export function QueueTicketCard({
                   </button>
                   <button
                     type="button"
-                    onClick={() => setIsConfirmingDecline(true)}
+                    onClick={() => handleRespond('DECLINED')}
                     disabled={isSubmitting}
-                    className="min-h-[44px] py-2.5 px-3 flex items-center justify-center gap-1.5 rounded-xl border border-[var(--qf-danger)]/25 bg-[var(--qf-danger)]/10 hover:bg-[var(--qf-danger)]/20 text-rose-300 text-xs font-bold transition-all active:scale-[0.98] cursor-pointer"
+                    className="min-h-[44px] py-2.5 px-3 flex items-center justify-center gap-1.5 rounded-xl border border-[var(--qf-danger)]/35 bg-rose-500/15 hover:bg-rose-500/25 text-rose-200 text-xs font-black shadow-sm transition-all active:scale-[0.98] cursor-pointer"
                   >
-                    <X className="h-3.5 w-3.5 text-rose-400" />
-                    <span>✕ CAN&apos;T COME</span>
+                    {isSubmitting ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin text-rose-400" />
+                    ) : (
+                      <X className="h-3.5 w-3.5 text-rose-400" />
+                    )}
+                    <span>✕ DENY — CAN&apos;T COME</span>
                   </button>
                 </div>
               </div>
