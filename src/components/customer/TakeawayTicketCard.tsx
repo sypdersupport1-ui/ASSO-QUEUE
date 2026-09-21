@@ -6,7 +6,6 @@ import { useRouter } from 'next/navigation';
 import {
   ShoppingBag,
   CheckCircle2,
-  Volume2,
   Check,
   X,
   LoaderCircle,
@@ -109,7 +108,6 @@ export function TakeawayTicketCard({
   const prevPositionRef = useRef(status.position);
 
   const [liveAnnouncement, setLiveAnnouncement] = useState('');
-  const [buzzerTested, setBuzzerTested] = useState(false);
   const [atCounterConfirmed, setAtCounterConfirmed] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
@@ -403,19 +401,6 @@ export function TakeawayTicketCard({
             </div>
           </div>
 
-          {/* Test Loud Buzzer Button */}
-          <button
-            type="button"
-            onClick={() => {
-              chimeEngine.playBuzzerSound();
-              setBuzzerTested(true);
-              setTimeout(() => setBuzzerTested(false), 2200);
-            }}
-            className="customer-glass-control w-full flex items-center justify-center gap-2 py-2.5 px-4 text-slate-200 text-xs font-bold transition-all active:scale-[0.98] cursor-pointer shadow-sm"
-          >
-            <Volume2 className="h-4 w-4 text-[var(--qf-primary)] shrink-0" />
-            <span>{buzzerTested ? 'Buzzer ringing loud! 🔊' : 'Test Loud Buzzer Sound'}</span>
-          </button>
         </div>
       )}
 

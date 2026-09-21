@@ -10,6 +10,7 @@ import { CustomerInput } from './ui/CustomerInput';
 import { CustomerButton } from './ui/CustomerButton';
 import { CustomerBadge } from './ui/CustomerBadge';
 import { normalizePhoneForSubmit, mapJoinErrorToUX, type JoinFormErrors } from '@/lib/customer-join-ux';
+import { requestUserQueueAlerts } from '@/lib/notifications/web-notification';
 
 interface TakeawayJoinCardProps {
   restaurant: PublicRestaurantInfo;
@@ -41,6 +42,9 @@ export function TakeawayJoinCard({ restaurant }: TakeawayJoinCardProps) {
       e.preventDefault();
       return;
     }
+    // Explicit user activation gesture: request browser lock-screen notification permission
+    requestUserQueueAlerts().catch(() => {});
+
     const errors: JoinFormErrors = {};
     if (!name.trim()) {
       errors.name = 'Please enter your name';
@@ -138,10 +142,16 @@ export function TakeawayJoinCard({ restaurant }: TakeawayJoinCardProps) {
             loadingText="Saving your spot…"
             leftIcon={<ShoppingBag className="h-4 w-4" />}
             rightIcon={<ArrowRight className="h-4 w-4" />}
+            onClick={() => {
+              requestUserQueueAlerts().catch(() => {});
+            }}
           >
             Join Takeaway Queue
           </CustomerButton>
-          <p className="text-center text-[11px] text-slate-400 mt-2.5">
+          <p className="flex items-center justify-center gap-1.5 text-center text-[11px] text-slate-400 mt-2.5">
+            <span>🔔 Lock-screen alerts &amp; buzzer sound enabled</span>
+          </p>
+          <p className="text-center text-[11px] text-slate-500 mt-1">
             No table wait · Direct counter collection
           </p>
         </div>

@@ -8,7 +8,6 @@ import {
   CheckCircle2,
   Info,
   UtensilsCrossed,
-  Volume2,
   Clock,
   Users,
   Check,
@@ -27,9 +26,7 @@ import { broadcastCustomerQueueUpdate } from '@/lib/realtime/useCustomerQueueRea
 import { syncTicketCookieAction } from '@/app/q/actions';
 import {
   registerServiceWorker,
-  requestUserQueueAlerts,
   triggerBackgroundTicketNotification,
-  getNotificationPermissionState,
 } from '@/lib/notifications/web-notification';
 import {
   ticketStateMeta,
@@ -78,7 +75,6 @@ export function QueueTicketCard({
   const prevAlmostYourTurnRef = useRef(status.isAlmostYourTurn);
 
   const [liveAnnouncement, setLiveAnnouncement] = useState('');
-  const [buzzerTested, setBuzzerTested] = useState(false);
 
   // Customer Table-Call Decision State
   const [localResponse, setLocalResponse] = useState<'ACCEPTED' | 'DELAY_REQUESTED' | 'DECLINED' | null>(
@@ -90,27 +86,9 @@ export function QueueTicketCard({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCallExpired, setIsCallExpired] = useState(false);
   const [countdownSeconds, setCountdownSeconds] = useState<number | null>(null);
-  const [alertsEnabled, setAlertsEnabled] = useState(false);
-
   useEffect(() => {
     registerServiceWorker();
-    if (getNotificationPermissionState() === 'granted') {
-      setAlertsEnabled(true);
-    }
   }, []);
-
-  const handleEnableAlerts = async () => {
-    chimeEngine.playBuzzerSound();
-    const granted = await requestUserQueueAlerts();
-    if (granted) {
-      setAlertsEnabled(true);
-      triggerBackgroundTicketNotification(
-        '✓ Alerts Enabled! — Biriyani House',
-        "You will receive a notification and buzzer when your table is ready, even if you switch apps!",
-        typeof window !== 'undefined' ? window.location.href : undefined
-      );
-    }
-  };
 
   // Sync prop changes to local response state
   useEffect(() => {
@@ -440,33 +418,6 @@ export function QueueTicketCard({
         {liveAnnouncement}
       </div>
 
-      {/* 0. PROMINENT BACKGROUND ALERT OPT-IN PROMPT */}
-      {!alertsEnabled && !isTerminal && (
-        <div
-          onClick={handleEnableAlerts}
-          className="relative z-10 mb-3 p-3 rounded-2xl border border-amber-400/40 bg-gradient-to-r from-amber-500/20 via-amber-400/10 to-amber-500/20 shadow-md shadow-amber-500/10 cursor-pointer transition-all active:scale-[0.98] motion-safe:animate-pulse"
-          role="button"
-          tabIndex={0}
-        >
-          <div className="flex items-center gap-3 text-left">
-            <div className="w-8 h-8 rounded-xl bg-amber-500/30 border border-amber-400/50 flex items-center justify-center shrink-0">
-              <Bell className="w-4 h-4 text-amber-300 motion-safe:animate-bounce" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-xs font-black uppercase tracking-wider text-amber-200">
-                Turn On Lock-Screen Alerts 🔔
-              </p>
-              <p className="text-[11px] text-amber-100/80 leading-snug">
-                Tap here so your phone buzzes & notifies you even when you switch apps or lock your screen!
-              </p>
-            </div>
-            <span className="shrink-0 text-xs font-black text-amber-950 bg-amber-400 px-2.5 py-1 rounded-lg shadow-sm">
-              ALLOW
-            </span>
-          </div>
-        </div>
-      )}
-
       {/* 1. HERO QUEUE PASS & GUEST IDENTITY */}
       <div className="relative z-10 space-y-2">
         {/* Sleek live badge */}
@@ -517,31 +468,6 @@ export function QueueTicketCard({
             </span>
           </span>
         </div>
-
-        {/* LIVE BUZZER TEST BUTTON — Always visible on ticket pass */}
-        {!isTerminal && (
-          <div className="pt-2">
-            <button
-              type="button"
-              onClick={() => {
-                chimeEngine.playBuzzerSound();
-                setBuzzerTested(true);
-                setTimeout(() => setBuzzerTested(false), 2400);
-              }}
-              className={`inline-flex items-center justify-center gap-2 py-1.5 px-4 rounded-full text-xs font-bold transition-all active:scale-95 cursor-pointer shadow-sm border backdrop-blur-md ${
-                buzzerTested
-                  ? 'border-amber-400 bg-amber-400/25 text-amber-200 shadow-amber-500/30 motion-safe:animate-pulse ring-2 ring-amber-400/40'
-                  : 'customer-glass-control text-slate-200 hover:text-white'
-              }`}
-              title="Test the loud restaurant pager buzzer sound on this phone"
-            >
-              <Volume2 className={`h-3.5 w-3.5 shrink-0 ${buzzerTested ? 'text-amber-300 motion-safe:animate-bounce' : 'text-[var(--qf-primary)]'}`} />
-              <span>
-                {buzzerTested ? '🔊 Buzzer Ringing Loud! 🔊' : '🔊 Live Buzzer Test'}
-              </span>
-            </button>
-          </div>
-        )}
       </div>
 
       {/* 2. STATE PRESENTATION */}
@@ -774,50 +700,6 @@ export function QueueTicketCard({
             </div>
           )}
 
-          {/* LOUD PAGER BUZZER & LOCK-SCREEN NOTIFICATIONS */}
-          <div className="pt-1 space-y-2">
-            <button
-              type="button"
-              onClick={handleEnableAlerts}
-              className={`w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs font-bold transition-all active:scale-[0.98] cursor-pointer shadow-sm border ${
-                alertsEnabled
-                  ? 'border-[var(--qf-success)]/50 bg-[var(--qf-success)]/15 text-emerald-200'
-                  : 'border-amber-400/50 bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 shadow-amber-500/10'
-              }`}
-            >
-              <Bell
-                className={`h-4 w-4 shrink-0 ${
-                  alertsEnabled ? 'text-emerald-400' : 'text-amber-300 animate-bounce'
-                }`}
-              />
-              <span>
-                {alertsEnabled
-                  ? '✓ Background Lock-Screen Alerts Active'
-                  : '🔔 Turn On Lock-Screen Notifications'}
-              </span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => {
-                chimeEngine.playBuzzerSound();
-                setBuzzerTested(true);
-                setTimeout(() => setBuzzerTested(false), 2400);
-              }}
-              className={`customer-glass-control w-full flex items-center justify-center gap-2 py-2.5 px-4 text-xs font-bold transition-all active:scale-[0.98] cursor-pointer shadow-sm border ${
-                buzzerTested
-                  ? 'border-amber-400 bg-amber-400/25 text-amber-200 shadow-amber-500/30 motion-safe:animate-pulse ring-2 ring-amber-400/40'
-                  : 'text-slate-200 hover:text-white'
-              }`}
-            >
-              <Volume2 className={`h-4 w-4 shrink-0 ${buzzerTested ? 'text-amber-300 motion-safe:animate-bounce' : 'text-[var(--qf-primary)]'}`} />
-              <span>{buzzerTested ? '🔊 Buzzer Ringing Loud! 🔊' : '🔊 Test Loud Pager Buzzer Sound'}</span>
-            </button>
-            <p className="text-[10px] text-slate-400">
-              Rings loudly &amp; alerts lock-screen even if you switch apps or lock your phone.
-            </p>
-          </div>
-
           {/* Running Late & Leave Queue Actions */}
           <div className="pt-3 border-t border-white/10 space-y-2.5">
             <CustomerLateModal
@@ -1004,26 +886,6 @@ export function QueueTicketCard({
                     <span>✕ DENY — CAN&apos;T COME</span>
                   </button>
                 </div>
-              </div>
-
-              {/* Repeat loud buzzer button during called state */}
-              <div className="pt-1">
-                <button
-                  type="button"
-                  onClick={() => {
-                    chimeEngine.playBuzzerSound();
-                    setBuzzerTested(true);
-                    setTimeout(() => setBuzzerTested(false), 2400);
-                  }}
-                  className={`w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl text-xs font-bold transition-all active:scale-[0.98] cursor-pointer shadow-sm border ${
-                    buzzerTested
-                      ? 'border-amber-400 bg-amber-400/25 text-amber-200 shadow-amber-500/30 motion-safe:animate-pulse ring-2 ring-amber-400/40'
-                      : 'customer-glass-control text-slate-200 hover:text-white'
-                  }`}
-                >
-                  <Volume2 className={`h-3.5 w-3.5 shrink-0 ${buzzerTested ? 'text-amber-300 motion-safe:animate-bounce' : 'text-[var(--qf-primary)]'}`} />
-                  <span>{buzzerTested ? '🔊 Buzzer Ringing Loud! 🔊' : '🔊 Re-test Pager Buzzer Sound'}</span>
-                </button>
               </div>
             </div>
           )}

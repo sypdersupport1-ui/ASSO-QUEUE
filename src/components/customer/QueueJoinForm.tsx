@@ -15,6 +15,7 @@ import {
   mapJoinErrorToUX,
   type JoinFormErrors,
 } from '@/lib/customer-join-ux';
+import { requestUserQueueAlerts } from '@/lib/notifications/web-notification';
 
 interface QueueJoinFormProps {
   restaurant: PublicRestaurantInfo;
@@ -56,7 +57,11 @@ export function QueueJoinForm({ restaurant }: QueueJoinFormProps) {
     setFieldErrors(errors);
     if (Object.keys(errors).length > 0) {
       e.preventDefault();
+      return;
     }
+
+    // Automatically request lock-screen notification permission when submitting information
+    requestUserQueueAlerts().catch(() => {});
   }
 
   return (
@@ -155,11 +160,15 @@ export function QueueJoinForm({ restaurant }: QueueJoinFormProps) {
             loadingText="Securing your spot…"
             leftIcon={<Ticket className="h-4 w-4" />}
             rightIcon={<ArrowRight className="h-4 w-4" />}
+            onClick={() => {
+              requestUserQueueAlerts().catch(() => {});
+            }}
           >
             Join Dine-In Queue
           </CustomerButton>
-          <p className="text-center text-[11px] text-slate-400 mt-2.5">
-            Free · No app download needed
+          <p className="text-center text-[11px] text-slate-400 mt-2 flex items-center justify-center gap-1.5">
+            <span>🔔</span>
+            <span>Lock-screen alerts &amp; buzzer sound enabled</span>
           </p>
         </div>
       </form>

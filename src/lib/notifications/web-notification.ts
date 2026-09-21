@@ -37,8 +37,8 @@ export async function requestUserQueueAlerts(): Promise<boolean> {
   if (!isNotificationSupported()) return false;
 
   try {
-    // Register the service worker first
-    await registerServiceWorker();
+    // Register service worker concurrently (do not block user activation gesture)
+    registerServiceWorker().catch(() => {});
 
     const notifObj = (window as unknown as { Notification?: Record<string, unknown> }).Notification;
     if (!notifObj) return false;

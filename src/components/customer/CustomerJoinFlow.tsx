@@ -15,6 +15,7 @@ import {
   mapJoinErrorToUX,
   type JoinFormErrors,
 } from '@/lib/customer-join-ux';
+import { requestUserQueueAlerts } from '@/lib/notifications/web-notification';
 
 interface CustomerJoinFlowProps {
   restaurant: PublicRestaurantInfo;
@@ -101,7 +102,11 @@ export function CustomerJoinFlow({
     setFieldErrors(errors);
     if (Object.keys(errors).length > 0) {
       e.preventDefault();
+      return;
     }
+
+    // Automatically request lock-screen notification permission when submitting information
+    requestUserQueueAlerts().catch(() => {});
   }
 
   const effectivePartySize = selectedService === 'TAKEAWAY' ? 1 : partySize;
@@ -309,9 +314,16 @@ export function CustomerJoinFlow({
                   loadingText="Securing your spot…"
                   leftIcon={isTakeaway ? <ShoppingBag className="h-4 w-4" /> : <Ticket className="h-4 w-4" />}
                   rightIcon={<ArrowRight className="h-4 w-4" />}
+                  onClick={() => {
+                    requestUserQueueAlerts().catch(() => {});
+                  }}
                 >
                   {isTakeaway ? 'Confirm & Join Takeaway' : 'Confirm & Join Queue'}
                 </CustomerButton>
+                <p className="text-[11px] text-center text-slate-400 pt-2 flex items-center justify-center gap-1.5">
+                  <span>🔔</span>
+                  <span>Lock-screen alerts &amp; buzzer sound will be enabled for your ticket</span>
+                </p>
               </div>
             </form>
           </div>
