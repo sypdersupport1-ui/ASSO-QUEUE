@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { Clock, MessageSquare, Send, X, Check, Car, AlertCircle } from 'lucide-react';
 import type { QueueLateInfo, QueueChatMessage } from '@/lib/services/queue-service';
+import { calculateDelayCountdown } from '@/lib/delay-timer';
 
 interface CustomerLateModalProps {
   token: string;
@@ -30,6 +31,13 @@ export function CustomerLateModal({
   const [chatInput, setChatInput] = useState('');
   const [isSendingChat, setIsSendingChat] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [nowMs, setNowMs] = useState<number>(Date.now());
+
+  // Tick timer every second
+  React.useEffect(() => {
+    const timer = setInterval(() => setNowMs(Date.now()), 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   // Synchronize incoming chat messages from server polling or realtime updates
   React.useEffect(() => {
@@ -168,32 +176,44 @@ export function CustomerLateModal({
     <>
       {/* Trigger Button or Banner on Customer Ticket */}
       {lateInfo?.isLate ? (
-        <div className="customer-glass-surface rounded-2xl border border-[var(--qf-warning)]/40 bg-[var(--qf-warning)]/10 p-3.5 shadow-lg transition-all animate-fadeUp">
-          <div className="flex items-start justify-between gap-3">
-            <div className="flex items-start gap-2.5">
-              <div className="h-8 w-8 rounded-xl bg-[var(--qf-warning)]/20 border border-[var(--qf-warning)]/40 flex items-center justify-center text-[var(--qf-warning)] shrink-0 mt-0.5">
-                <Clock className="h-4 w-4 animate-pulse" />
-              </div>
-              <div>
-                <div className="flex items-center gap-1.5 flex-wrap">
-                  <span className="text-xs font-black text-[var(--qf-warning)] uppercase tracking-wide">
-                    Running Late (+{lateInfo.delayMinutes || 10}m)
-                  </span>
-                  {lateInfo.tablePassedToNext && (
-                    <span className="px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-300 text-[9px] font-black uppercase border border-purple-500/30">
-                      Table Offered to Next · Spot Held
-                    </span>
-                  )}
+        (() => {
+          const timerResult = calculateDelayCountdown(lateInfo.reportedAt, lateInfo.delayMinutes || 10, nowMs);
+          return (
+            <div className="customer-glass-surface rounded-2xl border border-[var(--qf-warning)]/40 bg-[var(--qf-warning)]/10 p-3.5 shadow-lg transition-all animate-fadeUp">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-start gap-2.5">
+                  <div className="h-8 w-8 rounded-xl bg-[var(--qf-warning)]/20 border border-[var(--qf-warning)]/40 flex items-center justify-center text-[var(--qf-warning)] shrink-0 mt-0.5">
+                    <Clock className="h-4 w-4 animate-pulse" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="text-xs font-black text-[var(--qf-warning)] uppercase tracking-wide">
+                        Running Late (+{lateInfo.delayMinutes || 10}m)
+                      </span>
+                      <span
+                        className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-black border flex items-center gap-1 ${
+                          timerResult.isExpired
+                            ? 'bg-rose-500/20 text-rose-300 border-rose-500/40 animate-pulse'
+                            : 'bg-[var(--qf-warning)]/20 text-[var(--qf-warning)] border-[var(--qf-warning)]/40'
+                        }`}
+                      >
+                        ⏱️ {timerResult.isExpired ? '00:00 Expired' : `${timerResult.formatted} left`}
+                      </span>
+                      {lateInfo.tablePassedToNext && (
+                        <span className="px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-300 text-[9px] font-black uppercase border border-purple-500/30">
+                          Table Offered to Next · Spot Held
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-[11px] text-slate-300 mt-0.5 leading-snug">
+                      {lateInfo.tablePassedToNext
+                        ? "The host seated the next guest to keep service moving. Your queue priority is held and you'll be seated upon arrival!"
+                        : lateInfo.note
+                        ? `"${lateInfo.note}" — Host notified.`
+                        : "Host notified. We'll hold your spot!"}
+                    </p>
+                  </div>
                 </div>
-                <p className="text-[11px] text-slate-300 mt-0.5 leading-snug">
-                  {lateInfo.tablePassedToNext
-                    ? "The host seated the next guest to keep service moving. Your queue priority is held and you'll be seated upon arrival!"
-                    : lateInfo.note
-                    ? `"${lateInfo.note}" — Host notified.`
-                    : "Host notified. We'll hold your spot!"}
-                </p>
-              </div>
-            </div>
 
             <button
               type="button"
@@ -208,7 +228,9 @@ export function CustomerLateModal({
             </button>
           </div>
         </div>
-      ) : (
+      );
+    })()
+  ) : (
         <button
           type="button"
           onClick={() => {

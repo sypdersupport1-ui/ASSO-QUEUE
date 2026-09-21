@@ -9,6 +9,7 @@ import { StaffQueueChatModal } from '@/components/dashboard/StaffQueueChatModal'
 import { AddQueueGuestModal } from '@/components/dashboard/AddQueueGuestModal';
 import { StaffTakeawayOrderModal, StaffTakeawayMenuItem } from '@/components/dashboard/StaffTakeawayOrderModal';
 import { chimeEngine } from '@/lib/audio-chime';
+import { calculateDelayCountdown } from '@/lib/delay-timer';
 
 interface LiveQueueFeedClientProps {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -55,6 +56,13 @@ export function LiveQueueFeedClient({
   const [chatEntry, setChatEntry] = useState<any | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>(initialStatusFilter);
   const [searchTerm, setSearchTerm] = useState<string>(initialSearchTerm);
+  const [nowTick, setNowTick] = useState<number>(Date.now());
+
+  // 1-second ticker for live delay and call timers
+  useEffect(() => {
+    const timer = setInterval(() => setNowTick(Date.now()), 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   // Sync state when props update
   useEffect(() => {
@@ -1073,9 +1081,17 @@ export function LiveQueueFeedClient({
                                 );
                               }
                               if (resp === 'DELAY_REQUESTED') {
+                                const startIso = anyEntry.call_responded_at || anyEntry.called_at || anyEntry.updated_at;
+                                const delayMins = anyEntry.call_delay_minutes || 10;
+                                const timerRes = calculateDelayCountdown(startIso, delayMins, nowTick);
                                 return (
-                                  <span className="inline-flex items-center gap-1.5 text-amber-400 font-bold">
-                                    <span className="w-2 h-2 rounded-full bg-amber-400" /> Delay requested (+{anyEntry.call_delay_minutes || 10}m)
+                                  <span className={`inline-flex items-center gap-1.5 font-bold px-2.5 py-0.5 rounded-full border text-xs ${
+                                    timerRes.isExpired
+                                      ? 'bg-rose-500/20 border-rose-500/40 text-rose-300 animate-pulse'
+                                      : 'bg-amber-500/20 border-amber-500/40 text-amber-300'
+                                  }`}>
+                                    <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
+                                    <span>Delay (+{delayMins}m) · ⏱️ {timerRes.isExpired ? '00:00 EXPIRED' : `${timerRes.formatted} left`}</span>
                                   </span>
                                 );
                               }
@@ -1156,10 +1172,19 @@ export function LiveQueueFeedClient({
                                   className="w-full h-11 px-3 rounded-xl bg-slate-800/80 border border-white/10 text-slate-400 text-xs font-bold opacity-80 cursor-not-allowed flex items-center justify-center gap-1.5 select-none"
                                 >
                                   {anyEntry.call_response === 'DELAY_REQUESTED' ? (
-                                    <>
-                                      <span>⏱</span>
-                                      <span>Guest Delayed (+{anyEntry.call_delay_minutes || 10}m)</span>
-                                    </>
+                                    (() => {
+                                      const startIso = anyEntry.call_responded_at || anyEntry.called_at || anyEntry.updated_at;
+                                      const delayMins = anyEntry.call_delay_minutes || 10;
+                                      const timerRes = calculateDelayCountdown(startIso, delayMins, nowTick);
+                                      return (
+                                        <div className="flex items-center gap-1.5 text-amber-300 font-bold">
+                                          <span>⏱</span>
+                                          <span>
+                                            Guest Delayed (+{delayMins}m) · {timerRes.isExpired ? '00:00 EXPIRED' : timerRes.formatted}
+                                          </span>
+                                        </div>
+                                      );
+                                    })()
                                   ) : anyEntry.call_response === 'DECLINED' ? (
                                     <>
                                       <span className="text-rose-400">✕</span>

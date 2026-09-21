@@ -36,6 +36,7 @@ import {
   formatTableNumber,
   operatingNoteForTicket,
 } from '@/lib/customer-ticket-ux';
+import { calculateDelayCountdown } from '@/lib/delay-timer';
 
 interface QueueTicketCardProps {
   status: PublicQueueStatusResponse;
@@ -94,6 +95,14 @@ export function QueueTicketCard({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCallExpired, setIsCallExpired] = useState(false);
   const [countdownSeconds, setCountdownSeconds] = useState<number | null>(null);
+  const [nowMs, setNowMs] = useState<number>(Date.now());
+
+  // 1-second interval ticker for live timers
+  useEffect(() => {
+    const timer = setInterval(() => setNowMs(Date.now()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
   useEffect(() => {
     registerServiceWorker();
     startBackgroundKeeper();
@@ -817,33 +826,59 @@ export function QueueTicketCard({
               </div>
             </div>
           ) : localResponse === 'DELAY_REQUESTED' ? (
-            /* 3. DELAY REQUESTED STATE */
-            <div className="customer-glass-surface p-5 text-center space-y-3 shadow-xl motion-safe:animate-fadeIn">
-              <div className="inline-flex items-center gap-1.5 text-xs font-black uppercase tracking-wider text-[var(--qf-warning)]">
-                <Clock className="h-4 w-4 text-[var(--qf-warning)]" />
-                YOUR TURN IS HERE
-              </div>
-              <h2 className="text-xl sm:text-2xl font-black text-white">
-                Please return to the restaurant now.
-              </h2>
-              <div className="inline-block rounded-full border border-[var(--qf-border)] bg-white/5 px-4 py-1">
-                <span className="text-xs font-black text-[var(--qf-warning)]">
-                  Delay Requested (+{localDelayMins || 10} min)
-                </span>
-              </div>
-              <p className="text-xs text-slate-300 leading-relaxed max-w-[280px] mx-auto">
-                The restaurant has been notified of your delay. When you arrive, tap below to confirm.
-              </p>
-              <button
-                type="button"
-                onClick={() => handleRespond('ACCEPTED')}
-                disabled={isSubmitting}
-                className="customer-primary-cta w-full min-h-[48px] h-12 flex items-center justify-center gap-2 rounded-2xl text-sm font-black transition-all active:scale-[0.99] cursor-pointer"
-              >
-                {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
-                <span>I&apos;ve Arrived — Ready for Table</span>
-              </button>
-            </div>
+            /* 3. DELAY REQUESTED STATE WITH LIVE COUNTDOWN TIMER */
+            (() => {
+              const delayStartIso = status.callRespondedAt || status.calledAt || status.lateInfo?.reportedAt;
+              const delayMins = localDelayMins || status.callDelayMinutes || status.lateInfo?.delayMinutes || 10;
+              const delayTimer = calculateDelayCountdown(delayStartIso, delayMins, nowMs);
+
+              return (
+                <div className="customer-glass-surface p-5 text-center space-y-3.5 shadow-xl motion-safe:animate-fadeIn">
+                  <div className="inline-flex items-center gap-1.5 text-xs font-black uppercase tracking-wider text-[var(--qf-warning)]">
+                    <Clock className="h-4 w-4 text-[var(--qf-warning)] animate-pulse" />
+                    YOUR TURN IS HERE
+                  </div>
+                  <h2 className="text-xl sm:text-2xl font-black text-white">
+                    Please return to the restaurant now.
+                  </h2>
+
+                  {/* Prominent Live Ticking Delay Timer Badge */}
+                  <div className="rounded-2xl border-2 border-[var(--qf-warning)]/60 bg-[var(--qf-warning)]/10 p-3.5 text-center space-y-2 shadow-lg">
+                    <div className="flex items-center justify-center gap-2">
+                      <span className="font-mono text-xl font-black tracking-wider text-[var(--qf-warning)]">
+                        {delayTimer.isExpired ? '⏱️ 00:00 (Delay Expired)' : `⏱️ Delay Timer: ${delayTimer.formatted}`}
+                      </span>
+                    </div>
+                    <div className="h-2 w-full bg-black/40 rounded-full overflow-hidden p-0.5">
+                      <div
+                        className={`h-full rounded-full transition-all duration-500 ${
+                          delayTimer.isExpired ? 'bg-rose-500 animate-pulse' : 'bg-[var(--qf-warning)]'
+                        }`}
+                        style={{ width: `${delayTimer.progressPercent}%` }}
+                      />
+                    </div>
+                    <p className="text-[11px] font-bold text-slate-300">
+                      {delayTimer.isExpired
+                        ? '⚠️ Requested delay time has passed. Please return to host stand immediately!'
+                        : `Host notified of your delay (+${delayMins} min requested)`}
+                    </p>
+                  </div>
+
+                  <p className="text-xs text-slate-300 leading-relaxed max-w-[280px] mx-auto">
+                    When you arrive at the host stand, tap below to confirm.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => handleRespond('ACCEPTED')}
+                    disabled={isSubmitting}
+                    className="customer-primary-cta w-full min-h-[48px] h-12 flex items-center justify-center gap-2 rounded-2xl text-sm font-black transition-all active:scale-[0.99] cursor-pointer"
+                  >
+                    {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+                    <span>I&apos;ve Arrived — Ready for Table</span>
+                  </button>
+                </div>
+              );
+            })()
           ) : localResponse === 'DECLINED' ? (
             /* 4. DECLINED / LEFT QUEUE STATE */
             <div className="customer-glass-surface p-6 text-center space-y-3.5 shadow-xl motion-safe:animate-fadeIn">

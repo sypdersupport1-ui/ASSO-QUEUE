@@ -5,6 +5,7 @@ import { MessageSquare, Send, X, ArrowRightCircle, Clock, AlertTriangle } from '
 import { sendQueueChatMessageAction, passTableToNextAction } from '@/app/dashboard/actions';
 import { broadcastCustomerQueueUpdate } from '@/lib/realtime/useCustomerQueueRealtime';
 import type { QueueChatMessage, QueueLateInfo } from '@/lib/services/queue-service';
+import { calculateDelayCountdown } from '@/lib/delay-timer';
 
 interface StaffQueueChatModalProps {
   isOpen: boolean;
@@ -32,6 +33,14 @@ export function StaffQueueChatModal({
   const [isSending, setIsSending] = useState(false);
   const [isPassingTable, setIsPassingTable] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [nowTick, setNowTick] = useState<number>(Date.now());
+
+  // 1-second ticker for live delay timer
+  useEffect(() => {
+    if (!isOpen) return;
+    const timer = setInterval(() => setNowTick(Date.now()), 1000);
+    return () => clearInterval(timer);
+  }, [isOpen]);
 
   // Sync messages from parent when props change (4s router.refresh cycle)
   useEffect(() => {
@@ -154,10 +163,19 @@ export function StaffQueueChatModal({
               <div className="flex items-center gap-2">
                 <h3 className="text-sm font-black text-white">{customerName}</h3>
                 {lateInfo?.isLate && (
-                  <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 text-[10px] font-bold border border-amber-500/30 flex items-center gap-1">
-                    <Clock className="h-3 w-3" />
-                    <span>+{lateInfo.delayMinutes || 10}m late</span>
-                  </span>
+                  (() => {
+                    const timerRes = calculateDelayCountdown(lateInfo.reportedAt, lateInfo.delayMinutes || 10, nowTick);
+                    return (
+                      <span className={`px-2 py-0.5 rounded-full font-mono text-[10px] font-bold border flex items-center gap-1 ${
+                        timerRes.isExpired
+                          ? 'bg-rose-500/20 text-rose-300 border-rose-500/40 animate-pulse'
+                          : 'bg-amber-500/20 text-amber-300 border-amber-500/30'
+                      }`}>
+                        <Clock className="h-3 w-3" />
+                        <span>+{lateInfo.delayMinutes || 10}m late ({timerRes.isExpired ? 'EXPIRED' : `${timerRes.formatted} left`})</span>
+                      </span>
+                    );
+                  })()
                 )}
               </div>
               <p className="text-[11px] text-slate-400">
@@ -177,31 +195,39 @@ export function StaffQueueChatModal({
 
         {/* Customer Late Alert & Pass-to-Next Action Bar */}
         {lateInfo?.isLate && (
-          <div className="p-3.5 bg-amber-500/10 border-b border-amber-500/20 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div className="flex items-center gap-2">
-              <AlertTriangle className="h-4 w-4 text-amber-400 shrink-0" />
-              <div className="text-xs text-slate-300">
-                <span className="font-bold text-amber-300">Guest reported delay: </span>
-                {lateInfo.note ? `"${lateInfo.note}"` : `~${lateInfo.delayMinutes} mins late`}
-              </div>
-            </div>
+          (() => {
+            const timerRes = calculateDelayCountdown(lateInfo.reportedAt, lateInfo.delayMinutes || 10, nowTick);
+            return (
+              <div className="p-3.5 bg-amber-500/10 border-b border-amber-500/20 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <AlertTriangle className="h-4 w-4 text-amber-400 shrink-0" />
+                  <div className="text-xs text-slate-300">
+                    <span className="font-bold text-amber-300">Guest reported delay (+{lateInfo.delayMinutes || 10}m): </span>
+                    {lateInfo.note ? `"${lateInfo.note}"` : `Spot held`}{' '}
+                    <span className="font-mono text-amber-300 font-bold ml-1">
+                      (⏱️ {timerRes.isExpired ? '00:00 EXPIRED' : `${timerRes.formatted} remaining`})
+                    </span>
+                  </div>
+                </div>
 
-            <button
-              type="button"
-              onClick={handlePassToNext}
-              disabled={isPassingTable || lateInfo.tablePassedToNext}
-              className="px-3 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 disabled:opacity-50 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow transition-all cursor-pointer shrink-0"
-            >
-              <ArrowRightCircle className="h-3.5 w-3.5" />
-              <span>
-                {lateInfo.tablePassedToNext
-                  ? 'Table Passed to Next'
-                  : isPassingTable
-                  ? 'Passing...'
-                  : 'Seat Next & Hold Table'}
-              </span>
-            </button>
-          </div>
+                <button
+                  type="button"
+                  onClick={handlePassToNext}
+                  disabled={isPassingTable || lateInfo.tablePassedToNext}
+                  className="px-3 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 disabled:opacity-50 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow transition-all cursor-pointer shrink-0"
+                >
+                  <ArrowRightCircle className="h-3.5 w-3.5" />
+                  <span>
+                    {lateInfo.tablePassedToNext
+                      ? 'Table Passed to Next'
+                      : isPassingTable
+                      ? 'Passing...'
+                      : 'Pass Table to Next'}
+                  </span>
+                </button>
+              </div>
+            );
+          })()
         )}
 
         {/* Messages List */}
