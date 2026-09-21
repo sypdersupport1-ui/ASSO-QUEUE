@@ -117,14 +117,16 @@ export async function triggerBackgroundTicketNotification(
   if (perm !== 'granted') return;
 
   try {
-    const options: NotificationOptions & { renotify?: boolean; vibrate?: number[] } = {
+    const options: NotificationOptions & { renotify?: boolean; vibrate?: number[]; silent?: boolean; sound?: string } = {
       body,
       icon: '/brand/asso/asso-customer-white.png',
       badge: '/brand/asso/asso-customer-white.png',
       tag: 'asso-queue-alert',
       renotify: true,
       requireInteraction: true,
-      vibrate: [350, 100, 350, 100, 600, 150, 600],
+      silent: false,
+      sound: '/brand/pager-chime.wav',
+      vibrate: [500, 150, 500, 150, 800, 200, 800],
       data: {
         url: targetUrl || window.location.href,
         time: Date.now(),

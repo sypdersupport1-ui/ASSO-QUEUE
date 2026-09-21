@@ -26,7 +26,9 @@ self.addEventListener('push', (event) => {
     tag: data.tag || 'queue-table-alert',
     renotify: true,
     requireInteraction: true,
-    vibrate: [350, 100, 350, 100, 600, 150, 600],
+    silent: false,
+    sound: '/brand/pager-chime.wav',
+    vibrate: [500, 150, 500, 150, 800, 200, 800],
     data: {
       url: data.url || '/',
       time: Date.now(),
@@ -70,7 +72,9 @@ self.addEventListener('message', (event) => {
       self.registration.showNotification(title || 'Queue Alert', {
         icon: '/brand/asso/asso-customer-white.png',
         badge: '/brand/asso/asso-customer-white.png',
-        vibrate: [350, 100, 350, 100, 600, 150, 600],
+        silent: false,
+        sound: '/brand/pager-chime.wav',
+        vibrate: [500, 150, 500, 150, 800, 200, 800],
         requireInteraction: true,
         renotify: true,
         ...options,

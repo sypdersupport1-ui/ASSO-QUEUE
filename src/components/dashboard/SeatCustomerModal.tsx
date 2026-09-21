@@ -409,95 +409,111 @@ export function SeatCustomerModal({
                       const zone = table.restaurant_zones?.name || table.zoneName;
 
                       return (
-                        <div
-                          key={table.id}
-                          className={`p-3.5 sm:p-4 border rounded-2xl transition-all ${
-                            isRecommended
-                              ? 'bg-gradient-to-r from-emerald-950/40 via-[#111827] to-emerald-950/20 border-emerald-500/50 shadow-lg shadow-emerald-950/30'
-                              : 'bg-[#111827] border-white/10 hover:border-white/20'
-                          }`}
-                        >
-                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                            {/* Left: Table Identifier & Fit Details */}
-                            <div className="flex items-center gap-3.5 min-w-0 flex-1">
+                        <React.Fragment key={table.id}>
+                          {idx === 1 && (
+                            <div className="pt-2 pb-1 flex items-center gap-2">
+                              <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">
+                                Alternative Available Tables
+                              </span>
+                              <div className="h-px flex-1 bg-white/10" />
+                            </div>
+                          )}
+                          <div
+                            className={`p-3.5 sm:p-4 border rounded-2xl transition-all ${
+                              isRecommended
+                                ? 'bg-gradient-to-r from-emerald-950/50 via-[#0F172A] to-emerald-950/30 border-2 border-emerald-500/70 shadow-lg shadow-emerald-950/40 relative overflow-hidden'
+                                : 'bg-[#111827] border border-white/10 hover:border-white/20'
+                            }`}
+                          >
+                            {isRecommended && (
                               <div
-                                className={`h-10 w-10 rounded-xl flex flex-col items-center justify-center font-mono shrink-0 shadow-sm ${
-                                  isRecommended
-                                    ? 'bg-emerald-500 text-slate-950 font-black'
-                                    : 'bg-slate-800 border border-white/10 text-white font-bold'
-                                }`}
-                              >
-                                <span className={`text-[9px] uppercase font-sans leading-none font-semibold ${isRecommended ? 'text-slate-900/80' : 'text-slate-400'}`}>
-                                  Tbl
-                                </span>
-                                <span className="text-xs font-black leading-tight">{cleanNum}</span>
-                              </div>
+                                aria-hidden="true"
+                                className="pointer-events-none absolute -inset-full top-0 block -rotate-45 bg-gradient-to-r from-transparent via-emerald-400/10 to-transparent opacity-60 animate-[shimmer_3s_infinite]"
+                              />
+                            )}
 
-                              <div className="min-w-0 space-y-1">
-                                <div className="flex items-center gap-2 flex-wrap">
-                                  <span className="text-sm font-black text-white tracking-tight">
-                                    {tableHeading}
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 relative z-10">
+                              {/* Left: Table Identifier & Fit Details */}
+                              <div className="flex items-center gap-3.5 min-w-0 flex-1">
+                                <div
+                                  className={`h-11 w-11 rounded-2xl flex flex-col items-center justify-center font-mono shrink-0 shadow-md ${
+                                    isRecommended
+                                      ? 'bg-gradient-to-br from-emerald-400 to-emerald-600 text-slate-950 font-black'
+                                      : 'bg-slate-800 border border-white/10 text-white font-bold'
+                                  }`}
+                                >
+                                  <span className={`text-[9px] uppercase font-sans leading-none font-extrabold ${isRecommended ? 'text-slate-950/70' : 'text-slate-400'}`}>
+                                    Tbl
                                   </span>
-                                  <span className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-white/10 text-slate-200">
-                                    Seats {cap}
-                                  </span>
-                                  {zone && (
-                                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-blue-500/15 border border-blue-500/30 text-blue-300">
-                                      {zone}
-                                    </span>
-                                  )}
-                                  {isRecommended && (
-                                    <span className="px-2 py-0.5 rounded-md bg-emerald-500 text-slate-950 text-[10px] font-black uppercase tracking-wider flex items-center gap-1 shadow-sm">
-                                      ⭐ Best Match
-                                    </span>
-                                  )}
-                                  {isExact && !isRecommended && (
-                                    <span className="px-2 py-0.5 rounded-md bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-[10px] font-bold uppercase tracking-wider">
-                                      Exact Fit
-                                    </span>
-                                  )}
+                                  <span className="text-sm font-black leading-tight">{cleanNum}</span>
                                 </div>
 
-                                {/* Dynamic, human-friendly fit description for staff */}
-                                <p className="text-xs text-slate-400 leading-snug">
-                                  {isExact ? (
-                                    <span className="text-emerald-400 font-medium">
-                                      ✓ Perfect match for your party of {actualGuests}
+                                <div className="min-w-0 space-y-1">
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    <span className="text-sm font-black text-white tracking-tight">
+                                      {tableHeading}
                                     </span>
-                                  ) : isOver ? (
-                                    <span>
-                                      Seats party of {actualGuests}{' '}
-                                      <span className="text-slate-400">
-                                        ({extra} extra {extra === 1 ? 'chair' : 'chairs'})
+                                    {isRecommended && (
+                                      <span className="px-2 py-0.5 rounded-md bg-emerald-500 text-slate-950 text-[10px] font-black uppercase tracking-wider flex items-center gap-1 shadow-sm">
+                                        ⭐ Best Match
                                       </span>
+                                    )}
+                                    <span className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-white/10 text-slate-200 flex items-center gap-1">
+                                      <span>🪑</span>
+                                      <span>{cap} seats</span>
                                     </span>
-                                  ) : (
-                                    <span className="text-rose-400 font-medium">
-                                      ⚠️ Under-capacity (Needs {Math.abs(extra)} more{' '}
-                                      {Math.abs(extra) === 1 ? 'seat' : 'seats'})
-                                    </span>
-                                  )}
-                                </p>
-                              </div>
-                            </div>
+                                    {zone && (
+                                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-blue-500/15 border border-blue-500/30 text-blue-300">
+                                        📍 {zone}
+                                      </span>
+                                    )}
+                                    {isExact && !isRecommended && (
+                                      <span className="px-2 py-0.5 rounded-md bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-[10px] font-bold uppercase tracking-wider">
+                                        Exact Fit
+                                      </span>
+                                    )}
+                                  </div>
 
-                            {/* Right: Clear, unambiguous Seat Button */}
-                            <button
-                              type="button"
-                              onClick={() => handleSeat(table.id)}
-                              disabled={isPending}
-                              className={`w-full sm:w-auto px-4 py-2 font-bold text-xs rounded-xl transition-all cursor-pointer active:scale-95 shrink-0 ${
-                                isRecommended
-                                  ? 'bg-emerald-500 hover:bg-emerald-400 active:bg-emerald-600 text-slate-950 shadow-md font-black'
-                                  : 'bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white'
-                              }`}
-                            >
-                              {isPending && selectedTableId === table.id
-                                ? 'Assigning...'
-                                : `Seat at ${tableHeading}${isRecommended ? ' ⭐' : ''}`}
-                            </button>
+                                  {/* Dynamic, crystal-clear fit description for staff */}
+                                  <p className="text-xs text-slate-300 leading-snug">
+                                    {isExact ? (
+                                      <span className="text-emerald-400 font-semibold flex items-center gap-1">
+                                        <span>✓</span>
+                                        <span>Exact match for {actualGuests} {actualGuests === 1 ? 'guest' : 'guests'} (zero empty seats)</span>
+                                      </span>
+                                    ) : isOver ? (
+                                      <span className="flex items-center gap-1 text-slate-300">
+                                        <span>Seats party of {actualGuests}</span>
+                                        <span className="text-slate-400">· {extra} extra {extra === 1 ? 'chair' : 'chairs'}</span>
+                                      </span>
+                                    ) : (
+                                      <span className="text-rose-400 font-medium">
+                                        ⚠️ Under-capacity (Needs {Math.abs(extra)} more{' '}
+                                        {Math.abs(extra) === 1 ? 'seat' : 'seats'})
+                                      </span>
+                                    )}
+                                  </p>
+                                </div>
+                              </div>
+
+                              {/* Right: Clear, unambiguous Seat Button */}
+                              <button
+                                type="button"
+                                onClick={() => handleSeat(table.id)}
+                                disabled={isPending}
+                                className={`w-full sm:w-auto px-4 py-2.5 font-black text-xs rounded-xl transition-all cursor-pointer active:scale-95 shrink-0 shadow-md ${
+                                  isRecommended
+                                    ? 'bg-gradient-to-r from-emerald-500 to-teal-500 hover:brightness-110 active:brightness-90 text-slate-950 shadow-emerald-950/40 border border-emerald-300/40'
+                                    : 'bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white'
+                                }`}
+                              >
+                                {isPending && selectedTableId === table.id
+                                  ? 'Assigning...'
+                                  : `Seat at ${tableHeading}${isRecommended ? ' ⭐' : ''}`}
+                              </button>
+                            </div>
                           </div>
-                        </div>
+                        </React.Fragment>
                       );
                     })}
                   </div>

@@ -22,6 +22,7 @@ import { cancelQueuePublicAction } from '@/app/q/actions';
 import { chimeEngine } from '@/lib/audio-chime';
 import { broadcastCustomerQueueUpdate } from '@/lib/realtime/useCustomerQueueRealtime';
 import { useBackgroundQueueMonitor } from '@/lib/notifications/useBackgroundQueueMonitor';
+import { startBackgroundKeeper } from '@/lib/audio-background-keeper';
 
 interface TakeawayOrderItem {
   name: string;
@@ -124,6 +125,10 @@ export function TakeawayTicketCard({
     isTerminal: isCancelled || isExpired,
   });
 
+  useEffect(() => {
+    startBackgroundKeeper();
+  }, []);
+
   // Format currency
   const locale = currency === 'INR' ? 'en-IN' : 'en-US';
   const formatPrice = (amount: number) => {
@@ -180,7 +185,8 @@ export function TakeawayTicketCard({
   // Handle "I'm at the counter" acknowledge
   const handleAtCounter = async () => {
     setAtCounterConfirmed(true);
-    setLiveAnnouncement("Staff notified that you're at the takeaway counter.");
+    chimeEngine.playCallChime();
+    setLiveAnnouncement("Staff notified that you're at the counter.");
     try {
       await fetch('/api/q/respond', {
         method: 'POST',
@@ -211,6 +217,8 @@ export function TakeawayTicketCard({
   return (
     <section
       aria-label={`Takeaway ticket ${ticketNo}`}
+      onClick={() => startBackgroundKeeper()}
+      onTouchStart={() => startBackgroundKeeper()}
       className="customer-glass-card relative overflow-hidden p-5 sm:p-7 text-center backdrop-blur-xl space-y-5"
     >
       {/* Ambient background illumination */}
@@ -415,22 +423,40 @@ export function TakeawayTicketCard({
         </div>
       )}
 
-      {/* STAGE 2: CALLED */}
+      {/* STAGE 2: CALLED — FLASHY COUNTER READY ALERT */}
       {currentStage === 'CALLED' && !isCancelled && !isExpired && (
         <div className="relative z-10 space-y-4 pt-1 animate-fadeUp">
-          <div className="customer-glass-surface p-5 text-center shadow-xl space-y-3">
-            <div className="flex h-12 w-12 mx-auto items-center justify-center rounded-2xl bg-[var(--qf-warning)]/20 text-[var(--qf-warning)] border border-[var(--qf-warning)]/30">
-              <Megaphone className="h-6 w-6 text-[var(--qf-warning)]" aria-hidden="true" />
+          <div className="relative overflow-hidden rounded-3xl border-2 border-amber-400 bg-gradient-to-b from-amber-950/80 via-slate-950 to-orange-950/60 p-6 text-center shadow-[0_0_45px_rgba(245,158,11,0.55)] space-y-3.5 motion-safe:animate-bounce-short">
+            {/* Shimmer strobe */}
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute -inset-full top-0 block -rotate-45 bg-gradient-to-r from-transparent via-amber-200/20 to-transparent opacity-80 animate-[shimmer_2s_infinite]"
+            />
+
+            <div className="relative mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 text-slate-950 shadow-lg shadow-amber-500/50 motion-safe:animate-bounce">
+              <Megaphone className="h-7 w-7 text-slate-950" aria-hidden="true" />
             </div>
-            <h2 className="text-2xl sm:text-3xl font-black text-[var(--qf-warning)] tracking-tight">
-              YOUR TICKET IS CALLED
-            </h2>
-            <p className="text-xs sm:text-sm font-bold text-slate-200">
-              Ticket {ticketNo} — Please proceed to the takeaway counter.
-            </p>
-            <p className="text-xs text-slate-400 leading-relaxed">
+
+            <div>
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-amber-400/50 bg-amber-500/20 text-amber-200 text-[11px] font-black uppercase tracking-widest mb-1.5">
+                <span className="relative flex h-2 w-2">
+                  <span className="motion-safe:animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-90" />
+                  <span className="relative inline-flex h-2 w-2 rounded-full bg-amber-400" />
+                </span>
+                <span>🚨 TICKET CALLED · STEP UP TO COUNTER</span>
+              </div>
+
+              <h2 className="text-2xl sm:text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-amber-100 to-amber-300 tracking-tight drop-shadow-md">
+                YOUR TICKET IS CALLED!
+              </h2>
+              <p className="text-xs sm:text-sm font-bold text-amber-100 mt-1">
+                Ticket {ticketNo} — Please proceed to the takeaway counter now.
+              </p>
+            </div>
+
+            <p className="text-xs text-amber-200/80 leading-relaxed max-w-[320px] mx-auto">
               {takeawayManualOrderingEnabled
-                ? 'Show your ticket to the staff. Place your order at the counter to begin preparation.'
+                ? 'Show your ticket number to the staff at the counter to place your order!'
                 : 'Show your ticket to the staff. They will confirm your order and begin preparation.'}
             </p>
           </div>
@@ -438,16 +464,16 @@ export function TakeawayTicketCard({
           <button
             type="button"
             onClick={handleAtCounter}
-            className="customer-primary-cta w-full flex h-13 min-h-[52px] items-center justify-center gap-2 rounded-2xl font-black text-sm tracking-wide active:scale-[0.99] cursor-pointer transition-all"
+            className="customer-primary-cta w-full flex h-13 min-h-[52px] items-center justify-center gap-2 rounded-2xl font-black text-sm tracking-wide active:scale-[0.99] cursor-pointer transition-all shadow-lg"
           >
             {atCounterConfirmed ? (
               <>
-                <Check className="h-4 w-4" />
+                <Check className="h-5 w-5 stroke-[3]" />
                 <span>Staff Notified — At Counter</span>
               </>
             ) : (
               <>
-                <ShoppingBag className="h-4 w-4" />
+                <ShoppingBag className="h-5 w-5" />
                 <span>I&apos;m at the Counter</span>
               </>
             )}
@@ -459,19 +485,32 @@ export function TakeawayTicketCard({
       {currentStage === 'ORDER_COMPLETED' && !isCancelled && !isExpired && (
         <div className="relative z-10 space-y-4 pt-1 animate-fadeUp">
           {isReady ? (
-            /* Sub-state: Order is READY for collection */
-            <div className="customer-glass-card p-5 text-center shadow-xl space-y-3">
-              <div className="flex h-12 w-12 mx-auto items-center justify-center rounded-2xl bg-[var(--qf-success)]/20 text-[var(--qf-success)] border border-[var(--qf-success)]/30">
-                <Sparkles className="h-6 w-6 text-[var(--qf-success)]" aria-hidden="true" />
+            /* Sub-state: Order is READY for collection — FLASHY COLLECTION CARD */
+            <div className="relative overflow-hidden rounded-3xl border-2 border-emerald-400 bg-gradient-to-b from-emerald-950/80 via-slate-950 to-teal-950/60 p-6 text-center shadow-[0_0_45px_rgba(16,185,129,0.5)] space-y-3.5 motion-safe:animate-bounce-short">
+              <div
+                aria-hidden="true"
+                className="pointer-events-none absolute -inset-full top-0 block -rotate-45 bg-gradient-to-r from-transparent via-emerald-300/20 to-transparent opacity-80 animate-[shimmer_2.5s_infinite]"
+              />
+
+              <div className="relative mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-500 text-slate-950 shadow-lg shadow-emerald-500/50 motion-safe:animate-bounce">
+                <Sparkles className="h-7 w-7 text-slate-950" aria-hidden="true" />
               </div>
-              <h2 className="text-2xl sm:text-3xl font-black text-[var(--qf-success)] tracking-tight">
-                READY FOR COLLECTION!
-              </h2>
-              <p className="text-xs sm:text-sm font-bold text-slate-200">
-                Ticket {ticketNo} — Your food is packed and ready!
-              </p>
-              <p className="text-xs text-slate-300 leading-relaxed">
-                Please step up to the takeaway counter to pick up your order.
+
+              <div>
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-[var(--qf-success)]/50 bg-[var(--qf-success)]/20 text-[var(--qf-success)] text-[11px] font-black uppercase tracking-widest mb-1.5">
+                  <span>✨ PACKED &amp; HOT · READY</span>
+                </div>
+
+                <h2 className="text-2xl sm:text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-emerald-100 to-teal-200 tracking-tight drop-shadow-md">
+                  READY FOR COLLECTION!
+                </h2>
+                <p className="text-xs sm:text-sm font-bold text-emerald-100 mt-1">
+                  Ticket {ticketNo} — Your food is packed and waiting!
+                </p>
+              </div>
+
+              <p className="text-xs text-emerald-200/90 leading-relaxed max-w-[320px] mx-auto">
+                Please step up to the takeaway counter and present your ticket to receive your meal.
               </p>
             </div>
           ) : (
@@ -496,21 +535,21 @@ export function TakeawayTicketCard({
         </div>
       )}
 
-      {/* STAGE 4: ITEMS RECEIVED */}
+      {/* STAGE 4: ITEMS RECEIVED — CELEBRATION CARD */}
       {currentStage === 'ITEMS_RECEIVED' && (
         <div className="relative z-10 space-y-4 pt-1 animate-fadeUp">
-          <div className="customer-glass-card p-5 text-center shadow-xl space-y-2">
+          <div className="relative overflow-hidden rounded-3xl border-2 border-[var(--qf-success)]/80 bg-gradient-to-br from-emerald-950/70 via-slate-950 to-teal-950/50 p-6 text-center shadow-[0_0_35px_rgba(16,185,129,0.4)] space-y-3">
             <div className="flex h-12 w-12 mx-auto items-center justify-center rounded-2xl bg-[var(--qf-success)]/20 text-[var(--qf-success)] border border-[var(--qf-success)]/30">
-              <CheckCircle2 className="h-6 w-6 text-[var(--qf-success)]" />
+              <CheckCircle2 className="h-7 w-7 text-[var(--qf-success)]" />
             </div>
             <h2 className="text-2xl font-black text-white tracking-tight">
-              ITEMS RECEIVED
+              ITEMS RECEIVED 🎉
             </h2>
-            <p className="text-sm font-bold text-[var(--qf-success)]">
-              Thanks! Your takeaway order has been completed.
+            <p className="text-sm font-bold text-emerald-300">
+              Thank you! Your takeaway order is complete.
             </p>
-            <p className="text-xs text-slate-400">
-              We hope you enjoy your meal. Visit us again!
+            <p className="text-xs text-slate-300">
+              We hope you enjoy your delicious meal! Visit us again soon.
             </p>
           </div>
 

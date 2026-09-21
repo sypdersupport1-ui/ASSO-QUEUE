@@ -114,14 +114,28 @@ class AudioChimeEngine {
    */
   playBuzzerSound() {
     // 1. Strong hardware vibration on mobile devices
-    this.triggerPhoneVibration([350, 100, 350, 100, 600, 150, 600]);
+    this.triggerPhoneVibration([500, 150, 500, 150, 800, 200, 800]);
 
-    // 2. High-audibility resonant chime synth
+    // 2. Play dedicated loud pager audio asset directly via HTML5 Audio element
+    // HTML5 Audio cuts through background restrictions and works even when Web Audio is suspended
+    try {
+      if (typeof window !== 'undefined' && typeof Audio !== 'undefined') {
+        const directAudio = new Audio('/brand/pager-chime.wav');
+        directAudio.volume = 1.0;
+        const playPromise = directAudio.play();
+        if (playPromise) {
+          playPromise.catch(() => {});
+        }
+      }
+    } catch {}
+
+    // 3. High-audibility resonant chime synth backup via Web Audio
     const synthesize = (ctx: AudioContext) => {
       try {
         const now = ctx.currentTime;
 
         // Pulse 1: Alert Ding (659.25Hz -> 880Hz)
+
         // Pulse 2: Full resonant confirmation chord (C5 + E5 + G5 + C6)
         // Pulse 3: High-frequency penetrating finishing bell (1318Hz)
         const notes = [

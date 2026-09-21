@@ -3,6 +3,7 @@
 import { useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { chimeEngine } from '@/lib/audio-chime';
+import { startBackgroundKeeper } from '@/lib/audio-background-keeper';
 import {
   registerServiceWorker,
   triggerBackgroundTicketNotification,
@@ -43,8 +44,9 @@ export function useBackgroundQueueMonitor({
   useEffect(() => {
     if (isTerminal || !token) return;
 
-    // Ensure Service Worker is registered
+    // Ensure Service Worker is registered and mobile background keeper is running
     registerServiceWorker().catch(() => {});
+    startBackgroundKeeper();
 
     // Active polling interval (2.5s):
     // Crucial: NOT restricted to document.visibilityState === 'visible'

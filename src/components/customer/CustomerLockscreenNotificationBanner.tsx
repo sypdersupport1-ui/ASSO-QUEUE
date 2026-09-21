@@ -8,6 +8,7 @@ import {
   isNotificationSupported,
 } from '@/lib/notifications/web-notification';
 import { chimeEngine } from '@/lib/audio-chime';
+import { startBackgroundKeeper } from '@/lib/audio-background-keeper';
 
 interface CustomerLockscreenNotificationBannerProps {
   restaurantName?: string;
@@ -25,14 +26,22 @@ export function CustomerLockscreenNotificationBanner({
       return;
     }
 
-    setPermission(getNotificationPermissionState());
+    const current = getNotificationPermissionState();
+    setPermission(current);
+    if (current === 'granted') {
+      startBackgroundKeeper();
+    }
 
     if (typeof navigator !== 'undefined' && 'permissions' in navigator) {
       navigator.permissions
         .query({ name: 'notifications' as PermissionName })
         .then((status) => {
           status.onchange = () => {
-            setPermission(getNotificationPermissionState());
+            const next = getNotificationPermissionState();
+            setPermission(next);
+            if (next === 'granted') {
+              startBackgroundKeeper();
+            }
           };
         })
         .catch(() => {});
@@ -47,9 +56,11 @@ export function CustomerLockscreenNotificationBanner({
     setIsRequesting(true);
     try {
       chimeEngine.initAudio();
+      startBackgroundKeeper();
       const granted = await requestUserQueueAlerts();
       if (granted) {
         setPermission('granted');
+        startBackgroundKeeper();
       } else {
         setPermission(getNotificationPermissionState());
       }
