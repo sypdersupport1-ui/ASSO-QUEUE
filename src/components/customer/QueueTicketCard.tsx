@@ -227,6 +227,7 @@ export function QueueTicketCard({
     meta.title,
     meta.guidance,
     tableDisplay,
+    status.partySize,
   ]);
 
   const handleRespond = async (
@@ -637,7 +638,7 @@ export function QueueTicketCard({
               onClick={handleEnableAlerts}
               className={`w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs font-bold transition-all active:scale-[0.98] cursor-pointer shadow-sm border ${
                 alertsEnabled
-                  ? 'border-emerald-500/50 bg-emerald-500/15 text-emerald-200'
+                  ? 'border-[var(--qf-success)]/50 bg-[var(--qf-success)]/15 text-emerald-200'
                   : 'border-amber-400/50 bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 shadow-amber-500/10'
               }`}
             >
