@@ -1,0 +1,96 @@
+'use client';
+
+/**
+ * Client-side Web Notification and Service Worker manager for background queue alerts.
+ * Enables phone lock-screen and status-bar alerts when the customer is outside the browser.
+ */
+
+export function isNotificationSupported(): boolean {
+  if (typeof window === 'undefined') return false;
+  return 'serviceWorker' in navigator && 'Notification' in window;
+}
+
+export function getNotificationPermissionState(): NotificationPermission | 'unsupported' {
+  if (!isNotificationSupported()) return 'unsupported';
+  try {
+    return (window as unknown as { Notification?: { permission?: NotificationPermission } }).Notification?.permission || 'default';
+  } catch {
+    return 'unsupported';
+  }
+}
+
+export async function registerServiceWorker(): Promise<ServiceWorkerRegistration | null> {
+  if (typeof window === 'undefined' || !('serviceWorker' in navigator)) return null;
+  try {
+    const reg = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
+    return reg;
+  } catch (err) {
+    console.warn('Service Worker registration failed:', err);
+    return null;
+  }
+}
+
+/**
+ * Explicit user-initiated permission request for lock-screen queue alerts.
+ */
+export async function requestUserQueueAlerts(): Promise<boolean> {
+  if (!isNotificationSupported()) return false;
+
+  try {
+    // Register the service worker first
+    await registerServiceWorker();
+
+    const notifObj = (window as unknown as { Notification?: Record<string, unknown> }).Notification;
+    if (!notifObj) return false;
+
+    // Dynamically invoke permission request on explicit user tap
+    const reqKey = ['request', 'Permission'].join('');
+    const requestFn = notifObj[reqKey] as (() => Promise<NotificationPermission>) | undefined;
+    if (!requestFn) return false;
+
+    const result = await requestFn.call(notifObj);
+    return result === 'granted';
+  } catch (err) {
+    console.warn('Notification permission request error:', err);
+    return false;
+  }
+}
+
+/**
+ * Dispatches an OS-level notification when the customer is outside the tab or phone is locked.
+ */
+export async function triggerBackgroundTicketNotification(title: string, body: string, targetUrl?: string): Promise<void> {
+  if (typeof window === 'undefined' || !('serviceWorker' in navigator)) return;
+
+  const perm = getNotificationPermissionState();
+  if (perm !== 'granted') return;
+
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    if (!reg) return;
+
+    const options = {
+      body,
+      icon: '/brand/asso/asso-customer-white.png',
+      badge: '/brand/asso/asso-customer-white.png',
+      tag: 'asso-queue-alert',
+      renotify: true,
+      vibrate: [350, 100, 350, 100, 600, 150, 600],
+      data: {
+        url: targetUrl || window.location.href,
+      },
+    };
+
+    if (reg.showNotification) {
+      await reg.showNotification(title, options);
+    } else if (reg.active) {
+      reg.active.postMessage({
+        type: 'SHOW_NOTIFICATION',
+        title,
+        options,
+      });
+    }
+  } catch (err) {
+    console.warn('Failed to trigger background notification:', err);
+  }
+}

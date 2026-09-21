@@ -26,6 +26,12 @@ import { chimeEngine } from '@/lib/audio-chime';
 import { broadcastCustomerQueueUpdate } from '@/lib/realtime/useCustomerQueueRealtime';
 import { syncTicketCookieAction } from '@/app/q/actions';
 import {
+  registerServiceWorker,
+  requestUserQueueAlerts,
+  triggerBackgroundTicketNotification,
+  getNotificationPermissionState,
+} from '@/lib/notifications/web-notification';
+import {
   ticketStateMeta,
   formatTicketNumber,
   formatTableNumber,
@@ -84,6 +90,27 @@ export function QueueTicketCard({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCallExpired, setIsCallExpired] = useState(false);
   const [countdownSeconds, setCountdownSeconds] = useState<number | null>(null);
+  const [alertsEnabled, setAlertsEnabled] = useState(false);
+
+  useEffect(() => {
+    registerServiceWorker();
+    if (getNotificationPermissionState() === 'granted') {
+      setAlertsEnabled(true);
+    }
+  }, []);
+
+  const handleEnableAlerts = async () => {
+    chimeEngine.playBuzzerSound();
+    const granted = await requestUserQueueAlerts();
+    if (granted) {
+      setAlertsEnabled(true);
+      triggerBackgroundTicketNotification(
+        '✓ Alerts Enabled! — Biriyani House',
+        "You will receive a notification and buzzer when your table is ready, even if you switch apps!",
+        typeof window !== 'undefined' ? window.location.href : undefined
+      );
+    }
+  };
 
   // Sync prop changes to local response state
   useEffect(() => {
@@ -129,6 +156,11 @@ export function QueueTicketCard({
             navigator.vibrate([300, 150, 300, 150, 450]);
           }
         } catch {}
+        triggerBackgroundTicketNotification(
+          '⚡ YOUR TABLE IS READY!',
+          `Party of ${status.partySize} — please return to the restaurant now!`,
+          typeof window !== 'undefined' ? window.location.href : undefined
+        );
         setLiveAnnouncement('Your table is being called. Please return to the restaurant now.');
       } else if (status.status === 'NOTIFIED') {
         chimeEngine.playBuzzerSound();
@@ -137,6 +169,11 @@ export function QueueTicketCard({
             navigator.vibrate([250, 100, 250, 100, 350]);
           }
         } catch {}
+        triggerBackgroundTicketNotification(
+          "⚡ You're Getting Close! Table Preparing",
+          'The restaurant host is preparing your table. Please start heading to the entrance now!',
+          typeof window !== 'undefined' ? window.location.href : undefined
+        );
         setLiveAnnouncement('Your table is being prepared. Please start heading to the restaurant.');
       } else if (status.status === 'SEATED') {
         chimeEngine.playSeatChime();
@@ -593,8 +630,29 @@ export function QueueTicketCard({
             </div>
           )}
 
-          {/* LOUD PAGER BUZZER TEST BUTTON */}
-          <div className="pt-1">
+          {/* LOUD PAGER BUZZER & LOCK-SCREEN NOTIFICATIONS */}
+          <div className="pt-1 space-y-2">
+            <button
+              type="button"
+              onClick={handleEnableAlerts}
+              className={`w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs font-bold transition-all active:scale-[0.98] cursor-pointer shadow-sm border ${
+                alertsEnabled
+                  ? 'border-emerald-500/50 bg-emerald-500/15 text-emerald-200'
+                  : 'border-amber-400/50 bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 shadow-amber-500/10'
+              }`}
+            >
+              <Bell
+                className={`h-4 w-4 shrink-0 ${
+                  alertsEnabled ? 'text-emerald-400' : 'text-amber-300 animate-bounce'
+                }`}
+              />
+              <span>
+                {alertsEnabled
+                  ? '✓ Background Lock-Screen Alerts Active'
+                  : '🔔 Turn On Lock-Screen Notifications'}
+              </span>
+            </button>
+
             <button
               type="button"
               onClick={() => {
@@ -607,8 +665,8 @@ export function QueueTicketCard({
               <Volume2 className="h-4 w-4 text-[var(--qf-primary)] shrink-0" />
               <span>{buzzerTested ? 'Buzzer ringing loud! 🔊' : 'Test Loud Pager Buzzer Sound'}</span>
             </button>
-            <p className="text-[10px] text-slate-400 mt-1">
-              Loud buzzer rings automatically on every queue update &amp; when called.
+            <p className="text-[10px] text-slate-400">
+              Rings loudly &amp; alerts lock-screen even if you switch apps or lock your phone.
             </p>
           </div>
 
