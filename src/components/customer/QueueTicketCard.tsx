@@ -968,7 +968,15 @@ export function QueueTicketCard({
             </div>
           </div>
 
-          <div className="pt-2 border-t border-white/10">
+          {/* Running Late & Host Chat Actions */}
+          <div className="pt-2 border-t border-white/10 space-y-2.5">
+            <CustomerLateModal
+              token={token}
+              restaurantSlug={restaurantSlug}
+              customerName={status.customerName}
+              lateInfo={status.lateInfo}
+              initialMessages={status.chatMessages || []}
+            />
             <CancelQueueDialog token={token} restaurantSlug={restaurantSlug} />
           </div>
         </div>

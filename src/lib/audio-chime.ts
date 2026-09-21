@@ -40,41 +40,67 @@ class AudioChimeEngine {
   /**
    * Snappy button click chime (Tactile micro-click + D5 -> A5 melodic rise).
    * The signature pleasant button click sound for restaurant dashboard staff buttons.
-   * Reliably plays even if AudioContext was suspended prior to the click.
+   * Plays directly through native HTML5 Audio element + Web Audio synth for 100% reliability.
    */
   playCallChime() {
+    // 1. Play dedicated button click WAV directly via HTML5 Audio
+    try {
+      if (typeof window !== 'undefined' && typeof Audio !== 'undefined') {
+        const directAudio = new Audio('/brand/button-click.wav');
+        directAudio.volume = 1.0;
+        const p = directAudio.play();
+        if (p) p.catch(() => {});
+      }
+    } catch {}
+
+    // 2. Web Audio synthesis — always fires as primary source of sound
+    // High gain so it's always clearly audible on restaurant staff tablets/phones
     try {
       const play = (ctx: AudioContext) => {
         const now = ctx.currentTime;
 
-        // 1. Instant tactile mechanical click transient (30ms)
+        // 1. Punchy mechanical click transient (40ms)
         const clickOsc = ctx.createOscillator();
         const clickGain = ctx.createGain();
-        clickOsc.type = 'triangle';
-        clickOsc.frequency.setValueAtTime(1400, now);
-        clickOsc.frequency.exponentialRampToValueAtTime(250, now + 0.025);
-        clickGain.gain.setValueAtTime(0.35, now);
-        clickGain.gain.exponentialRampToValueAtTime(0.001, now + 0.025);
+        clickOsc.type = 'square';
+        clickOsc.frequency.setValueAtTime(1200, now);
+        clickOsc.frequency.exponentialRampToValueAtTime(180, now + 0.035);
+        clickGain.gain.setValueAtTime(0.85, now);
+        clickGain.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
         clickOsc.connect(clickGain);
         clickGain.connect(ctx.destination);
         clickOsc.start(now);
-        clickOsc.stop(now + 0.03);
+        clickOsc.stop(now + 0.045);
 
-        // 2. Signature upward melodic chime (D5 587Hz -> A5 880Hz)
+        // 2. Loud signature upward melodic chime (D5 587Hz -> A5 880Hz)
         const chimeOsc = ctx.createOscillator();
         const chimeGain = ctx.createGain();
-        chimeOsc.type = 'sine';
+        chimeOsc.type = 'triangle';
         chimeOsc.frequency.setValueAtTime(587.33, now);
-        chimeOsc.frequency.exponentialRampToValueAtTime(880.00, now + 0.12);
+        chimeOsc.frequency.exponentialRampToValueAtTime(880.00, now + 0.14);
 
         chimeGain.gain.setValueAtTime(0.001, now);
-        chimeGain.gain.linearRampToValueAtTime(0.40, now + 0.025);
-        chimeGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.45);
+        chimeGain.gain.linearRampToValueAtTime(0.80, now + 0.03);
+        chimeGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.55);
 
         chimeOsc.connect(chimeGain);
         chimeGain.connect(ctx.destination);
         chimeOsc.start(now);
-        chimeOsc.stop(now + 0.45);
+        chimeOsc.stop(now + 0.55);
+
+        // 3. Harmonic overtone for richness
+        const harmOsc = ctx.createOscillator();
+        const harmGain = ctx.createGain();
+        harmOsc.type = 'sine';
+        harmOsc.frequency.setValueAtTime(1174.66, now);
+        harmOsc.frequency.exponentialRampToValueAtTime(1760.00, now + 0.14);
+        harmGain.gain.setValueAtTime(0.001, now);
+        harmGain.gain.linearRampToValueAtTime(0.45, now + 0.03);
+        harmGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.40);
+        harmOsc.connect(harmGain);
+        harmGain.connect(ctx.destination);
+        harmOsc.start(now);
+        harmOsc.stop(now + 0.40);
       };
 
       const ctx = this.getContext();
@@ -176,6 +202,17 @@ class AudioChimeEngine {
    * Celebratory upward arpeggio chime for seating or completing orders.
    */
   playSeatChime() {
+    // 1. Play HTML5 Audio
+    try {
+      if (typeof window !== 'undefined' && typeof Audio !== 'undefined') {
+        const directAudio = new Audio('/brand/seat-chime.wav');
+        directAudio.volume = 1.0;
+        const p = directAudio.play();
+        if (p) p.catch(() => {});
+      }
+    } catch {}
+
+    // 2. Web Audio backup
     try {
       const play = (ctx: AudioContext) => {
         const now = ctx.currentTime;
@@ -213,6 +250,17 @@ class AudioChimeEngine {
    * Loud crisp alert chime for remove, no-show, and cancel actions.
    */
   playAlertChime() {
+    // 1. Play HTML5 Audio
+    try {
+      if (typeof window !== 'undefined' && typeof Audio !== 'undefined') {
+        const directAudio = new Audio('/brand/alert-chime.wav');
+        directAudio.volume = 1.0;
+        const p = directAudio.play();
+        if (p) p.catch(() => {});
+      }
+    } catch {}
+
+    // 2. Web Audio backup
     try {
       const play = (ctx: AudioContext) => {
         const now = ctx.currentTime;

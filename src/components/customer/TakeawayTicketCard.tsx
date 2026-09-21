@@ -19,6 +19,7 @@ import {
 import type { PublicQueueStatusResponse } from '@/lib/services/queue-service';
 import { formatTakeawayTicketNumber } from '@/lib/customer-ticket-ux';
 import { cancelQueuePublicAction } from '@/app/q/actions';
+import { CustomerLateModal } from './CustomerLateModal';
 import { chimeEngine } from '@/lib/audio-chime';
 import { broadcastCustomerQueueUpdate } from '@/lib/realtime/useCustomerQueueRealtime';
 import { useBackgroundQueueMonitor } from '@/lib/notifications/useBackgroundQueueMonitor';
@@ -683,6 +684,19 @@ export function TakeawayTicketCard({
           )}
         </div>
       ) : null}
+
+      {/* Messages & Host Chat Section */}
+      {!isCompleted && !isCancelled && !isExpired && (
+        <div className="relative z-10 pt-2 space-y-2">
+          <CustomerLateModal
+            token={token}
+            restaurantSlug={restaurantSlug}
+            customerName={status.customerName}
+            lateInfo={status.lateInfo}
+            initialMessages={status.chatMessages || []}
+          />
+        </div>
+      )}
 
       {/* 4. CANCELLATION (ONLY FOR WAITING / CALLED STAGE BEFORE PREPARATION) */}
       {(currentStage === 'WAITING' || (currentStage === 'CALLED' && !isPreparing && !isReady)) && (

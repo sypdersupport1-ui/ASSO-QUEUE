@@ -31,6 +31,45 @@ export function CustomerLateModal({
   const [isSendingChat, setIsSendingChat] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
+  // Synchronize incoming chat messages from server polling or realtime updates
+  React.useEffect(() => {
+    if (initialMessages && Array.isArray(initialMessages)) {
+      setMessages(initialMessages);
+    }
+  }, [initialMessages]);
+
+  // Live polling and event listener for chat messages — always active (not just when modal is open)
+  // This ensures message count badge stays accurate and messages appear instantly on all devices
+  React.useEffect(() => {
+    const fetchLatestMessages = async () => {
+      try {
+        const queryParams = new URLSearchParams({ token, restaurantSlug });
+        const res = await fetch(`/api/q/status?${queryParams.toString()}`, { cache: 'no-store' });
+        if (!res.ok) return;
+        const data = await res.json();
+        const latestMsgs = data?.status?.chatMessages;
+        if (latestMsgs && Array.isArray(latestMsgs)) {
+          setMessages(latestMsgs);
+        }
+      } catch {}
+    };
+
+    fetchLatestMessages();
+    const interval = setInterval(fetchLatestMessages, 3000);
+
+    const onQueueUpdate = () => {
+      fetchLatestMessages();
+    };
+    window.addEventListener('queue_update', onQueueUpdate);
+    window.addEventListener('queue_poll_tick', onQueueUpdate);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('queue_update', onQueueUpdate);
+      window.removeEventListener('queue_poll_tick', onQueueUpdate);
+    };
+  }, [token, restaurantSlug]);
+
   const delayOptions = [5, 10, 15, 20, 30];
   const quickNotes = [
     '🚗 Looking for parking',
@@ -165,7 +204,7 @@ export function CustomerLateModal({
               className="px-3 py-1.5 rounded-xl bg-[var(--qf-warning)]/20 hover:bg-[var(--qf-warning)]/30 border border-[var(--qf-warning)]/40 text-[var(--qf-warning)] text-xs font-bold flex items-center gap-1.5 shrink-0 transition-all cursor-pointer active:scale-95"
             >
               <MessageSquare className="h-3.5 w-3.5" />
-              <span>Chat</span>
+              <span>Chat {messages.length > 0 ? `(${messages.length})` : ''}</span>
             </button>
           </div>
         </div>
@@ -173,24 +212,29 @@ export function CustomerLateModal({
         <button
           type="button"
           onClick={() => {
-            setActiveTab('delay');
+            setActiveTab(messages.length > 0 ? 'chat' : 'delay');
             setIsOpen(true);
           }}
           className="customer-glass-control w-full flex items-center justify-between gap-2 p-3 rounded-2xl border border-[var(--qf-warning)]/30 bg-[var(--qf-warning)]/10 hover:bg-[var(--qf-warning)]/15 text-[var(--qf-warning)] transition-all cursor-pointer group shadow-sm active:scale-[0.99]"
         >
           <div className="flex items-center gap-2.5">
-            <div className="h-7 w-7 rounded-lg bg-[var(--qf-warning)]/20 flex items-center justify-center text-[var(--qf-warning)]">
-              <Clock className="h-4 w-4" />
+            <div className="h-7 w-7 rounded-lg bg-[var(--qf-warning)]/20 flex items-center justify-center text-[var(--qf-warning)] shrink-0">
+              {messages.length > 0 ? <MessageSquare className="h-4 w-4" /> : <Clock className="h-4 w-4" />}
             </div>
             <div className="text-left">
               <span className="text-xs font-bold text-white block group-hover:text-[var(--qf-warning)] transition-colors">
-                Running late? Let the host know
+                {messages.length > 0 ? 'Host Stand Messages' : 'Running late? Let the host know'}
               </span>
-              <span className="text-[10px] text-slate-400">We will hold your spot and seat next guest</span>
+              <span className="text-[10px] text-slate-400">
+                {messages.length > 0
+                  ? `${messages.length} message${messages.length === 1 ? '' : 's'} with restaurant host`
+                  : 'We will hold your spot and seat next guest'}
+              </span>
             </div>
           </div>
-          <span className="text-xs font-black text-[var(--qf-warning)] font-mono px-2 py-1 rounded-lg bg-[var(--qf-warning)]/20 border border-[var(--qf-warning)]/30">
-            I&apos;ll be late →
+          <span className="text-xs font-black text-[var(--qf-warning)] font-mono px-2 py-1 rounded-lg bg-[var(--qf-warning)]/20 border border-[var(--qf-warning)]/30 shrink-0 flex items-center gap-1">
+            <MessageSquare className="h-3 w-3" />
+            <span>{messages.length > 0 ? `Chat (${messages.length})` : "I'll be late →"}</span>
           </span>
         </button>
       )}

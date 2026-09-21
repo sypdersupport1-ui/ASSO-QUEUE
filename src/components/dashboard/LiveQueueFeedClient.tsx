@@ -69,6 +69,18 @@ export function LiveQueueFeedClient({
     setTables(tablesRes.tables || []);
   }, [tablesRes.tables]);
 
+  // Prime AudioContext on mount and first interaction so button sounds always work
+  useEffect(() => {
+    chimeEngine.initAudio();
+    const primer = () => chimeEngine.initAudio();
+    document.addEventListener('pointerdown', primer, { once: true, capture: true });
+    document.addEventListener('touchstart', primer, { once: true, capture: true });
+    return () => {
+      document.removeEventListener('pointerdown', primer, true);
+      document.removeEventListener('touchstart', primer, true);
+    };
+  }, []);
+
   // Seamless polling fallback so live queue stays in lockstep across all devices
   useEffect(() => {
     const timer = setInterval(() => {
