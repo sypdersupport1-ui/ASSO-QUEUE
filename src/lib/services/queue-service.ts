@@ -1470,8 +1470,8 @@ export class QueueService {
           zone_name: extractZoneName(t.restaurant_zones) || 'Floor',
           rank: isExact ? 1 : 2 + waste,
           reason: isExact
-            ? `Exact Fit: Table ${t.table_number} (${t.capacity} seats)`
-            : `Fits Party: Table ${t.table_number} (${t.capacity} seats, ${waste} extra)`,
+            ? `Exact fit for party of ${partySize} (${t.capacity} seats)`
+            : `Seats ${t.capacity} • Fits party of ${partySize} (${waste} spare ${waste === 1 ? 'seat' : 'seats'})`,
           is_combination: false,
           is_shared: false,
           table_ids: [t.id],

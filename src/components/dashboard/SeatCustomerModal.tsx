@@ -212,20 +212,28 @@ export function SeatCustomerModal({
               </div>
 
               {/* Mode Toggle: Smart Recommendations vs Custom Multi-Table Combine */}
+              {/* Mode Toggle: Smart Recommendations vs Custom Multi-Table Combine */}
               <div className="flex items-center justify-between pt-1">
-                <span className="text-xs font-bold text-slate-300 uppercase tracking-wider">
-                  {isCustomCombine ? 'Select Multiple Tables to Combine' : 'Smart Recommendations'}
-                </span>
+                <div>
+                  <h4 className="text-xs font-bold text-slate-200 uppercase tracking-wider">
+                    {isCustomCombine ? 'Select Multiple Tables to Combine' : 'Available Table Recommendations'}
+                  </h4>
+                  {!isCustomCombine && (
+                    <p className="text-[11px] text-slate-400">
+                      Ranked by closest fit to avoid wasted seats
+                    </p>
+                  )}
+                </div>
                 {poolTables.length >= 2 && (
                   <button
                     type="button"
                     onClick={() => setIsCustomCombine(!isCustomCombine)}
-                    className="text-xs text-primary hover:text-blue-400 font-bold flex items-center gap-1 cursor-pointer"
+                    className="text-xs text-purple-400 hover:text-purple-300 font-bold flex items-center gap-1 cursor-pointer py-1 px-2 rounded-lg hover:bg-purple-500/10 transition-colors"
                   >
                     <span className="material-symbols-outlined text-[16px]">
                       {isCustomCombine ? 'auto_awesome' : 'tune'}
                     </span>
-                    {isCustomCombine ? 'View AI Recommendations' : 'Custom Combine'}
+                    {isCustomCombine ? 'View Recommendations' : 'Custom Combine'}
                   </button>
                 )}
               </div>
@@ -261,7 +269,7 @@ export function SeatCustomerModal({
                             />
                             <div>
                               <span className="text-xs font-bold text-white">Table {getTableNumber(t)}</span>
-                              <span className="text-[10px] text-slate-400 ml-2">Cap: {t.capacity}</span>
+                              <span className="text-[10px] text-slate-400 ml-2">Seats: {t.capacity}</span>
                             </div>
                           </div>
                           <span className="text-[10px] text-slate-400">{t.restaurant_zones?.name || t.zoneName || 'Floor'}</span>
@@ -302,111 +310,193 @@ export function SeatCustomerModal({
                     </p>
                   </div>
                 ) : (
-                  <div className="space-y-2">
+                  <div className="space-y-2.5">
                     {tablesToShow.map((table, idx) => {
                       if (table.is_combination && table.table_ids && table.table_ids.length > 0) {
                         const primaryId = table.table_ids[0];
                         if (!primaryId) return null;
+                        const comboLabel = cleanTablePrefix(getTableNumber(table));
                         return (
                           <div
                             key={table.id}
-                            className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 border rounded-2xl bg-purple-950/20 border-purple-500/30 hover:border-purple-500/50 transition-all"
+                            className="p-3.5 sm:p-4 border rounded-2xl bg-purple-950/20 border-purple-500/30 hover:border-purple-500/50 transition-all space-y-3"
                           >
-                            <div className="flex items-center gap-3 min-w-0 flex-1">
-                              <div className="h-10 px-2.5 rounded-xl flex items-center justify-center font-bold text-xs font-mono bg-purple-500/20 border border-purple-500/40 text-purple-300 shrink-0">
-                                {cleanTablePrefix(getTableNumber(table))}
-                              </div>
-                              <div className="min-w-0">
-                                <div className="text-xs font-bold text-white flex items-center gap-1.5 flex-wrap">
-                                  <span>Tables {cleanTablePrefix(getTableNumber(table))}</span>
-                                  <span className="text-[10px] font-bold text-purple-300">• Cap {table.capacity}</span>
-                                  <span className="px-1.5 py-0.5 rounded bg-purple-500/30 border border-purple-500/40 text-purple-200 text-[9px] font-black uppercase">
-                                    Combine Suggestion
-                                  </span>
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                              <div className="flex items-center gap-3.5 min-w-0 flex-1">
+                                <div className="h-10 px-3 rounded-xl flex flex-col items-center justify-center font-mono font-black text-xs bg-purple-500/20 border border-purple-500/40 text-purple-300 shrink-0">
+                                  <span className="text-[9px] uppercase font-sans text-purple-400/80 leading-none">Combo</span>
+                                  <span>{comboLabel}</span>
                                 </div>
-                                <span className="text-[10px] text-slate-400 truncate block mt-0.5">
-                                  {table.reason || `Combined: fits party of ${actualGuests}`}
-                                </span>
+                                <div className="min-w-0 space-y-0.5">
+                                  <div className="text-xs font-bold text-white flex items-center gap-1.5 flex-wrap">
+                                    <span className="text-sm font-black">Tables {comboLabel}</span>
+                                    <span className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-purple-500/20 text-purple-200 border border-purple-500/30">
+                                      Combined: {table.capacity} Seats
+                                    </span>
+                                    <span className="px-1.5 py-0.5 rounded bg-purple-500/30 text-purple-200 text-[9px] font-black uppercase">
+                                      Combine Suggestion
+                                    </span>
+                                  </div>
+                                  <p className="text-xs text-slate-400">
+                                    {table.reason || `Combines tables to fit party of ${actualGuests}`}
+                                  </p>
+                                </div>
                               </div>
-                            </div>
 
-                            <button
-                              type="button"
-                              onClick={() => handleSeat(primaryId, table.table_ids?.slice(1))}
-                              disabled={isPending}
-                              className="w-full sm:w-auto px-4 py-2 font-bold text-xs rounded-xl bg-purple-600 hover:bg-purple-500 active:bg-purple-700 text-white transition-colors disabled:opacity-50 cursor-pointer shadow active:scale-95 shrink-0"
-                            >
-                              {isPending && selectedTableId === primaryId ? 'Assigning...' : 'Seat Both Tables'}
-                            </button>
+                              <button
+                                type="button"
+                                onClick={() => handleSeat(primaryId, table.table_ids?.slice(1))}
+                                disabled={isPending}
+                                className="w-full sm:w-auto px-4 py-2 font-black text-xs rounded-xl bg-purple-600 hover:bg-purple-500 active:bg-purple-700 text-white transition-colors disabled:opacity-50 cursor-pointer shadow active:scale-95 shrink-0"
+                              >
+                                {isPending && selectedTableId === primaryId ? 'Assigning...' : `Seat Tables ${comboLabel}`}
+                              </button>
+                            </div>
                           </div>
                         );
                       }
 
                       if (table.is_shared) {
+                        const sharedNum = formatTableBadge(getTableNumber(table));
+                        const sharedHeading = formatTableHeading(getTableNumber(table));
                         return (
                           <div
                             key={table.id}
-                            className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 border rounded-2xl bg-amber-950/20 border-amber-500/30 hover:border-amber-500/50 transition-all"
+                            className="p-3.5 sm:p-4 border rounded-2xl bg-amber-950/20 border-amber-500/30 hover:border-amber-500/50 transition-all space-y-3"
                           >
-                            <div className="flex items-center gap-3 min-w-0 flex-1">
-                              <div className="h-9 w-9 rounded-xl flex items-center justify-center font-bold text-xs font-mono bg-amber-500/20 border border-amber-500/40 text-amber-300 shrink-0">
-                                {formatTableBadge(getTableNumber(table))}
-                              </div>
-                              <div className="min-w-0">
-                                <div className="text-xs font-bold text-white flex items-center gap-1.5 flex-wrap">
-                                  <span>{formatTableHeading(getTableNumber(table))}</span>
-                                  <span className="text-[10px] font-bold text-amber-300">• Total Cap {table.capacity}</span>
-                                  <span className="px-1.5 py-0.5 rounded bg-amber-500/30 border border-amber-500/40 text-amber-200 text-[9px] font-black uppercase">
-                                    Shared Table
-                                  </span>
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                              <div className="flex items-center gap-3.5 min-w-0 flex-1">
+                                <div className="h-10 w-10 rounded-xl flex flex-col items-center justify-center font-mono font-black text-xs bg-amber-500/20 border border-amber-500/40 text-amber-300 shrink-0">
+                                  <span className="text-[9px] uppercase font-sans text-amber-400/80 leading-none">Shared</span>
+                                  <span>{sharedNum}</span>
                                 </div>
-                                <span className="text-[10px] text-slate-400 truncate block mt-0.5">
-                                  {table.reason || `Shared seating available`}
-                                </span>
+                                <div className="min-w-0 space-y-0.5">
+                                  <div className="text-xs font-bold text-white flex items-center gap-1.5 flex-wrap">
+                                    <span className="text-sm font-black">{sharedHeading}</span>
+                                    <span className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-200 border border-amber-500/30">
+                                      Total Cap {table.capacity}
+                                    </span>
+                                    <span className="px-1.5 py-0.5 rounded bg-amber-500/30 text-amber-200 text-[9px] font-black uppercase">
+                                      Shared Table
+                                    </span>
+                                  </div>
+                                  <p className="text-xs text-slate-400">
+                                    {table.reason || 'Shared seating available for this party'}
+                                  </p>
+                                </div>
                               </div>
-                            </div>
 
-                            <button
-                              type="button"
-                              onClick={() => handleSeat(table.id)}
-                              disabled={isPending}
-                              className="w-full sm:w-auto px-4 py-2 font-bold text-xs rounded-xl bg-amber-600 hover:bg-amber-500 active:bg-amber-700 text-white transition-colors disabled:opacity-50 cursor-pointer shadow active:scale-95 shrink-0"
-                            >
-                              {isPending && selectedTableId === table.id ? 'Assigning...' : 'Seat at Shared Table'}
-                            </button>
+                              <button
+                                type="button"
+                                onClick={() => handleSeat(table.id)}
+                                disabled={isPending}
+                                className="w-full sm:w-auto px-4 py-2 font-black text-xs rounded-xl bg-amber-600 hover:bg-amber-500 active:bg-amber-700 text-white transition-colors disabled:opacity-50 cursor-pointer shadow active:scale-95 shrink-0"
+                              >
+                                {isPending && selectedTableId === table.id ? 'Assigning...' : `Seat at ${sharedHeading}`}
+                              </button>
+                            </div>
                           </div>
                         );
                       }
 
+                      const cleanNum = cleanTablePrefix(getTableNumber(table));
+                      const tableHeading = formatTableHeading(getTableNumber(table));
+                      const cap = table.capacity || 0;
+                      const extra = cap - actualGuests;
+                      const isExact = extra === 0;
+                      const isOver = extra > 0;
+                      const isRecommended = idx === 0;
+                      const zone = table.restaurant_zones?.name || table.zoneName;
+
                       return (
                         <div
                           key={table.id}
-                          className={`flex items-center justify-between p-3.5 border rounded-2xl transition-all ${idx === 0 ? 'bg-emerald-950/30 border-emerald-500/30' : 'bg-[#111827] border-white/5 hover:border-white/20'}`}
+                          className={`p-3.5 sm:p-4 border rounded-2xl transition-all ${
+                            isRecommended
+                              ? 'bg-gradient-to-r from-emerald-950/40 via-[#111827] to-emerald-950/20 border-emerald-500/50 shadow-lg shadow-emerald-950/30'
+                              : 'bg-[#111827] border-white/10 hover:border-white/20'
+                          }`}
                         >
-                          <div className="flex items-center gap-3 min-w-0 flex-1">
-                            <div className={`h-9 w-9 rounded-xl flex items-center justify-center font-bold text-sm font-mono shrink-0 ${idx === 0 ? 'bg-emerald-500 text-white' : 'bg-emerald-500/10 border border-emerald-500/30 text-emerald-400'}`}>
-                              {formatTableBadge(getTableNumber(table))}
-                            </div>
-                            <div className="min-w-0">
-                              <div className="text-xs font-bold text-white flex items-center gap-1.5">
-                                <span>{formatTableHeading(getTableNumber(table))}</span>
-                                <span className="text-[10px] font-normal text-slate-400">• Cap {table.capacity}</span>
-                                {idx === 0 && <span className="ml-1 px-1.5 py-0.5 rounded bg-emerald-500 text-white text-[9px] font-black uppercase">Recommended</span>}
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                            {/* Left: Table Identifier & Fit Details */}
+                            <div className="flex items-center gap-3.5 min-w-0 flex-1">
+                              <div
+                                className={`h-10 w-10 rounded-xl flex flex-col items-center justify-center font-mono shrink-0 shadow-sm ${
+                                  isRecommended
+                                    ? 'bg-emerald-500 text-slate-950 font-black'
+                                    : 'bg-slate-800 border border-white/10 text-white font-bold'
+                                }`}
+                              >
+                                <span className={`text-[9px] uppercase font-sans leading-none font-semibold ${isRecommended ? 'text-slate-900/80' : 'text-slate-400'}`}>
+                                  Tbl
+                                </span>
+                                <span className="text-xs font-black leading-tight">{cleanNum}</span>
                               </div>
-                              <span className="text-[10px] text-slate-400 truncate block">
-                                {table.reason || (table.restaurant_zones?.name ? `${table.restaurant_zones.name} • Fits party` : (table.zoneName ? `${table.zoneName} • Fits party` : `Main Area • Rank #${idx + 1}`))}
-                              </span>
-                            </div>
-                          </div>
 
-                          <button
-                            type="button"
-                            onClick={() => handleSeat(table.id)}
-                            disabled={isPending}
-                            className={`px-4 py-2 font-bold text-xs rounded-xl transition-colors disabled:opacity-50 cursor-pointer active:scale-95 shrink-0 ${idx === 0 ? 'bg-emerald-500 hover:bg-emerald-600 text-white shadow' : 'bg-emerald-600 hover:bg-emerald-500 text-white'}`}
-                          >
-                            {isPending && selectedTableId === table.id ? 'Assigning...' : idx === 0 ? 'Seat — Recommended' : 'Seat'}
-                          </button>
+                              <div className="min-w-0 space-y-1">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <span className="text-sm font-black text-white tracking-tight">
+                                    {tableHeading}
+                                  </span>
+                                  <span className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-white/10 text-slate-200">
+                                    Seats {cap}
+                                  </span>
+                                  {zone && (
+                                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-blue-500/15 border border-blue-500/30 text-blue-300">
+                                      {zone}
+                                    </span>
+                                  )}
+                                  {isRecommended && (
+                                    <span className="px-2 py-0.5 rounded-md bg-emerald-500 text-slate-950 text-[10px] font-black uppercase tracking-wider flex items-center gap-1 shadow-sm">
+                                      ⭐ Best Match
+                                    </span>
+                                  )}
+                                  {isExact && !isRecommended && (
+                                    <span className="px-2 py-0.5 rounded-md bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-[10px] font-bold uppercase tracking-wider">
+                                      Exact Fit
+                                    </span>
+                                  )}
+                                </div>
+
+                                {/* Dynamic, human-friendly fit description for staff */}
+                                <p className="text-xs text-slate-400 leading-snug">
+                                  {isExact ? (
+                                    <span className="text-emerald-400 font-medium">
+                                      ✓ Perfect match for your party of {actualGuests}
+                                    </span>
+                                  ) : isOver ? (
+                                    <span>
+                                      Seats party of {actualGuests}{' '}
+                                      <span className="text-slate-400">
+                                        ({extra} extra {extra === 1 ? 'chair' : 'chairs'})
+                                      </span>
+                                    </span>
+                                  ) : (
+                                    <span className="text-rose-400 font-medium">
+                                      ⚠️ Under-capacity (Needs {Math.abs(extra)} more{' '}
+                                      {Math.abs(extra) === 1 ? 'seat' : 'seats'})
+                                    </span>
+                                  )}
+                                </p>
+                              </div>
+                            </div>
+
+                            {/* Right: Clear, unambiguous Seat Button */}
+                            <button
+                              type="button"
+                              onClick={() => handleSeat(table.id)}
+                              disabled={isPending}
+                              className={`w-full sm:w-auto px-4 py-2 font-bold text-xs rounded-xl transition-all cursor-pointer active:scale-95 shrink-0 ${
+                                isRecommended
+                                  ? 'bg-emerald-500 hover:bg-emerald-400 active:bg-emerald-600 text-slate-950 shadow-md font-black'
+                                  : 'bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white'
+                              }`}
+                            >
+                              {isPending && selectedTableId === table.id
+                                ? 'Assigning...'
+                                : `Seat at ${tableHeading}${isRecommended ? ' ⭐' : ''}`}
+                            </button>
+                          </div>
                         </div>
                       );
                     })}
