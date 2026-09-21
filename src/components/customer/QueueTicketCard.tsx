@@ -985,24 +985,54 @@ export function QueueTicketCard({
       {/* STATE C: SEATED — CELEBRATORY DINING CARD */}
       {isSeated && (
         <div className="relative z-10 space-y-5 pt-4 motion-safe:animate-fadeIn">
-          <div className="relative overflow-hidden rounded-3xl border-2 border-emerald-400 bg-gradient-to-br from-emerald-950/80 via-slate-950 to-teal-950/60 p-6 sm:p-7 text-center space-y-3.5 shadow-[0_0_40px_rgba(16,185,129,0.45)]">
+          <div
+            className="relative overflow-hidden rounded-3xl border-2 p-6 sm:p-7 text-center space-y-3.5"
+            style={{
+              borderColor: 'var(--qf-primary)',
+              background: 'linear-gradient(135deg, color-mix(in srgb, var(--qf-primary) 18%, #0a0e17) 0%, #050810 50%, color-mix(in srgb, var(--qf-accent-dine-in) 12%, #0a0e17) 100%)',
+              boxShadow: '0 0 40px color-mix(in srgb, var(--qf-primary) 35%, transparent)',
+            }}
+          >
             {/* Shimmer sweep */}
             <div
               aria-hidden="true"
-              className="pointer-events-none absolute -inset-full top-0 block -rotate-45 bg-gradient-to-r from-transparent via-emerald-300/15 to-transparent opacity-70 animate-[shimmer_3s_infinite]"
+              className="pointer-events-none absolute -inset-full top-0 block -rotate-45 opacity-60 animate-[shimmer_3s_infinite]"
+              style={{ background: 'linear-gradient(90deg, transparent, color-mix(in srgb, var(--qf-primary) 20%, transparent), transparent)' }}
             />
 
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-[var(--qf-success)]/50 bg-[var(--qf-success)]/20 text-[var(--qf-success)] text-xs font-black uppercase tracking-wider shadow-sm">
-              <CheckCircle2 className="h-4 w-4 text-[var(--qf-success)]" />
+            <div
+              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border text-xs font-black uppercase tracking-wider shadow-sm"
+              style={{
+                borderColor: 'color-mix(in srgb, var(--qf-primary) 50%, transparent)',
+                background: 'color-mix(in srgb, var(--qf-primary) 20%, transparent)',
+                color: 'var(--qf-primary)',
+              }}
+            >
+              <CheckCircle2 className="h-4 w-4" style={{ color: 'var(--qf-primary)' }} />
               <span>{isCompleted ? 'Dining completed' : '🎉 You Are Seated!'}</span>
             </div>
 
-            <h2 className="text-2xl sm:text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-emerald-100 to-teal-200 tracking-tight drop-shadow-md">
+            <h2
+              className="text-2xl sm:text-3xl font-black tracking-tight drop-shadow-md"
+              style={{
+                backgroundImage: 'linear-gradient(to right, #ffffff, color-mix(in srgb, var(--qf-primary) 60%, white), var(--qf-accent-dine-in))',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text',
+              }}
+            >
               {isCompleted ? 'Thank you for dining with us!' : 'Welcome to Your Table!'}
             </h2>
 
             {tableDisplay && !isCompleted && (
-              <div className="inline-flex items-center gap-2 rounded-2xl border-2 border-[var(--qf-success)]/60 bg-[var(--qf-success)]/25 px-5 py-2 shadow-lg shadow-emerald-950/50">
+              <div
+                className="inline-flex items-center gap-2 rounded-2xl border-2 px-5 py-2 shadow-lg"
+                style={{
+                  borderColor: 'color-mix(in srgb, var(--qf-primary) 60%, transparent)',
+                  background: 'color-mix(in srgb, var(--qf-primary) 25%, transparent)',
+                  boxShadow: '0 4px 20px color-mix(in srgb, var(--qf-primary) 20%, transparent)',
+                }}
+              >
                 <span className="text-xl">🪑</span>
                 <p className="font-mono text-lg font-black text-white tracking-wide">
                   Table {tableDisplay}
@@ -1010,7 +1040,7 @@ export function QueueTicketCard({
               </div>
             )}
 
-            <p className="text-xs sm:text-sm text-emerald-100/90 font-medium leading-relaxed max-w-[320px] mx-auto">
+            <p className="text-xs sm:text-sm font-medium leading-relaxed max-w-[320px] mx-auto" style={{ color: 'color-mix(in srgb, var(--qf-primary) 40%, white)' }}>
               {isCompleted
                 ? 'We hope you enjoyed your visit. You have exited the queue.'
                 : 'Your wait is over — sit back, relax, and enjoy a wonderful meal!'}

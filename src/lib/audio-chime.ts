@@ -43,11 +43,11 @@ class AudioChimeEngine {
    * Plays directly through native HTML5 Audio element + Web Audio synth for 100% reliability.
    */
   playCallChime() {
-    // 1. Play dedicated button click WAV directly via HTML5 Audio
+    // 1. Play dedicated button click WAV at moderate volume
     try {
       if (typeof window !== 'undefined' && typeof Audio !== 'undefined') {
         const directAudio = new Audio('/brand/button-click.wav');
-        directAudio.volume = 1.0;
+        directAudio.volume = 0.65;
         const p = directAudio.play();
         if (p) p.catch(() => {});
       }
@@ -65,7 +65,7 @@ class AudioChimeEngine {
         clickOsc.type = 'square';
         clickOsc.frequency.setValueAtTime(1200, now);
         clickOsc.frequency.exponentialRampToValueAtTime(180, now + 0.035);
-        clickGain.gain.setValueAtTime(0.85, now);
+        clickGain.gain.setValueAtTime(0.45, now);
         clickGain.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
         clickOsc.connect(clickGain);
         clickGain.connect(ctx.destination);
@@ -80,7 +80,7 @@ class AudioChimeEngine {
         chimeOsc.frequency.exponentialRampToValueAtTime(880.00, now + 0.14);
 
         chimeGain.gain.setValueAtTime(0.001, now);
-        chimeGain.gain.linearRampToValueAtTime(0.80, now + 0.03);
+        chimeGain.gain.linearRampToValueAtTime(0.42, now + 0.03);
         chimeGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.55);
 
         chimeOsc.connect(chimeGain);
@@ -95,7 +95,7 @@ class AudioChimeEngine {
         harmOsc.frequency.setValueAtTime(1174.66, now);
         harmOsc.frequency.exponentialRampToValueAtTime(1760.00, now + 0.14);
         harmGain.gain.setValueAtTime(0.001, now);
-        harmGain.gain.linearRampToValueAtTime(0.45, now + 0.03);
+        harmGain.gain.linearRampToValueAtTime(0.22, now + 0.03);
         harmGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.40);
         harmOsc.connect(harmGain);
         harmGain.connect(ctx.destination);
@@ -134,7 +134,7 @@ class AudioChimeEngine {
     try {
       if (typeof window !== 'undefined' && typeof Audio !== 'undefined') {
         const directAudio = new Audio('/brand/pager-chime.wav');
-        directAudio.volume = 1.0;
+        directAudio.volume = 0.75;
         const p = directAudio.play();
         if (p) p.catch(() => {});
       }
@@ -164,7 +164,7 @@ class AudioChimeEngine {
             osc.type = idx === 0 ? 'triangle' : 'sine';
             osc.frequency.setValueAtTime(f, now + start);
 
-            const peakVol = idx === 0 ? 0.98 : 0.65;
+            const peakVol = idx === 0 ? 0.55 : 0.38;
             gain.gain.setValueAtTime(0.01, now + start);
             gain.gain.linearRampToValueAtTime(peakVol, now + start + 0.008);
             gain.gain.setValueAtTime(peakVol, now + start + dur - 0.02);
@@ -206,7 +206,7 @@ class AudioChimeEngine {
     try {
       if (typeof window !== 'undefined' && typeof Audio !== 'undefined') {
         const directAudio = new Audio('/brand/seat-chime.wav');
-        directAudio.volume = 1.0;
+        directAudio.volume = 0.70;
         const p = directAudio.play();
         if (p) p.catch(() => {});
       }
@@ -225,7 +225,7 @@ class AudioChimeEngine {
           osc.frequency.setValueAtTime(freq, now + idx * 0.09);
 
           gain.gain.setValueAtTime(0.01, now + idx * 0.09);
-          gain.gain.linearRampToValueAtTime(0.75, now + idx * 0.09 + 0.02);
+          gain.gain.linearRampToValueAtTime(0.40, now + idx * 0.09 + 0.02);
           gain.gain.exponentialRampToValueAtTime(0.0001, now + idx * 0.09 + 0.45);
 
           osc.connect(gain);
@@ -254,7 +254,7 @@ class AudioChimeEngine {
     try {
       if (typeof window !== 'undefined' && typeof Audio !== 'undefined') {
         const directAudio = new Audio('/brand/alert-chime.wav');
-        directAudio.volume = 1.0;
+        directAudio.volume = 0.65;
         const p = directAudio.play();
         if (p) p.catch(() => {});
       }
@@ -273,7 +273,7 @@ class AudioChimeEngine {
           osc.frequency.setValueAtTime(freq, now + idx * 0.12);
 
           gain.gain.setValueAtTime(0.01, now + idx * 0.12);
-          gain.gain.linearRampToValueAtTime(0.70, now + idx * 0.12 + 0.02);
+          gain.gain.linearRampToValueAtTime(0.38, now + idx * 0.12 + 0.02);
           gain.gain.exponentialRampToValueAtTime(0.0001, now + idx * 0.12 + 0.40);
 
           osc.connect(gain);
