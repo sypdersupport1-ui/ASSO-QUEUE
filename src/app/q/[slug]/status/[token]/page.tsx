@@ -7,6 +7,7 @@ import { NotificationService } from '@/lib/services/notification-service';
 import { QueueTicketCard } from '@/components/customer/QueueTicketCard';
 import { TakeawayTicketCard } from '@/components/customer/TakeawayTicketCard';
 import { TicketNotificationBanner, type TicketNotification } from '@/components/customer/TicketNotificationBanner';
+import { CustomerLockscreenNotificationBanner } from '@/components/customer/CustomerLockscreenNotificationBanner';
 import { KitchenPreOrderCard } from '@/components/customer/KitchenPreOrderCard';
 import { CustomerOrdersCard } from '@/components/customer/CustomerOrdersCard';
 import { OrderService } from '@/lib/services/order-service';
@@ -199,6 +200,9 @@ export default async function CustomerQueueStatusPage({
       </header>
 
       {/* 3. Hero ticket */}
+      {!isTerminal && (
+        <CustomerLockscreenNotificationBanner restaurantName={restaurant.name} />
+      )}
       <TicketNotificationBanner notification={ticketNotification} />
       {status.queueType === 'TAKEAWAY' ? (
         <TakeawayTicketCard

@@ -22,6 +22,12 @@ class AudioChimeEngine {
     return this.ctx;
   }
 
+  initAudio() {
+    try {
+      this.getContext();
+    } catch {}
+  }
+
   playCallChime() {
     try {
       const ctx = this.getContext();

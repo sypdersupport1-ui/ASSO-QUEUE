@@ -21,6 +21,7 @@ import { formatTakeawayTicketNumber } from '@/lib/customer-ticket-ux';
 import { cancelQueuePublicAction } from '@/app/q/actions';
 import { chimeEngine } from '@/lib/audio-chime';
 import { broadcastCustomerQueueUpdate } from '@/lib/realtime/useCustomerQueueRealtime';
+import { useBackgroundQueueMonitor } from '@/lib/notifications/useBackgroundQueueMonitor';
 
 interface TakeawayOrderItem {
   name: string;
@@ -112,6 +113,16 @@ export function TakeawayTicketCard({
   const [isCancelling, setIsCancelling] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [cancelError, setCancelError] = useState<string | null>(null);
+
+  // Background queue monitor for lock-screen alerts & buzzers even when tab is backgrounded
+  useBackgroundQueueMonitor({
+    token,
+    restaurantSlug,
+    initialStatus: status.status,
+    partySize: 1,
+    ticketNo,
+    isTerminal: isCancelled || isExpired,
+  });
 
   // Format currency
   const locale = currency === 'INR' ? 'en-IN' : 'en-US';
