@@ -104,7 +104,7 @@ describe('Customer Table-Call Response Flow (End-to-End)', () => {
     });
 
     it('displays delay notice with arrival confirmation button when delayed', () => {
-      expect(cardCode).toContain('Delay Requested (+');
+      expect(cardCode).toContain('min requested');
       expect(cardCode).toContain("I&apos;ve Arrived — Ready for Table");
     });
 
@@ -136,7 +136,7 @@ describe('Customer Table-Call Response Flow (End-to-End)', () => {
     it('displays CALLED · DELAY (+Xm) badge in DashboardClient when customer requested delay', () => {
       expect(dashboardCode).toContain("response === 'DELAY_REQUESTED'");
       expect(dashboardCode).toContain('CALLED · DELAY (+');
-      expect(dashboardCode).toContain('Delay requested (+');
+      expect(dashboardCode).toContain('Delay (+');
     });
 
     it('displays CALLED · AWAITING RESPONSE badge when waiting for guest', () => {

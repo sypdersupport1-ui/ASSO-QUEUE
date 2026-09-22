@@ -760,13 +760,16 @@ export function LiveQueueFeedClient({
                         </span>
                       </div>
 
-                      {/* Takeaway Order Breakdown Pill */}
-                      {isTakeaway && (
+                      {/* Order Breakdown Pill (Pre-ordered dishes & Takeaway orders) */}
+                      {(linkedOrder || isTakeaway) && (
                         <div className="mt-2 p-2.5 rounded-xl bg-white/[0.03] border border-white/5 flex flex-col gap-1">
                           {linkedOrder ? (
                             <div className="flex flex-col gap-1">
                               <div className="flex items-center justify-between gap-2 flex-wrap text-xs">
-                                <div className="flex items-center gap-1.5">
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                  <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase px-2 py-0.5 rounded-md bg-amber-500/15 border border-amber-500/30 text-amber-300 shrink-0">
+                                    {isTakeaway ? '🛍️ TAKEAWAY ORDER' : '🍽️ PRE-ORDERED DISHES'}
+                                  </span>
                                   <span className="font-bold text-white">Order #{linkedOrder.orderNumber}</span>
                                   <span className="text-slate-400 text-[11px]">
                                     ({linkedOrder.itemCount} {linkedOrder.itemCount === 1 ? 'item' : 'items'})
@@ -791,7 +794,7 @@ export function LiveQueueFeedClient({
                                 </div>
                               </div>
                               {linkedOrder.items && linkedOrder.items.length > 0 && (
-                                <div className="text-[11px] text-slate-400 truncate">
+                                <div className="text-[11px] text-slate-300 font-medium truncate pt-0.5">
                                   {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                                   {linkedOrder.items.map((i: any) => `${i.name} × ${i.quantity}`).join(' · ')}
                                 </div>

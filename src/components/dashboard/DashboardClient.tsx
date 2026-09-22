@@ -364,6 +364,11 @@ export function DashboardClient({
                                 <span>⭐</span> VIP
                               </span>
                             )}
+                            {hasPreOrder && (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 text-[10px] font-black border border-emerald-500/30 shrink-0">
+                                <span>🍽️</span> PRE-ORDERED
+                              </span>
+                            )}
                             {isLargeGroup && (
                               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-orange-500/15 text-orange-400 text-[10px] font-black border border-orange-500/30 shrink-0">
                                 <span>🔥</span> Large Group

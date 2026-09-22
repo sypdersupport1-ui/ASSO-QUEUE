@@ -254,7 +254,15 @@ export class OrderService {
       },
     });
 
-    // 7b. Publish Outbox Event for Background Worker & Notifications
+    // 7b. Touch queue_entries.updated_at to trigger real-time updates on staff dashboard
+    if (validated.queueEntryId) {
+      await supabase
+        .from('queue_entries')
+        .update({ updated_at: new Date().toISOString() })
+        .eq('id', validated.queueEntryId);
+    }
+
+    // 7c. Publish Outbox Event for Background Worker & Notifications
     try {
       await OutboxService.publishEvent({
         restaurantId: validated.restaurantId,
