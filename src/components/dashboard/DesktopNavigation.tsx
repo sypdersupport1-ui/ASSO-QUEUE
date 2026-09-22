@@ -31,16 +31,13 @@ export default function DesktopNavigation({ activeQueueCount, children }: Deskto
     <aside className="hidden md:flex fixed left-0 top-0 h-screen w-64 bg-[#0A0E17] border-r border-white/5 z-50 flex-col justify-between overflow-y-auto font-sans text-slate-300">
       <div className="flex flex-col">
         {/* Logo Area */}
-        <div className="h-20 px-6 flex flex-col justify-center border-b border-white/5">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded bg-primary/20 border border-primary/30 flex items-center justify-center">
-              <span className="material-symbols-outlined text-[18px] text-primary">restaurant</span>
-            </div>
-            <div className="flex flex-col">
-              <span className="font-headline-sm text-[16px] text-white font-black tracking-tight leading-none">QueueFlow</span>
-              <span className="text-[8px] text-slate-400 font-mono tracking-widest uppercase mt-0.5">COMMAND OS • HOST STATION</span>
-            </div>
-          </div>
+        <div className="h-20 px-5 flex flex-col justify-center border-b border-white/5">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/brand/asso/asso-customer-white.png"
+            alt="ASSO — Business Management & Q"
+            className="h-10 w-auto object-contain select-none"
+          />
         </div>
         
         <div className="px-4 pt-6">

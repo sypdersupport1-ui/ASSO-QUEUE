@@ -3,7 +3,7 @@
 import { useActionState } from 'react';
 import { loginAction } from './actions';
 import { motion } from 'framer-motion';
-import { Lock, Mail, ArrowRight, ShieldCheck } from 'lucide-react';
+import { Lock, Mail, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import { ThemeToggle } from '@/components/ThemeToggle';
 
@@ -30,10 +30,13 @@ export default function LoginPage() {
         className="w-full max-w-md relative z-10"
       >
         <div className="rounded-3xl border border-slate-800 bg-slate-900/60 p-8 shadow-2xl backdrop-blur-xl">
-          <div className="mb-8 text-center">
-            <div className="mx-auto mb-4 w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center shadow-lg shadow-emerald-500/20">
-              <ShieldCheck className="w-6 h-6 text-slate-950" />
-            </div>
+          <div className="mb-8 text-center flex flex-col items-center">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/brand/asso/asso-customer-white.png"
+              alt="ASSO — Business Management & Q"
+              className="h-12 w-auto object-contain select-none mb-4"
+            />
             <h1 className="text-3xl font-extrabold text-white tracking-tight">Welcome Back</h1>
             <p className="mt-2 text-sm text-slate-400">Sign in to your administrative dashboard</p>
           </div>
