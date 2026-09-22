@@ -22,7 +22,7 @@ export function CustomerPlatformBrand() {
         alt="ASSO — Business Management & Q"
         width={1024}
         height={341}
-        className="h-10 sm:h-11 w-auto object-contain select-none"
+        className="h-10 sm:h-11 w-auto object-contain select-none mix-blend-screen drop-shadow-md"
         decoding="async"
       />
     </div>
