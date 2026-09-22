@@ -128,8 +128,7 @@ export function CustomerShell({
       {/* ── Layer 5: Branded Hospitality Footer ──────────────────────────────── */}
       {!hideFooter && (
         <footer
-          className="relative mx-auto w-full max-w-md px-4 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-5 text-center space-y-1"
-          style={{ zIndex: bgImage || cssBackground ? 10 : undefined }}
+          className="relative z-0 mx-auto w-full max-w-md px-4 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-5 text-center space-y-1 select-none pointer-events-none"
         >
           <div aria-hidden="true" className="flex justify-center text-amber-400/70 text-xs select-none">
             ✦

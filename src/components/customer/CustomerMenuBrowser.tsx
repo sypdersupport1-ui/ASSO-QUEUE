@@ -309,7 +309,7 @@ export function CustomerMenuBrowser({
     .filter((cat) => cat.items.length > 0);
 
   return (
-    <div className="space-y-4 pb-28">
+    <div className={`space-y-4 ${totalItemsCount > 0 ? 'pb-44' : 'pb-28'}`}>
       {/* Phase 4H: a CALLED customer browsing the menu gets one dominant,
           honest instruction — return first, browse later. No duplicate
           urgency banners; the ticket hero remains the authority. */}
@@ -526,17 +526,26 @@ export function CustomerMenuBrowser({
 
       {/* Floating Cart Sticky Bottom Bar */}
       {!orderingDisabled && totalItemsCount > 0 && (
-        <div className="fixed bottom-4 inset-x-4 max-w-md mx-auto z-50 animate-in fade-in slide-in-from-bottom-2 duration-200">
-          <div className="customer-glass-card flex items-center justify-between gap-3 rounded-2xl border border-[var(--qf-border)] bg-[var(--qf-surface)]/95 px-4 py-3 shadow-2xl backdrop-blur-xl">
-            <div className="flex items-center gap-3 min-w-0">
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[var(--qf-primary)]/15 text-[var(--qf-primary)] border border-[var(--qf-primary)]/25">
-                <span className="material-symbols-outlined text-[18px]">shopping_bag</span>
+        <div className="fixed bottom-[max(1rem,env(safe-area-inset-bottom,1rem))] inset-x-3 sm:inset-x-4 max-w-md mx-auto z-50 animate-in fade-in slide-in-from-bottom-2 duration-200">
+          <div
+            onClick={() => setIsCartOpen(true)}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => e.key === 'Enter' && setIsCartOpen(true)}
+            aria-label={`View cart with ${totalItemsCount} items totaling ${formatPrice(cartSubtotal)}`}
+            className="flex items-center justify-between gap-3 rounded-2xl border border-[var(--qf-border)] bg-[#0B0F19] p-3.5 sm:px-4 sm:py-3.5 shadow-[0_12px_45px_rgba(0,0,0,0.95)] ring-1 ring-white/10 cursor-pointer active:scale-[0.99] transition-all group"
+          >
+            <div className="flex items-center gap-3 min-w-0 flex-1">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[var(--qf-primary)]/20 text-[var(--qf-primary)] border border-[var(--qf-primary)]/30 group-hover:scale-105 transition-transform">
+                <span className="material-symbols-outlined text-[20px]">shopping_bag</span>
               </div>
-              <div className="min-w-0">
-                <p className="text-xs font-bold text-white truncate">
-                  {totalItemsCount} {totalItemsCount === 1 ? 'item' : 'items'} · <span className="font-mono text-[var(--qf-primary)]">{formatPrice(cartSubtotal)}</span>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs sm:text-sm font-black text-white truncate flex items-center gap-1.5">
+                  <span>{totalItemsCount} {totalItemsCount === 1 ? 'item' : 'items'}</span>
+                  <span className="text-slate-500">·</span>
+                  <span className="font-mono text-[var(--qf-primary)]">{formatPrice(cartSubtotal)}</span>
                 </p>
-                <p className="text-[11px] text-slate-400 truncate">
+                <p className="text-[11px] text-slate-400 truncate mt-0.5">
                   Pre-ordering while waiting
                 </p>
               </div>
@@ -544,11 +553,14 @@ export function CustomerMenuBrowser({
 
             <button
               type="button"
-              onClick={() => setIsCartOpen(true)}
-              className="customer-primary-cta shrink-0 px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 active:scale-95 shadow-md cursor-pointer"
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsCartOpen(true);
+              }}
+              className="customer-primary-cta shrink-0 px-4 py-2.5 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 shadow-lg active:scale-95 cursor-pointer min-h-[40px]"
             >
               <span>View cart</span>
-              <span className="material-symbols-outlined text-[15px]">arrow_forward</span>
+              <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
             </button>
           </div>
         </div>
