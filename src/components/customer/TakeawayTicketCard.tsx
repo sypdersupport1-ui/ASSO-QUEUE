@@ -487,9 +487,9 @@ export function TakeawayTicketCard({
         <div className="relative z-10 space-y-3.5 pt-1 animate-fadeUp">
           {isReady ? (
             /* Sub-state: Order is READY for collection */
-            <div className="relative overflow-hidden rounded-2xl border border-emerald-400/60 bg-gradient-to-b from-emerald-950/60 via-slate-900 to-teal-950/40 p-5 sm:p-6 text-center shadow-lg space-y-3 motion-safe:animate-fadeIn">
-              <div className="relative mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                <Sparkles className="h-6 w-6 text-emerald-300" aria-hidden="true" />
+            <div className="relative overflow-hidden rounded-2xl border border-[var(--qf-success)]/60 bg-gradient-to-b from-emerald-950/60 via-slate-900 to-teal-950/40 p-5 sm:p-6 text-center shadow-lg space-y-3 motion-safe:animate-fadeIn">
+              <div className="relative mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--qf-success)]/20 text-[var(--qf-success)] border border-[var(--qf-success)]/30">
+                <Sparkles className="h-6 w-6 text-[var(--qf-success)]" aria-hidden="true" />
               </div>
 
               <div>
@@ -500,7 +500,7 @@ export function TakeawayTicketCard({
                 <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
                   Ready for Collection!
                 </h2>
-                <p className="text-xs sm:text-sm font-semibold text-emerald-200 mt-1">
+                <p className="text-xs sm:text-sm font-semibold text-[var(--qf-success)] mt-1">
                   Ticket {ticketNo} — Your food is packed and waiting!
                 </p>
               </div>

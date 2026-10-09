@@ -771,7 +771,7 @@ export function QueueTicketCard({
             <div className="customer-glass-surface p-5 text-center space-y-3 shadow-md motion-safe:animate-fadeIn">
               <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-[var(--qf-warning)]">
                 <Clock className="h-4 w-4 text-[var(--qf-warning)]" />
-                Call Expired
+                CALL EXPIRED
               </div>
               <h2 className="text-xl sm:text-2xl font-black text-white">
                 Your table call window has passed
@@ -791,10 +791,10 @@ export function QueueTicketCard({
             <div className="customer-glass-card p-5 text-center space-y-3 shadow-md motion-safe:animate-fadeIn">
               <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-[var(--qf-success)]">
                 <CheckCircle2 className="h-4 w-4 text-[var(--qf-success)]" />
-                Your Turn Is Here
+                YOUR TURN IS HERE
               </div>
               <h2 className="text-xl sm:text-2xl font-black text-white">
-                Please return to the restaurant now
+                Please return to the restaurant now.
               </h2>
               <div className="inline-block rounded-full border border-[var(--qf-border)] bg-white/5 px-4 py-1">
                 <span className="text-xs font-bold text-[var(--qf-success)]">
@@ -826,10 +826,10 @@ export function QueueTicketCard({
                 <div className="customer-glass-surface p-5 text-center space-y-3 shadow-md motion-safe:animate-fadeIn">
                   <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-[var(--qf-warning)]">
                     <Clock className="h-4 w-4 text-[var(--qf-warning)]" />
-                    Your Turn Is Here
+                    YOUR TURN IS HERE
                   </div>
                   <h2 className="text-xl sm:text-2xl font-black text-white">
-                    Please return to the restaurant
+                    Please return to the restaurant now.
                   </h2>
 
                   {/* Prominent Live Ticking Delay Timer Badge */}
