@@ -51,7 +51,6 @@ export function QueueTicketCard({
   status: initialStatus,
   token,
   restaurantSlug,
-  restaurantName: _restaurantName,
   queueEnabled = true,
   operatingState = 'OPEN',
 }: QueueTicketCardProps) {
