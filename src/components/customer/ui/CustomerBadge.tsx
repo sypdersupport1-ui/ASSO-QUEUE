@@ -20,11 +20,11 @@ export function CustomerBadge({
   icon,
 }: CustomerBadgeProps) {
   const variantStyles = {
-    success: 'border-[var(--qf-success)]/30 bg-[var(--qf-success)]/10 text-[var(--qf-success)]',
-    warning: 'border-[var(--qf-warning)]/30 bg-[var(--qf-warning)]/10 text-[var(--qf-warning)]',
-    info: 'border-[var(--qf-accent-dine-in)]/30 bg-[var(--qf-accent-dine-in)]/10 text-[var(--qf-accent-dine-in)]',
+    success: 'border-[var(--qf-success)]/25 bg-[var(--qf-success)]/10 text-[var(--qf-success)]',
+    warning: 'border-[var(--qf-warning)]/25 bg-[var(--qf-warning)]/10 text-[var(--qf-warning)]',
+    info: 'border-[var(--qf-accent-dine-in)]/25 bg-[var(--qf-accent-dine-in)]/10 text-[var(--qf-accent-dine-in)]',
     neutral: 'border-[var(--qf-border)] bg-white/[0.04] text-slate-300',
-    danger: 'border-[var(--qf-danger)]/30 bg-[var(--qf-danger)]/10 text-[var(--qf-danger)]',
+    danger: 'border-[var(--qf-danger)]/25 bg-[var(--qf-danger)]/10 text-[var(--qf-danger)]',
   };
 
   const dotColors = {
@@ -37,7 +37,7 @@ export function CustomerBadge({
 
   return (
     <span
-      className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider ${variantStyles[variant]} ${className}`}
+      className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[10.5px] font-bold uppercase tracking-wider ${variantStyles[variant]} ${className}`}
     >
       {pulse ? (
         <span aria-hidden="true" className="relative flex h-1.5 w-1.5 shrink-0">

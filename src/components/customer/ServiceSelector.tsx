@@ -48,17 +48,17 @@ export function ServiceSelector({
               onSelectService('DINE_IN');
             }
           }}
-          className={`group flex flex-col items-center justify-center p-4 rounded-2xl border transition-all active:scale-[0.98] cursor-pointer text-center min-h-[110px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--qf-accent-dine-in)] ${
+          className={`group relative flex flex-col items-center justify-center p-4 rounded-2xl border transition-all duration-200 active:scale-[0.98] cursor-pointer text-center min-h-[110px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--qf-accent-dine-in)] ${
             selectedService === 'DINE_IN'
-              ? 'border-[var(--qf-accent-dine-in)] bg-[var(--qf-accent-dine-in-glow)] shadow-lg text-white ring-1 ring-[var(--qf-accent-dine-in)]/40'
-              : 'border-[var(--qf-border)] bg-[var(--qf-surface)]/60 hover:border-[var(--qf-border-hover)] hover:bg-[var(--qf-surface)] text-slate-300 hover:text-white'
+              ? 'border-[var(--qf-accent-dine-in)]/80 border-t-blue-400/40 bg-[var(--qf-accent-dine-in-glow)] shadow-md shadow-blue-500/10 text-white'
+              : 'border-[var(--qf-border)] border-t-white/[0.12] bg-white/[0.025] hover:border-[var(--qf-border-hover)] hover:bg-white/[0.05] text-slate-300 hover:text-white'
           }`}
         >
           <div
-            className={`flex h-11 w-11 items-center justify-center rounded-xl mb-2 transition-all ${
+            className={`flex h-11 w-11 items-center justify-center rounded-xl mb-2 transition-all duration-200 ${
               selectedService === 'DINE_IN'
-                ? 'bg-[var(--qf-accent-dine-in)] text-white shadow-md'
-                : 'bg-white/[0.04] border border-white/10 text-[var(--qf-text-secondary)]'
+                ? 'bg-[var(--qf-accent-dine-in)] text-white shadow-sm'
+                : 'bg-white/[0.04] border border-white/10 text-[var(--qf-text-secondary)] group-hover:text-white'
             }`}
           >
             <UtensilsCrossed className="h-5 w-5" />
@@ -66,7 +66,7 @@ export function ServiceSelector({
           <span className="text-xs sm:text-sm font-black tracking-wider uppercase">
             Dine-In
           </span>
-          <span className="text-[11px] text-[var(--qf-text-secondary)]/75 mt-0.5 leading-tight">
+          <span className="text-[11px] text-[var(--qf-text-secondary)]/80 mt-0.5 leading-tight">
             Table service inside
           </span>
         </button>
@@ -84,17 +84,17 @@ export function ServiceSelector({
               onSelectService('TAKEAWAY');
             }
           }}
-          className={`group flex flex-col items-center justify-center p-4 rounded-2xl border transition-all active:scale-[0.98] cursor-pointer text-center min-h-[110px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--qf-accent-takeaway)] ${
+          className={`group relative flex flex-col items-center justify-center p-4 rounded-2xl border transition-all duration-200 active:scale-[0.98] cursor-pointer text-center min-h-[110px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--qf-accent-takeaway)] ${
             selectedService === 'TAKEAWAY'
-              ? 'border-[var(--qf-accent-takeaway)] bg-[var(--qf-accent-takeaway-glow)] shadow-lg text-white ring-1 ring-[var(--qf-accent-takeaway)]/40'
-              : 'border-[var(--qf-border)] bg-[var(--qf-surface)]/60 hover:border-[var(--qf-border-hover)] hover:bg-[var(--qf-surface)] text-slate-300 hover:text-white'
+              ? 'border-[var(--qf-accent-takeaway)]/80 border-t-amber-400/40 bg-[var(--qf-accent-takeaway-glow)] shadow-md shadow-amber-500/10 text-white'
+              : 'border-[var(--qf-border)] border-t-white/[0.12] bg-white/[0.025] hover:border-[var(--qf-border-hover)] hover:bg-white/[0.05] text-slate-300 hover:text-white'
           }`}
         >
           <div
-            className={`flex h-11 w-11 items-center justify-center rounded-xl mb-2 transition-all ${
+            className={`flex h-11 w-11 items-center justify-center rounded-xl mb-2 transition-all duration-200 ${
               selectedService === 'TAKEAWAY'
-                ? 'bg-[var(--qf-accent-takeaway)] text-[var(--qf-primary-foreground)] shadow-md font-bold'
-                : 'bg-white/[0.04] border border-white/10 text-[var(--qf-text-secondary)]'
+                ? 'bg-[var(--qf-accent-takeaway)] text-slate-950 shadow-sm font-bold'
+                : 'bg-white/[0.04] border border-white/10 text-[var(--qf-text-secondary)] group-hover:text-white'
             }`}
           >
             <ShoppingBag className="h-5 w-5" />
@@ -102,7 +102,7 @@ export function ServiceSelector({
           <span className="text-xs sm:text-sm font-black tracking-wider uppercase">
             Takeaway
           </span>
-          <span className="text-[11px] text-[var(--qf-text-secondary)]/75 mt-0.5 leading-tight">
+          <span className="text-[11px] text-[var(--qf-text-secondary)]/80 mt-0.5 leading-tight">
             Order &amp; collect
           </span>
         </button>

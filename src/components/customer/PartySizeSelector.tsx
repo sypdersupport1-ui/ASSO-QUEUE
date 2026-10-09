@@ -40,7 +40,7 @@ export function PartySizeSelector({
         role="group"
         aria-labelledby="party-size-label"
         aria-describedby={describedBy}
-        className="flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-md p-2.5 sm:p-3"
+        className="flex items-center justify-between gap-3 rounded-2xl border border-[var(--qf-border)] border-t-white/[0.12] bg-white/[0.03] backdrop-blur-xl p-2.5 sm:p-3 shadow-sm"
       >
         <button
           type="button"
@@ -53,7 +53,7 @@ export function PartySizeSelector({
         </button>
 
         <div className="flex-1 text-center select-none" aria-live="polite" aria-atomic="true">
-          <p className="flex items-center justify-center gap-2 text-2xl sm:text-3xl font-black tabular-nums text-white">
+          <p className="flex items-center justify-center gap-1.5 text-2xl sm:text-3xl font-black tabular-nums text-white">
             {value}
             <Users aria-hidden="true" className="h-4 w-4 text-[var(--qf-primary)] shrink-0" />
           </p>
@@ -67,7 +67,7 @@ export function PartySizeSelector({
           onClick={() => onChange(Math.min(max, value + 1))}
           disabled={disabled || value >= max}
           aria-label="Increase party size by one"
-          className="customer-glass-control flex h-11 w-11 sm:h-12 sm:w-12 items-center justify-center rounded-xl border border-[var(--qf-primary)]/30 bg-[var(--qf-primary-glow)] text-[var(--qf-primary)] active:scale-95 disabled:cursor-not-allowed disabled:opacity-20 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--qf-primary)]"
+          className="flex h-11 w-11 sm:h-12 sm:w-12 items-center justify-center rounded-xl border border-[var(--qf-primary)]/40 bg-[var(--qf-primary-glow)] text-[var(--qf-primary)] hover:bg-[var(--qf-primary)]/20 active:scale-95 disabled:cursor-not-allowed disabled:opacity-20 cursor-pointer transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--qf-primary)]"
         >
           <Plus aria-hidden="true" className="h-4 w-4" />
         </button>

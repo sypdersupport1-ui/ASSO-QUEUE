@@ -152,7 +152,7 @@ export function CustomerJoinFlow({
             />
           </div>
         ) : (
-          <div className="rounded-2xl border border-[var(--qf-accent-takeaway)]/25 bg-[var(--qf-accent-takeaway-glow)] p-3 text-center">
+          <div className="rounded-2xl border border-[var(--qf-accent-takeaway)]/25 border-t-amber-400/30 bg-[var(--qf-accent-takeaway-glow)] p-3 text-center">
             <p className="text-xs font-bold text-[var(--qf-accent-takeaway)]">
               Takeaway Counter Service
             </p>
@@ -163,7 +163,7 @@ export function CustomerJoinFlow({
         )}
 
         {/* 8. Join Queue Primary CTA (Directly after Party Size, 52–60px tall) */}
-        <div className="pt-1.5 space-y-2">
+        <div className="pt-1 space-y-2">
           {name.trim() ? (
             <div className="flex items-center justify-between px-1 text-xs text-slate-300">
               <span className="truncate">
@@ -182,9 +182,9 @@ export function CustomerJoinFlow({
           <button
             type="button"
             onClick={handleOpenSheet}
-            className={`customer-primary-cta w-full min-h-[54px] h-14 rounded-2xl flex items-center justify-between px-5 font-black text-sm sm:text-base tracking-wide transition-all active:scale-[0.98] cursor-pointer shadow-lg select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--qf-background)] ${
+            className={`customer-primary-cta w-full min-h-[54px] h-14 rounded-2xl flex items-center justify-between px-5 font-black text-sm sm:text-base tracking-wide transition-all duration-150 active:scale-[0.985] cursor-pointer shadow-lg select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--qf-background)] ${
               isTakeaway
-                ? 'focus-visible:ring-[var(--qf-accent-takeaway)]'
+                ? 'focus-visible:ring-[var(--qf-accent-takeaway)] bg-[var(--qf-accent-takeaway)] text-slate-950 shadow-amber-500/15'
                 : 'focus-visible:ring-[var(--qf-primary)]'
             }`}
           >
@@ -213,14 +213,14 @@ export function CustomerJoinFlow({
           role="dialog"
           aria-modal="true"
           aria-labelledby="join-sheet-title"
-          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/80 backdrop-blur-sm motion-safe:animate-fadeIn"
+          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/80 backdrop-blur-md motion-safe:animate-fadeIn"
           onClick={(e) => {
             if (e.target === e.currentTarget) setIsSheetOpen(false);
           }}
         >
-          <div className="w-full max-w-md rounded-t-3xl sm:rounded-3xl border border-[var(--qf-border)] bg-[var(--qf-surface-solid)]/95 backdrop-blur-xl p-5 sm:p-6 shadow-2xl space-y-4 motion-safe:animate-slideUp max-h-[90dvh] overflow-y-auto">
+          <div className="w-full max-w-md rounded-t-3xl sm:rounded-3xl border border-[var(--qf-border)] border-t-white/[0.16] bg-[var(--qf-surface-solid)]/98 backdrop-blur-2xl p-5 sm:p-6 shadow-2xl space-y-4 motion-safe:animate-slideUp max-h-[90dvh] overflow-y-auto">
             {/* Sheet Header */}
-            <div className="flex items-center justify-between pb-1 border-b border-white/10">
+            <div className="flex items-center justify-between pb-2 border-b border-white/10">
               <div>
                 <h3 id="join-sheet-title" className="text-base sm:text-lg font-black text-white">
                   {isTakeaway ? 'Join Takeaway Line' : 'Join Dine-In Line'}

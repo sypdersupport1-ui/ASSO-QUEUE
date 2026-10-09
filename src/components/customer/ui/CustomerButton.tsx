@@ -29,23 +29,23 @@ export function CustomerButton({
   ...props
 }: CustomerButtonProps) {
   const baseStyles =
-    'relative inline-flex items-center justify-center font-bold tracking-tight rounded-2xl transition-all select-none cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0b0f19] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:active:scale-100';
+    'relative inline-flex items-center justify-center font-bold tracking-tight rounded-2xl transition-all duration-150 select-none cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[#080c14] active:scale-[0.985] disabled:cursor-not-allowed disabled:opacity-50 disabled:active:scale-100';
 
   const sizeStyles = {
     sm: 'h-10 min-h-[40px] px-3.5 text-xs gap-1.5',
     default: 'h-12 min-h-[48px] px-4 text-sm gap-2',
-    lg: 'h-13 min-h-[52px] px-5 text-sm sm:text-base gap-2.5',
+    lg: 'h-14 min-h-[52px] px-5 text-sm sm:text-base gap-2.5',
   };
 
   const variantStyles = {
     primary:
-      'bg-[var(--qf-primary)] hover:bg-[var(--qf-primary-hover)] text-[var(--qf-primary-foreground)] font-black shadow-lg shadow-black/25 focus-visible:ring-[var(--qf-primary)]',
+      'bg-[var(--qf-primary)] hover:bg-[var(--qf-primary-hover)] text-[var(--qf-primary-foreground)] font-black shadow-md shadow-[var(--qf-primary)]/15 focus-visible:ring-[var(--qf-primary)] border border-white/10',
     takeaway:
-      'bg-[var(--qf-accent-takeaway)] hover:opacity-95 text-slate-950 font-black shadow-lg shadow-amber-500/15 focus-visible:ring-[var(--qf-accent-takeaway)]',
+      'bg-[var(--qf-accent-takeaway)] hover:opacity-95 text-slate-950 font-black shadow-md shadow-amber-500/15 focus-visible:ring-[var(--qf-accent-takeaway)] border border-amber-300/20',
     dine_in:
-      'bg-[var(--qf-accent-dine-in)] hover:opacity-95 text-white font-black shadow-lg shadow-blue-600/15 focus-visible:ring-[var(--qf-accent-dine-in)]',
+      'bg-[var(--qf-accent-dine-in)] hover:opacity-95 text-white font-black shadow-md shadow-blue-600/15 focus-visible:ring-[var(--qf-accent-dine-in)] border border-blue-300/20',
     secondary:
-      'border border-[var(--qf-border)] bg-white/[0.04] hover:bg-white/[0.08] text-slate-200 hover:text-white focus-visible:ring-slate-400',
+      'border border-[var(--qf-border)] border-t-white/[0.12] bg-white/[0.04] hover:bg-white/[0.08] text-slate-200 hover:text-white focus-visible:ring-slate-400',
     danger:
       'border border-rose-500/30 bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 focus-visible:ring-rose-400',
     ghost:

@@ -236,25 +236,25 @@ html.light .shadow-2xl{ box-shadow: 0 8px 28px rgba(15,23,42,0.10) !important; }
 
 /* ==========================================================================
    QUEUEFLOW SEMANTIC DESIGN TOKENS (Phase 1 Foundation -> Phase 2 Themes)
-   Hospitality Technology Design Tokens
+   Hospitality Technology Design Tokens - Refined Modern Minimalist
    ========================================================================== */
 :root {
-  --qf-background: #0c1017;
-  --qf-background-elevated: #111722;
-  --qf-surface: rgba(18, 24, 38, 0.88);
-  --qf-surface-solid: #121826;
-  --qf-surface-elevated: rgba(25, 34, 52, 0.94);
-  --qf-surface-interactive: #1a2336;
+  --qf-background: #080c14;
+  --qf-background-elevated: #0f1422;
+  --qf-surface: rgba(15, 21, 34, 0.85);
+  --qf-surface-solid: #0f1522;
+  --qf-surface-elevated: rgba(22, 30, 48, 0.92);
+  --qf-surface-interactive: #161e30;
   
   --qf-primary: #10b981;
   --qf-primary-hover: #059669;
   --qf-primary-foreground: #022c22;
-  --qf-primary-glow: rgba(16, 185, 129, 0.18);
+  --qf-primary-glow: rgba(16, 185, 129, 0.16);
 
   --qf-accent-dine-in: #3b82f6;
-  --qf-accent-dine-in-glow: rgba(59, 130, 246, 0.18);
+  --qf-accent-dine-in-glow: rgba(59, 130, 246, 0.15);
   --qf-accent-takeaway: #f59e0b;
-  --qf-accent-takeaway-glow: rgba(245, 158, 11, 0.18);
+  --qf-accent-takeaway-glow: rgba(245, 158, 11, 0.15);
 
   --qf-text: #f8fafc;
   --qf-text-secondary: #94a3b8;
@@ -262,8 +262,8 @@ html.light .shadow-2xl{ box-shadow: 0 8px 28px rgba(15,23,42,0.10) !important; }
 
   --qf-border: rgba(255, 255, 255, 0.08);
   --qf-border-subtle: rgba(255, 255, 255, 0.04);
-  --qf-border-hover: rgba(255, 255, 255, 0.14);
-  --qf-border-active: rgba(255, 255, 255, 0.24);
+  --qf-border-hover: rgba(255, 255, 255, 0.16);
+  --qf-border-active: rgba(255, 255, 255, 0.28);
 
   --qf-success: #10b981;
   --qf-warning: #f59e0b;
@@ -274,18 +274,18 @@ html.light .shadow-2xl{ box-shadow: 0 8px 28px rgba(15,23,42,0.10) !important; }
   --qf-radius-lg: 1.25rem;
   --qf-radius-xl: 1.5rem;
 
-  --qf-shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.25);
-  --qf-shadow-md: 0 8px 24px rgba(0, 0, 0, 0.35);
-  --qf-shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.45);
+  --qf-shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+  --qf-shadow-md: 0 8px 24px -4px rgba(0, 0, 0, 0.45);
+  --qf-shadow-lg: 0 16px 40px -8px rgba(0, 0, 0, 0.55);
 }
 
 /* Restrained, tactile customer surfaces */
 .qf-bg {
   background-color: var(--qf-background);
   background-image:
-    radial-gradient(ellipse 80% 50% at 50% -10%, var(--qf-background-elevated) 0%, transparent 80%),
-    radial-gradient(circle at 10% 20%, var(--qf-primary-glow) 0%, transparent 40%),
-    radial-gradient(circle at 90% 80%, var(--qf-accent-takeaway-glow) 0%, transparent 40%);
+    radial-gradient(ellipse 90% 60% at 50% -15%, var(--qf-background-elevated) 0%, transparent 80%),
+    radial-gradient(circle at 15% 15%, var(--qf-primary-glow) 0%, transparent 35%),
+    radial-gradient(circle at 85% 85%, var(--qf-accent-takeaway-glow) 0%, transparent 35%);
 }
 
 .qf-card {
@@ -293,8 +293,8 @@ html.light .shadow-2xl{ box-shadow: 0 8px 28px rgba(15,23,42,0.10) !important; }
   border: 1px solid var(--qf-border);
   box-shadow: var(--qf-shadow-md);
   border-radius: var(--qf-radius-xl);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
 }
 
 .qf-surface {
@@ -305,13 +305,14 @@ html.light .shadow-2xl{ box-shadow: 0 8px 28px rgba(15,23,42,0.10) !important; }
 
 /* ==========================================================================
    CANONICAL CUSTOMER GLASS DESIGN SYSTEM
-   Controlled, premium hospitality glass surfaces with theme-aware accents
+   Controlled, modern hospitality glass surfaces with subtle rim lighting
    ========================================================================== */
 .customer-glass-surface {
   background: var(--qf-surface);
   border: 1px solid var(--qf-border);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  border-top-color: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   border-radius: var(--qf-radius-xl);
   box-shadow: var(--qf-shadow-md);
 }
@@ -319,19 +320,21 @@ html.light .shadow-2xl{ box-shadow: 0 8px 28px rgba(15,23,42,0.10) !important; }
 .customer-glass-card {
   background: var(--qf-surface);
   border: 1px solid var(--qf-border);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  border-top-color: rgba(255, 255, 255, 0.14);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
   border-radius: var(--qf-radius-xl);
-  box-shadow: 0 12px 36px -4px rgba(0, 0, 0, 0.45), 0 0 0 1px var(--qf-border-subtle);
+  box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.5), 0 0 0 1px var(--qf-border-subtle);
 }
 
 .customer-glass-status {
   background: var(--qf-surface);
   border: 1px solid var(--qf-border);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+  border-top-color: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   border-radius: var(--qf-radius-lg);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
 }
 
 .customer-glass-control {
@@ -349,12 +352,22 @@ html.light .shadow-2xl{ box-shadow: 0 8px 28px rgba(15,23,42,0.10) !important; }
 }
 
 /* ==========================================================================
-   CUSTOMER PRIMARY ACTION BUTTON (Theme Aware)
+   CUSTOMER PRIMARY ACTION BUTTON (Theme Aware & Tactile)
    ========================================================================== */
 .customer-primary-cta {
   background: linear-gradient(135deg, var(--qf-primary) 0%, var(--qf-primary-hover) 100%);
   color: var(--qf-primary-foreground);
-  box-shadow: 0 8px 25px var(--qf-primary-glow);
+  box-shadow: 0 6px 20px -2px var(--qf-primary-glow);
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+.customer-primary-cta:hover {
+  filter: brightness(1.04);
+}
+
+.customer-primary-cta:active {
+  transform: scale(0.985);
 }
 
 .customer-primary-cta:disabled,
@@ -362,6 +375,7 @@ html.light .shadow-2xl{ box-shadow: 0 8px 28px rgba(15,23,42,0.10) !important; }
   opacity: 0.5;
   cursor: not-allowed;
   pointer-events: none;
+  transform: none;
 }
 
 /* Diwali: Approved golden amber gradient (high contrast, zero neon) */

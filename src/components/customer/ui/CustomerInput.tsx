@@ -53,12 +53,12 @@ export const CustomerInput = React.forwardRef<HTMLInputElement, CustomerInputPro
             disabled={disabled}
             aria-invalid={Boolean(error)}
             aria-describedby={error ? `${id}-error` : undefined}
-            className={`h-12 w-full rounded-2xl border border-white/10 bg-white/[0.04] text-base sm:text-sm text-white placeholder-slate-500 transition-all focus:outline-none ${
+            className={`h-12 w-full rounded-2xl border bg-white/[0.035] text-base sm:text-sm text-white placeholder-slate-500 transition-all duration-150 focus:outline-none ${
               icon ? 'pl-10' : 'pl-4'
             } pr-4 ${
               error
-                ? 'border-rose-500/80 focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20'
-                : 'border-[var(--qf-border)] focus:border-[var(--qf-primary)] focus:ring-2 focus:ring-[var(--qf-primary)]/20'
+                ? 'border-rose-500/60 focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20'
+                : 'border-[var(--qf-border)] border-t-white/[0.12] focus:border-[var(--qf-primary)] focus:ring-2 focus:ring-[var(--qf-primary)]/20 focus:bg-white/[0.06]'
             } disabled:cursor-not-allowed disabled:opacity-50 ${className}`}
             {...props}
           />

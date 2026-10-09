@@ -66,7 +66,7 @@ export function CustomerShell({
             aria-hidden="true"
             fetchPriority="high"
             decoding="async"
-            className="pointer-events-none fixed inset-0 h-full w-full object-cover object-center select-none"
+            className="pointer-events-none fixed inset-0 h-full w-full object-cover object-center select-none opacity-40 mix-blend-luminosity"
             style={{ zIndex: 0 }}
           />
           <div
@@ -82,7 +82,7 @@ export function CustomerShell({
         <>
           <div
             aria-hidden="true"
-            className="pointer-events-none fixed inset-0 select-none"
+            className="pointer-events-none fixed inset-0 select-none opacity-60"
             style={{
               zIndex: 0,
               background: cssBackground,
@@ -102,11 +102,11 @@ export function CustomerShell({
           {/* Neutral premium hospitality ambient backdrop */}
           <div
             aria-hidden="true"
-            className="pointer-events-none absolute inset-x-0 top-0 h-[380px] bg-gradient-to-b from-slate-800/25 via-slate-900/10 to-transparent"
+            className="pointer-events-none fixed inset-x-0 top-0 h-[400px] bg-gradient-to-b from-slate-800/15 via-slate-900/5 to-transparent select-none"
           />
           <div
             aria-hidden="true"
-            className="pointer-events-none absolute top-4 left-1/2 -translate-x-1/2 h-64 w-64 rounded-full blur-3xl opacity-60"
+            className="pointer-events-none fixed top-0 left-1/2 -translate-x-1/2 h-72 w-80 rounded-full blur-[100px] opacity-40 select-none"
             style={{ background: 'var(--qf-primary-glow)' }}
           />
         </>
@@ -119,7 +119,7 @@ export function CustomerShell({
 
       {/* ── Layer 4: Main Content Column (Mobile First) ──────────────────────── */}
       <div
-        className="relative mx-auto w-full max-w-md flex-1 space-y-3.5 px-4 pt-[max(1.25rem,env(safe-area-inset-top))] pb-5 sm:py-6"
+        className="relative mx-auto w-full max-w-md flex-1 space-y-4 px-4 pt-[max(1.25rem,env(safe-area-inset-top))] pb-6 sm:py-6"
         style={{ zIndex: bgImage || cssBackground ? 10 : undefined }}
       >
         {children}
@@ -128,12 +128,12 @@ export function CustomerShell({
       {/* ── Layer 5: Branded Hospitality Footer ──────────────────────────────── */}
       {!hideFooter && (
         <footer
-          className="relative z-0 mx-auto w-full max-w-md px-4 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-5 text-center space-y-1 select-none pointer-events-none"
+          className="relative z-0 mx-auto w-full max-w-md px-4 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-4 text-center space-y-1 select-none pointer-events-none"
         >
-          <div aria-hidden="true" className="flex justify-center text-amber-400/70 text-xs select-none">
+          <div aria-hidden="true" className="flex justify-center text-amber-400/50 text-[10px] select-none">
             ✦
           </div>
-          <p className="text-xs font-serif italic text-slate-300 tracking-wide select-none">
+          <p className="text-[11px] font-medium tracking-wide text-slate-400 select-none">
             Food Brings Us Closer
           </p>
           <p className="inline-flex items-center gap-1.5 text-[10px] font-medium text-slate-500 pt-0.5">

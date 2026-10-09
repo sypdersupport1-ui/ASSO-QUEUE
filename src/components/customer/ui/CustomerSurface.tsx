@@ -23,10 +23,10 @@ export function CustomerSurface({
   role,
 }: CustomerSurfaceProps) {
   const variantStyles = {
-    card: 'border border-[var(--qf-border)] bg-[var(--qf-surface)] shadow-[var(--qf-shadow-md)] backdrop-blur-md rounded-2xl sm:rounded-3xl',
-    elevated: 'border border-[var(--qf-border-hover)] bg-[var(--qf-surface-elevated)] shadow-[var(--qf-shadow-lg)] rounded-2xl sm:rounded-3xl',
+    card: 'border border-[var(--qf-border)] border-t-white/[0.14] bg-[var(--qf-surface)] shadow-[var(--qf-shadow-md)] backdrop-blur-xl rounded-2xl sm:rounded-3xl',
+    elevated: 'border border-[var(--qf-border-hover)] border-t-white/[0.18] bg-[var(--qf-surface-elevated)] shadow-[var(--qf-shadow-lg)] rounded-2xl sm:rounded-3xl',
     subtle: 'border border-[var(--qf-border-subtle)] bg-white/[0.02] rounded-xl sm:rounded-2xl',
-    interactive: 'border border-[var(--qf-border)] bg-[var(--qf-surface-interactive)] hover:border-[var(--qf-border-hover)] transition-all rounded-2xl cursor-pointer active:scale-[0.99]',
+    interactive: 'border border-[var(--qf-border)] border-t-white/[0.12] bg-[var(--qf-surface-interactive)] hover:border-[var(--qf-border-hover)] transition-all duration-200 rounded-2xl cursor-pointer active:scale-[0.99]',
   };
 
   return (

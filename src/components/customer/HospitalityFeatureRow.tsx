@@ -34,21 +34,21 @@ export function HospitalityFeatureRow() {
     <div
       role="region"
       aria-label="Hospitality promises"
-      className="grid grid-cols-3 gap-2 sm:gap-2.5 pt-1"
+      className="grid grid-cols-3 gap-2 sm:gap-2.5 pt-0.5"
     >
       {items.map((item, idx) => (
         <div
           key={idx}
-          className="customer-glass-surface p-2.5 sm:p-3 text-center flex flex-col items-center justify-center rounded-2xl space-y-1 select-none"
+          className="customer-glass-surface p-2.5 sm:p-3 text-center flex flex-col items-center justify-center rounded-2xl space-y-1.5 select-none"
         >
           <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-white/[0.04] border border-white/10 shrink-0">
             {item.icon}
           </div>
-          <div className="min-w-0 w-full">
-            <p className="text-[11px] sm:text-xs font-black tracking-tight text-white truncate">
+          <div className="min-w-0 w-full space-y-0.5">
+            <p className="text-[11px] sm:text-xs font-bold tracking-tight text-white truncate">
               {item.title}
             </p>
-            <p className="text-[9.5px] sm:text-[10px] text-[var(--qf-text-secondary)]/80 leading-tight truncate">
+            <p className="text-[9.5px] sm:text-[10px] text-slate-400 leading-tight truncate">
               {item.desc}
             </p>
           </div>
