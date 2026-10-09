@@ -15,6 +15,9 @@ import {
   Loader2,
   AlertTriangle,
   Bell,
+  Volume2,
+  Copy,
+  ShieldCheck,
 } from 'lucide-react';
 import type { PublicQueueStatusResponse } from '@/lib/services/queue-service';
 import { CancelQueueDialog } from './CancelQueueDialog';
@@ -96,6 +99,30 @@ export function QueueTicketCard({
   const [isCallExpired, setIsCallExpired] = useState(false);
   const [countdownSeconds, setCountdownSeconds] = useState<number | null>(null);
   const [nowMs, setNowMs] = useState<number>(Date.now());
+
+  const [isTestingAudio, setIsTestingAudio] = useState(false);
+  const [hasCopiedLink, setHasCopiedLink] = useState(false);
+
+  const handleTestAudio = () => {
+    setIsTestingAudio(true);
+    chimeEngine.playBuzzerSound();
+    try {
+      if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+        navigator.vibrate([200, 100, 200]);
+      }
+    } catch {}
+    setTimeout(() => setIsTestingAudio(false), 2000);
+  };
+
+  const handleCopyLink = async () => {
+    try {
+      if (typeof window !== 'undefined' && navigator.clipboard) {
+        await navigator.clipboard.writeText(window.location.href);
+        setHasCopiedLink(true);
+        setTimeout(() => setHasCopiedLink(false), 2500);
+      }
+    } catch {}
+  };
 
   // 1-second interval ticker for live timers
   useEffect(() => {
@@ -712,6 +739,44 @@ export function QueueTicketCard({
             </div>
           )}
 
+          {/* Interactive Pass Quick Actions */}
+          <div className="pt-2 flex items-center justify-center gap-2">
+            <button
+              type="button"
+              onClick={handleTestAudio}
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-[11px] font-bold transition-all cursor-pointer ${
+                isTestingAudio
+                  ? 'border-[var(--qf-primary)] bg-[var(--qf-primary)]/20 text-white scale-[1.02]'
+                  : 'border-white/10 bg-white/[0.04] text-slate-300 hover:bg-white/[0.08] hover:text-white'
+              }`}
+            >
+              <Volume2 className={`h-3.5 w-3.5 ${isTestingAudio ? 'animate-bounce text-[var(--qf-primary)]' : 'text-slate-400'}`} />
+              <span>{isTestingAudio ? '🔊 Chime Playing…' : 'Test Sound'}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={handleCopyLink}
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-[11px] font-bold transition-all cursor-pointer ${
+                hasCopiedLink
+                  ? 'border-[var(--qf-success)]/40 bg-[var(--qf-success)]/15 text-[var(--qf-success)] scale-[1.02]'
+                  : 'border-white/10 bg-white/[0.04] text-slate-300 hover:bg-white/[0.08] hover:text-white'
+              }`}
+            >
+              {hasCopiedLink ? (
+                <>
+                  <Check className="h-3.5 w-3.5 text-emerald-400" />
+                  <span>Link Copied!</span>
+                </>
+              ) : (
+                <>
+                  <Copy className="h-3.5 w-3.5 text-slate-400" />
+                  <span>Share Pass</span>
+                </>
+              )}
+            </button>
+          </div>
+
           {/* Running Late & Leave Queue Actions */}
           <div className="pt-2 border-t border-white/10 space-y-2">
             <CustomerLateModal
@@ -1122,6 +1187,17 @@ export function QueueTicketCard({
           </div>
         </div>
       )}
+
+      {/* Digital Pass Authenticity & Security Footer */}
+      <div className="relative z-10 pt-4 mt-3 border-t border-dashed border-white/10 flex items-center justify-between text-[10.5px] font-mono text-slate-400">
+        <span className="inline-flex items-center gap-1.5">
+          <ShieldCheck className="h-3.5 w-3.5 text-emerald-400/90" />
+          <span className="tracking-wider uppercase font-bold text-slate-300">Digital Pass Verified</span>
+        </span>
+        <span className="text-slate-500 font-semibold tracking-widest">
+          #{token ? token.slice(0, 8).toUpperCase() : 'LIVE'}
+        </span>
+      </div>
     </section>
   );
 }
