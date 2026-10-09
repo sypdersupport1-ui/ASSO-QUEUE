@@ -457,38 +457,80 @@ export function QueueTicketCard({
         {liveAnnouncement}
       </div>
 
-      {/* 1. HERO QUEUE PASS & GUEST IDENTITY */}
-      <div className="relative z-10 space-y-1.5">
-        {/* Notified Pill (only when host is preparing table) */}
-        {isNotified && (
-          <div>
-            <span className="inline-flex items-center gap-2 rounded-full border border-amber-400/40 bg-amber-500/15 px-3 py-1 text-[10.5px] font-bold uppercase tracking-wider text-amber-200 shadow-sm backdrop-blur-md">
-              <span className="relative flex h-2 w-2">
-                <span className="motion-safe:animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
-                <span className="relative inline-flex h-2 w-2 rounded-full bg-amber-400" />
-              </span>
-              <span>Host Notified · Table Preparing</span>
+      {/* 1. HERO UBER LIVE ACTIVITY RING & NUMBER */}
+      <div className="relative z-10 flex flex-col items-center justify-center pt-2 pb-1">
+        {/* Dynamic Circular Activity Ring */}
+        <div className="relative flex items-center justify-center w-48 h-48 sm:w-52 sm:h-52">
+          {/* Subtle Ambient Backlight Glow */}
+          <div
+            aria-hidden="true"
+            className={`absolute inset-0 rounded-full blur-2xl transition-all duration-700 ${
+              isNotified
+                ? 'bg-amber-500/25 animate-pulse'
+                : isCalled
+                ? 'bg-rose-500/30 animate-pulse'
+                : isSeated
+                ? 'bg-[var(--qf-success)]/25'
+                : 'bg-[var(--qf-primary-glow)] opacity-60'
+            }`}
+          />
+
+          {/* SVG Progress Ring */}
+          <svg className="w-full h-full -rotate-90 transform" viewBox="0 0 120 120">
+            {/* Background Track */}
+            <circle
+              cx="60"
+              cy="60"
+              r="52"
+              fill="transparent"
+              stroke="rgba(255, 255, 255, 0.08)"
+              strokeWidth="5"
+            />
+            {/* Active Gradient Arc */}
+            <defs>
+              <linearGradient id="liveRingGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor={isNotified ? '#f59e0b' : 'var(--qf-primary)'} />
+                <stop offset="100%" stopColor={isNotified ? '#ea580c' : 'var(--qf-accent-dine-in)'} />
+              </linearGradient>
+            </defs>
+            <circle
+              cx="60"
+              cy="60"
+              r="52"
+              fill="transparent"
+              stroke="url(#liveRingGrad)"
+              strokeWidth="5.5"
+              strokeDasharray={326.7}
+              strokeDashoffset={
+                isSeated
+                  ? 0
+                  : isCalled
+                  ? 35
+                  : isNotified
+                  ? 115
+                  : 215
+              }
+              strokeLinecap="round"
+              className="transition-all duration-1000 ease-out"
+            />
+          </svg>
+
+          {/* Center Content: Ticket Number & Party Size */}
+          <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-4">
+            <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-slate-400">
+              Live Queue
+            </span>
+            <h1
+              aria-label={`Your queue number is ${ticketNo}`}
+              className="font-mono text-4xl sm:text-5xl font-black tracking-tight text-white tabular-nums drop-shadow-md my-0.5 motion-safe:animate-numberPop"
+            >
+              {ticketNo}
+            </h1>
+            <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-[var(--qf-primary)]">
+              <Users className="h-3 w-3 text-[var(--qf-primary)]" />
+              <span>{status.customerName || 'Guest'} · {status.partySize} {status.partySize === 1 ? 'guest' : 'guests'}</span>
             </span>
           </div>
-        )}
-
-        {/* Large high-impact ticket number */}
-        <h1
-          aria-label={`Your queue number is ${ticketNo}`}
-          className="font-mono text-5xl sm:text-6xl font-black tracking-tight text-white tabular-nums drop-shadow-sm my-1 motion-safe:animate-numberPop"
-        >
-          {ticketNo}
-        </h1>
-
-        {/* Guest identity badge */}
-        <div className="flex items-center justify-center pt-0.5 text-xs">
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.04] px-3.5 py-1 font-semibold text-slate-300">
-            <Users className="h-3.5 w-3.5 text-[var(--qf-primary)]" />
-            <span>
-              {status.customerName || 'Guest'} · {status.partySize}{' '}
-              {status.partySize === 1 ? 'guest' : 'guests'}
-            </span>
-          </span>
         </div>
       </div>
 
@@ -496,7 +538,7 @@ export function QueueTicketCard({
 
       {/* STATE A: WAITING / NOTIFIED */}
       {!isCalled && !isSeated && !isTerminal && (
-        <div className="relative z-10 space-y-4 pt-3">
+        <div className="relative z-10 space-y-4 pt-2">
           {/* REFINED NOTIFIED HERO ALERT */}
           {isNotified && (
             <div className="relative overflow-hidden rounded-2xl border border-amber-400/40 bg-gradient-to-b from-amber-500/15 via-amber-500/5 to-transparent p-4 sm:p-5 text-center shadow-lg motion-safe:animate-fadeIn space-y-2">
