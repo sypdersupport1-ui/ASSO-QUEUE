@@ -564,98 +564,77 @@ export function QueueTicketCard({
           )}
 
           {/* UNIFIED TELEMETRY & LIVE BOARD GRID */}
-          <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-left shadow-md">
-            <div className="flex items-center justify-between pb-3 mb-3 border-b border-white/5">
-              <span className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-300">
+          <div className="space-y-2.5">
+            {/* Header */}
+            <div className="flex items-center justify-between px-1">
+              <span className="inline-flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-wider text-slate-300">
                 <span className="relative flex h-2 w-2">
                   <span className="motion-safe:animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--qf-warning)] opacity-75" />
                   <span className="relative inline-flex h-2 w-2 rounded-full bg-[var(--qf-warning)]" />
                 </span>
                 LIVE CALLING BOARD
               </span>
-              <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--qf-primary)]">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--qf-primary)] flex items-center gap-1">
+                <span className="h-1.5 w-1.5 rounded-full bg-[var(--qf-primary)]" />
                 ● Live Sync
               </span>
             </div>
 
-            <div className="grid grid-cols-2 gap-3 divide-x divide-white/5">
-              {/* Left Column: Live Calling */}
-              <div className="space-y-3 pr-2">
+            {/* 2 High-End Frosted Glass Telemetry Pods */}
+            <div className="grid grid-cols-2 gap-2.5">
+              {/* Pod 1: Host Stand Calling */}
+              <div className="rounded-2xl border border-white/[0.08] bg-gradient-to-b from-white/[0.06] to-white/[0.02] p-3.5 text-left flex flex-col justify-between shadow-sm">
                 <div>
                   <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1">
                     <Megaphone className="h-3 w-3 text-[var(--qf-warning)]" />
                     <span>Now Calling</span>
                   </span>
-                  <p className="font-mono text-2xl sm:text-3xl font-black text-white tabular-nums mt-0.5">
+                  <p className="font-mono text-xl sm:text-2xl font-black text-white tabular-nums mt-1 leading-none">
                     {status.nowCallingNumber ? (
                       `Q-${status.nowCallingNumber.replace(/^#+/, '')}`
                     ) : (
-                      <span className="text-sm sm:text-base font-semibold text-slate-400">Calling Soon</span>
+                      <span className="text-sm font-bold text-slate-300">Calling Soon</span>
                     )}
                   </p>
-                  <span className="text-[10px] text-slate-400">
-                    {status.nowCallingNumber &&
-                    status.nowCallingNumber.replace(/^#+/, '') === (status.displayNumber || '').replace(/^#+/, '')
-                      ? 'Your Turn!'
-                      : 'Host Stand'}
-                  </span>
                 </div>
-
-                <div className="pt-2 border-t border-white/5">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1">
-                    <span className="h-1.5 w-1.5 rounded-full bg-[var(--qf-primary)]" />
-                    <span>Up Next</span>
-                  </span>
-                  <p className="font-mono text-lg sm:text-xl font-black text-[var(--qf-primary)] tabular-nums mt-0.5">
+                <div className="pt-2.5 mt-2 border-t border-white/5 flex items-center justify-between text-[10.5px]">
+                  <span className="text-slate-400 font-medium">Up Next:</span>
+                  <span className="font-bold text-[var(--qf-primary)] font-mono">
                     {status.position === 1 ? (
                       'YOU'
                     ) : status.upNextNumber ? (
                       `Q-${status.upNextNumber.replace(/^#+/, '')}`
                     ) : (
-                      <span className="text-sm font-semibold text-slate-400">On Deck</span>
+                      <span className="text-slate-400 font-semibold">On Deck</span>
                     )}
-                  </p>
-                  <span className="text-[10px] text-slate-400">
-                    {status.position === 1 ? 'Ready to seat' : 'Next in line'}
                   </span>
                 </div>
               </div>
 
-              {/* Right Column: Queue Metrics */}
-              <div className="space-y-3 pl-3">
+              {/* Pod 2: Your Queue Status & Wait */}
+              <div className="rounded-2xl border border-white/[0.08] bg-gradient-to-b from-white/[0.06] to-white/[0.02] p-3.5 text-left flex flex-col justify-between shadow-sm">
                 <div>
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                    Queue Status
-                  </span>
-                  <p className="font-mono text-2xl sm:text-3xl font-black text-white tabular-nums mt-0.5">
-                    {isNotified ? (
-                      <span className="text-amber-300 text-xl sm:text-2xl font-black">NOTIFIED</span>
-                    ) : status.position === 1 ? (
-                      <span className="text-[var(--qf-primary)]">Next</span>
-                    ) : status.peopleAhead !== null && status.peopleAhead >= 0 ? (
-                      status.peopleAhead
-                    ) : (
-                      '—'
-                    )}
-                  </p>
-                  <span className="text-[10px] text-slate-400">
-                    {isNotified
-                      ? 'Table being prepared'
-                      : status.position === 1
-                      ? 'You are first in line'
-                      : 'Ahead of your party'}
-                  </span>
-                </div>
-
-                <div className="pt-2 border-t border-white/5">
                   <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1">
                     <Clock className="h-3 w-3 text-[var(--qf-accent-takeaway)]" />
                     <span>Est. Wait</span>
                   </span>
-                  <p className="font-mono text-lg sm:text-xl font-black text-[var(--qf-accent-takeaway)] tabular-nums mt-0.5">
+                  <p className="font-mono text-xl sm:text-2xl font-black text-[var(--qf-accent-takeaway)] tabular-nums mt-1 leading-none">
                     {waitLabel ?? '—'}
                   </p>
-                  <span className="text-[10px] text-slate-400">Live queue pace</span>
+                </div>
+                <div className="pt-2.5 mt-2 border-t border-white/5 flex items-center justify-between text-[10.5px]">
+                  <span className="text-slate-400 font-medium">Position:</span>
+                  <span className="font-bold text-white">
+                    {isNotified ? (
+                      <span className="text-amber-300 font-bold">Notified</span>
+                    ) : status.position === 1 ? (
+                      <span className="text-[var(--qf-primary)] font-bold">1st in Line</span>
+                    ) : status.peopleAhead !== null && status.peopleAhead >= 0 ? (
+                      `${status.peopleAhead} ahead`
+                    ) : (
+                      '—'
+                    )}
+                  </span>
                 </div>
               </div>
             </div>
