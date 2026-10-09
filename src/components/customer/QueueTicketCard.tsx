@@ -526,160 +526,123 @@ export function QueueTicketCard({
         <div className="relative z-10 space-y-4 pt-3">
           {/* REFINED NOTIFIED HERO ALERT */}
           {isNotified && (
-            <div className="relative overflow-hidden rounded-2xl border border-amber-400/50 bg-gradient-to-br from-amber-500/20 via-slate-900 to-amber-950/40 p-4 sm:p-5 text-center shadow-lg motion-safe:animate-fadeIn">
-              <div className="flex items-center justify-center gap-2 mb-1.5">
-                <span className="relative flex h-2.5 w-2.5">
-                  <span className="motion-safe:animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-90" />
-                  <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-amber-400" />
-                </span>
-                <span className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest text-amber-300">
-                  <Bell className="h-3.5 w-3.5 text-amber-300" />
-                  Host Notified You · Table Preparing
-                </span>
+            <div className="relative overflow-hidden rounded-2xl border border-amber-400/40 bg-gradient-to-b from-amber-500/15 via-amber-500/5 to-transparent p-4 sm:p-5 text-center shadow-lg motion-safe:animate-fadeIn space-y-2">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-amber-400/40 bg-amber-500/15 text-amber-200 text-[11px] font-bold uppercase tracking-widest">
+                <Bell className="h-3.5 w-3.5 text-amber-300" />
+                <span>Host Notified You · Table Preparing</span>
               </div>
 
               <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight">
                 Your Table is Being Prepared
               </h2>
 
-              <p className="text-xs text-slate-300 font-medium leading-relaxed max-w-[340px] mx-auto mt-1.5">
+              <p className="text-xs text-slate-300 font-medium leading-relaxed max-w-[340px] mx-auto">
                 The restaurant host is preparing your table right now. Please start heading back to the entrance!
               </p>
 
-              <div className="mt-3 flex items-center justify-center">
-                <div className="inline-flex items-center gap-1.5 rounded-full border border-amber-400/40 bg-amber-500/15 px-3 py-1.5 text-[11px] font-bold text-amber-200">
+              <div className="pt-1 flex items-center justify-center">
+                <div className="inline-flex items-center gap-1.5 rounded-full border border-amber-400/40 bg-amber-500/20 px-3.5 py-1.5 text-xs font-bold text-amber-200">
                   <span>🚶‍♂️ Please head toward Host Stand</span>
                 </div>
               </div>
             </div>
           )}
 
-          {/* STANDOUT LIVE CALLING BOARD */}
-          <div className="customer-glass-surface p-3.5 sm:p-4 shadow-md">
-            <div className="flex items-center justify-between mb-2.5 px-0.5">
+          {/* UNIFIED TELEMETRY & LIVE BOARD GRID */}
+          <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-left shadow-md">
+            <div className="flex items-center justify-between pb-3 mb-3 border-b border-white/5">
               <span className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-300">
                 <span className="relative flex h-2 w-2">
                   <span className="motion-safe:animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--qf-warning)] opacity-75" />
                   <span className="relative inline-flex h-2 w-2 rounded-full bg-[var(--qf-warning)]" />
                 </span>
-                Live Calling Board
+                LIVE CALLING BOARD
               </span>
               <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--qf-primary)]">
                 ● Live Sync
               </span>
             </div>
 
-            <div className="grid grid-cols-2 gap-2.5">
-              {/* NOW CALLING */}
-              <div className="relative overflow-hidden rounded-xl border border-[var(--qf-warning)]/30 bg-[var(--qf-warning)]/10 p-3 text-center shadow-sm">
-                <div className="flex items-center justify-center gap-1 text-[10px] font-bold uppercase tracking-wider text-[var(--qf-warning)] mb-0.5">
-                  <Megaphone className="h-3 w-3 text-[var(--qf-warning)] shrink-0" />
-                  <span>Now Calling</span>
+            <div className="grid grid-cols-2 gap-3 divide-x divide-white/5">
+              {/* Left Column: Live Calling */}
+              <div className="space-y-3 pr-2">
+                <div>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1">
+                    <Megaphone className="h-3 w-3 text-[var(--qf-warning)]" />
+                    <span>Now Calling</span>
+                  </span>
+                  <p className="font-mono text-2xl sm:text-3xl font-black text-white tabular-nums mt-0.5">
+                    {status.nowCallingNumber ? (
+                      `Q-${status.nowCallingNumber.replace(/^#+/, '')}`
+                    ) : (
+                      <span className="text-sm sm:text-base font-semibold text-slate-400">Calling Soon</span>
+                    )}
+                  </p>
+                  <span className="text-[10px] text-slate-400">
+                    {status.nowCallingNumber &&
+                    status.nowCallingNumber.replace(/^#+/, '') === (status.displayNumber || '').replace(/^#+/, '')
+                      ? 'Your Turn!'
+                      : 'Host Stand'}
+                  </span>
                 </div>
-                <p className="font-mono text-2xl sm:text-3xl font-black text-[var(--qf-warning)] tabular-nums">
-                  {status.nowCallingNumber ? (
-                    `Q-${status.nowCallingNumber.replace(/^#+/, '')}`
-                  ) : (
-                    <span className="text-sm sm:text-base font-bold text-[var(--qf-warning)]/80">Calling Soon</span>
-                  )}
-                </p>
-                <span className="inline-block mt-0.5 text-[10px] font-medium text-slate-400">
-                  {status.nowCallingNumber &&
-                  status.nowCallingNumber.replace(/^#+/, '') === (status.displayNumber || '').replace(/^#+/, '')
-                    ? 'Your Turn!'
-                    : 'Host Stand'}
-                </span>
+
+                <div className="pt-2 border-t border-white/5">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1">
+                    <span className="h-1.5 w-1.5 rounded-full bg-[var(--qf-primary)]" />
+                    <span>Up Next</span>
+                  </span>
+                  <p className="font-mono text-lg sm:text-xl font-black text-[var(--qf-primary)] tabular-nums mt-0.5">
+                    {status.position === 1 ? (
+                      'YOU'
+                    ) : status.upNextNumber ? (
+                      `Q-${status.upNextNumber.replace(/^#+/, '')}`
+                    ) : (
+                      <span className="text-sm font-semibold text-slate-400">On Deck</span>
+                    )}
+                  </p>
+                  <span className="text-[10px] text-slate-400">
+                    {status.position === 1 ? 'Ready to seat' : 'Next in line'}
+                  </span>
+                </div>
               </div>
 
-              {/* UP NEXT */}
-              <div className="relative overflow-hidden rounded-xl border border-[var(--qf-primary)]/30 bg-[var(--qf-primary)]/10 p-3 text-center shadow-sm">
-                <div className="flex items-center justify-center gap-1 text-[10px] font-bold uppercase tracking-wider text-[var(--qf-primary)] mb-0.5">
-                  <span className="h-1.5 w-1.5 rounded-full bg-[var(--qf-primary)] shrink-0" />
-                  <span>Up Next</span>
+              {/* Right Column: Queue Metrics */}
+              <div className="space-y-3 pl-3">
+                <div>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                    Queue Status
+                  </span>
+                  <p className="font-mono text-2xl sm:text-3xl font-black text-white tabular-nums mt-0.5">
+                    {isNotified ? (
+                      <span className="text-amber-300 text-xl sm:text-2xl font-black">NOTIFIED</span>
+                    ) : status.position === 1 ? (
+                      <span className="text-[var(--qf-primary)]">Next</span>
+                    ) : status.peopleAhead !== null && status.peopleAhead >= 0 ? (
+                      status.peopleAhead
+                    ) : (
+                      '—'
+                    )}
+                  </p>
+                  <span className="text-[10px] text-slate-400">
+                    {isNotified
+                      ? 'Table being prepared'
+                      : status.position === 1
+                      ? 'You are first in line'
+                      : 'Ahead of your party'}
+                  </span>
                 </div>
-                <p className="font-mono text-2xl sm:text-3xl font-black text-[var(--qf-primary)] tabular-nums">
-                  {status.position === 1 ? (
-                    <span className="text-[var(--qf-primary)] font-black">YOU</span>
-                  ) : status.upNextNumber ? (
-                    `Q-${status.upNextNumber.replace(/^#+/, '')}`
-                  ) : (
-                    <span className="text-sm sm:text-base font-bold text-[var(--qf-primary)]/80">On Deck</span>
-                  )}
-                </p>
-                <span className="inline-block mt-0.5 text-[10px] font-medium text-slate-400">
-                  {status.position === 1 ? 'Ready to seat' : 'Next in line'}
-                </span>
+
+                <div className="pt-2 border-t border-white/5">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1">
+                    <Clock className="h-3 w-3 text-[var(--qf-accent-takeaway)]" />
+                    <span>Est. Wait</span>
+                  </span>
+                  <p className="font-mono text-lg sm:text-xl font-black text-[var(--qf-accent-takeaway)] tabular-nums mt-0.5">
+                    {waitLabel ?? '—'}
+                  </p>
+                  <span className="text-[10px] text-slate-400">Live queue pace</span>
+                </div>
               </div>
-            </div>
-          </div>
-
-          {/* QUEUE METRIC PODS */}
-          <div className="grid grid-cols-2 gap-3">
-            {/* Position / Turn Pod */}
-            <div
-              className={`customer-glass-surface p-3 text-center shadow-sm transition-all ${
-                isNotified ? 'border border-amber-400/40 bg-amber-500/10' : ''
-              }`}
-            >
-              <p
-                className={`text-[10px] font-bold uppercase tracking-widest mb-0.5 ${
-                  isNotified
-                    ? 'text-amber-300 flex items-center justify-center gap-1.5'
-                    : 'text-[var(--qf-primary)]'
-                }`}
-              >
-                {isNotified ? (
-                  <>
-                    <span className="relative flex h-1.5 w-1.5">
-                      <span className="motion-safe:animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
-                      <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-amber-400" />
-                    </span>
-                    <span>Queue Status</span>
-                  </>
-                ) : status.position === 1 ? (
-                  'Queue Status'
-                ) : (
-                  'Parties Ahead'
-                )}
-              </p>
-              <p
-                className={`font-mono text-3xl sm:text-4xl font-black tabular-nums ${
-                  isNotified ? 'text-amber-300' : 'text-[var(--qf-primary)]'
-                }`}
-              >
-                {isNotified ? (
-                  <span className="text-xl sm:text-2xl font-black tracking-wide">NOTIFIED</span>
-                ) : status.position === 1 ? (
-                  <span className="text-[var(--qf-primary)]">Next</span>
-                ) : status.peopleAhead !== null && status.peopleAhead >= 0 ? (
-                  status.peopleAhead
-                ) : (
-                  '—'
-                )}
-              </p>
-              <p
-                className={`text-[10px] font-medium mt-0.5 ${
-                  isNotified ? 'text-amber-200/90 font-semibold' : 'text-slate-400'
-                }`}
-              >
-                {isNotified
-                  ? 'Table being prepared'
-                  : status.position === 1
-                  ? 'You are first in line'
-                  : 'Ahead of your party'}
-              </p>
-            </div>
-
-            {/* Est. Wait Pod */}
-            <div className="customer-glass-surface p-3 text-center shadow-sm">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--qf-accent-takeaway)] mb-0.5 flex items-center justify-center gap-1">
-                <Clock className="h-3 w-3 text-[var(--qf-accent-takeaway)]" />
-                <span>Est. Wait</span>
-              </p>
-              <p className="font-mono text-3xl sm:text-4xl font-black text-[var(--qf-accent-takeaway)] tabular-nums">
-                {waitLabel ?? '—'}
-              </p>
-              <p className="text-[10px] font-medium text-slate-400 mt-0.5">Live queue pace</p>
             </div>
           </div>
 
@@ -729,7 +692,7 @@ export function QueueTicketCard({
           </div>
 
           {/* RADAR ALERT: Almost Your Turn */}
-          {status.isAlmostYourTurn && (
+          {!isNotified && status.isAlmostYourTurn && (
             <div className="relative overflow-hidden rounded-2xl border border-[var(--qf-warning)]/60 bg-gradient-to-r from-amber-950/50 via-slate-900 to-amber-950/40 p-3.5 text-left flex items-start gap-3 shadow-md motion-safe:animate-fadeIn">
               <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-[var(--qf-warning)]/20 text-[var(--qf-warning)] border border-[var(--qf-warning)]/30 shadow-sm">
                 <Clock className="h-4 w-4 animate-pulse text-[var(--qf-warning)]" aria-hidden="true" />
