@@ -1341,3 +1341,18 @@ export async function createManualTakeawayOrderAction(queueEntryId: string, note
   }
 }
 
+export async function getActivityFeedAction(restaurantId: string) {
+  try {
+    const { ActivityService } = await import('@/lib/services/activity-service');
+    const items = await ActivityService.getRestaurantActivityFeed(restaurantId);
+    return { success: true, items };
+  } catch (error: unknown) {
+    return {
+      success: false,
+      items: [],
+      error: error instanceof Error ? error.message : 'Failed to fetch activity feed.',
+    };
+  }
+}
+
+

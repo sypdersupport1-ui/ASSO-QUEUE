@@ -8,6 +8,7 @@ import MobileNavigation from '@/components/dashboard/MobileNavigation';
 import DesktopNavigation from '@/components/dashboard/DesktopNavigation';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { DashboardRealtime } from '@/components/realtime/DashboardRealtime';
+import { StaffNotificationCenter } from '@/components/dashboard/StaffNotificationCenter';
 
 export default async function RestaurantDashboardLayout({
   children,
@@ -82,10 +83,7 @@ export default async function RestaurantDashboardLayout({
               </Link>
               
               <ThemeToggle />
-              <button aria-label="Notifications" className="w-9 h-9 shrink-0 rounded-xl bg-white/[0.06] border border-white/[0.06] flex items-center justify-center text-slate-400 hover:text-white active:bg-white/10 transition-colors relative">
-                <span className="material-symbols-outlined text-[18px]">notifications</span>
-                <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-rose-500 border-2 border-[#0A0E17]"></span>
-              </button>
+              <StaffNotificationCenter restaurantId={restaurant.id} />
             </div>
           </div>
         </header>
