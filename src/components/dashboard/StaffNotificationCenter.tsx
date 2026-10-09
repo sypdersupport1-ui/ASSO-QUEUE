@@ -96,10 +96,6 @@ export function StaffNotificationCenter({
     }
   };
 
-  const handleTestSound = () => {
-    chimeEngine.playSeatChime();
-  };
-
   // Close when clicking outside modal
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -376,7 +372,7 @@ export function StaffNotificationCenter({
                 )}
               </div>
 
-              {/* Drawer Footer: Sound controls & audio testing */}
+              {/* Drawer Footer: Sound controls */}
               <div className="p-3.5 sm:p-4 border-t border-white/10 bg-[#0d1424] flex items-center justify-between gap-3 shrink-0">
                 <button
                   type="button"
@@ -389,16 +385,10 @@ export function StaffNotificationCenter({
                   <span>{soundEnabled ? 'Chimes Active' : 'Sound Muted'}</span>
                 </button>
 
-                <button
-                  type="button"
-                  onClick={handleTestSound}
-                  className="px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-bold text-slate-200 transition-colors flex items-center gap-1.5"
-                >
-                  <span className="material-symbols-outlined text-[15px] text-amber-400">
-                    play_arrow
-                  </span>
-                  <span>Test Bell</span>
-                </button>
+                <div className="text-[11px] font-mono text-slate-500 flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                  <span>Live Feed</span>
+                </div>
               </div>
             </div>
           </div>,
