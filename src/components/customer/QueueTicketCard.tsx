@@ -15,9 +15,6 @@ import {
   Loader2,
   AlertTriangle,
   Bell,
-  Volume2,
-  Copy,
-  ShieldCheck,
 } from 'lucide-react';
 import type { PublicQueueStatusResponse } from '@/lib/services/queue-service';
 import { CancelQueueDialog } from './CancelQueueDialog';
@@ -54,7 +51,7 @@ export function QueueTicketCard({
   status: initialStatus,
   token,
   restaurantSlug,
-  restaurantName,
+  restaurantName: _restaurantName,
   queueEnabled = true,
   operatingState = 'OPEN',
 }: QueueTicketCardProps) {
@@ -99,30 +96,6 @@ export function QueueTicketCard({
   const [isCallExpired, setIsCallExpired] = useState(false);
   const [countdownSeconds, setCountdownSeconds] = useState<number | null>(null);
   const [nowMs, setNowMs] = useState<number>(Date.now());
-
-  const [isTestingAudio, setIsTestingAudio] = useState(false);
-  const [hasCopiedLink, setHasCopiedLink] = useState(false);
-
-  const handleTestAudio = () => {
-    setIsTestingAudio(true);
-    chimeEngine.playBuzzerSound();
-    try {
-      if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
-        navigator.vibrate([200, 100, 200]);
-      }
-    } catch {}
-    setTimeout(() => setIsTestingAudio(false), 2000);
-  };
-
-  const handleCopyLink = async () => {
-    try {
-      if (typeof window !== 'undefined' && navigator.clipboard) {
-        await navigator.clipboard.writeText(window.location.href);
-        setHasCopiedLink(true);
-        setTimeout(() => setHasCopiedLink(false), 2500);
-      }
-    } catch {}
-  };
 
   // 1-second interval ticker for live timers
   useEffect(() => {
@@ -479,47 +452,25 @@ export function QueueTicketCard({
         />
       )}
 
-      {/* Ticket cutout pass notches (tactile aesthetic) */}
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute -left-3 top-1/2 -translate-y-1/2 h-6 w-6 rounded-full border border-[var(--qf-border)] bg-[var(--qf-background)] shadow-inner"
-      />
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute -right-3 top-1/2 -translate-y-1/2 h-6 w-6 rounded-full border border-[var(--qf-border)] bg-[var(--qf-background)] shadow-inner"
-      />
-
       {/* Screen-reader live announcement */}
       <div aria-live="polite" aria-atomic="true" className="sr-only">
         {liveAnnouncement}
       </div>
 
       {/* 1. HERO QUEUE PASS & GUEST IDENTITY */}
-      <div className="relative z-10 space-y-2">
-        {/* Sleek live badge */}
-        <div>
-          <span
-            className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[10.5px] font-bold uppercase tracking-wider shadow-sm backdrop-blur-md transition-all ${
-              isNotified
-                ? 'border-amber-400/40 bg-amber-500/15 text-amber-200 shadow-sm'
-                : 'border-[var(--qf-border)] bg-white/5 text-slate-300'
-            }`}
-          >
-            <span className="relative flex h-2 w-2">
-              <span
-                className={`motion-safe:animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${
-                  isNotified ? 'bg-amber-400' : 'bg-[var(--qf-success)]'
-                }`}
-              />
-              <span
-                className={`relative inline-flex h-2 w-2 rounded-full ${
-                  isNotified ? 'bg-amber-400' : 'bg-[var(--qf-success)]'
-                }`}
-              />
+      <div className="relative z-10 space-y-1.5">
+        {/* Notified Pill (only when host is preparing table) */}
+        {isNotified && (
+          <div>
+            <span className="inline-flex items-center gap-2 rounded-full border border-amber-400/40 bg-amber-500/15 px-3 py-1 text-[10.5px] font-bold uppercase tracking-wider text-amber-200 shadow-sm backdrop-blur-md">
+              <span className="relative flex h-2 w-2">
+                <span className="motion-safe:animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-amber-400" />
+              </span>
+              <span>Host Notified · Table Preparing</span>
             </span>
-            <span>{isNotified ? 'Host Notified · Table Preparing' : 'Live Digital Ticket'}</span>
-          </span>
-        </div>
+          </div>
+        )}
 
         {/* Large high-impact ticket number */}
         <h1
@@ -529,14 +480,9 @@ export function QueueTicketCard({
           {ticketNo}
         </h1>
 
-        {/* Guest & restaurant badges */}
-        <div className="flex flex-wrap items-center justify-center gap-2 pt-0.5 text-xs">
-          {restaurantName && (
-            <span className="inline-flex items-center gap-1.5 rounded-xl border border-[var(--qf-border)] bg-[var(--qf-surface)]/60 px-2.5 py-1 font-medium text-[var(--qf-text-secondary)] max-w-[220px] truncate">
-              {restaurantName}
-            </span>
-          )}
-          <span className="inline-flex items-center gap-1.5 rounded-xl border border-[var(--qf-primary)]/30 bg-[var(--qf-primary-glow)] px-2.5 py-1 font-semibold text-[var(--qf-primary)]">
+        {/* Guest identity badge */}
+        <div className="flex items-center justify-center pt-0.5 text-xs">
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.04] px-3.5 py-1 font-semibold text-slate-300">
             <Users className="h-3.5 w-3.5 text-[var(--qf-primary)]" />
             <span>
               {status.customerName || 'Guest'} · {status.partySize}{' '}
@@ -738,44 +684,6 @@ export function QueueTicketCard({
               </div>
             </div>
           )}
-
-          {/* Interactive Pass Quick Actions */}
-          <div className="pt-2 flex items-center justify-center gap-2">
-            <button
-              type="button"
-              onClick={handleTestAudio}
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-[11px] font-bold transition-all cursor-pointer ${
-                isTestingAudio
-                  ? 'border-[var(--qf-primary)] bg-[var(--qf-primary)]/20 text-white scale-[1.02]'
-                  : 'border-white/10 bg-white/[0.04] text-slate-300 hover:bg-white/[0.08] hover:text-white'
-              }`}
-            >
-              <Volume2 className={`h-3.5 w-3.5 ${isTestingAudio ? 'animate-bounce text-[var(--qf-primary)]' : 'text-slate-400'}`} />
-              <span>{isTestingAudio ? '🔊 Chime Playing…' : 'Test Sound'}</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={handleCopyLink}
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-[11px] font-bold transition-all cursor-pointer ${
-                hasCopiedLink
-                  ? 'border-[var(--qf-success)]/40 bg-[var(--qf-success)]/15 text-[var(--qf-success)] scale-[1.02]'
-                  : 'border-white/10 bg-white/[0.04] text-slate-300 hover:bg-white/[0.08] hover:text-white'
-              }`}
-            >
-              {hasCopiedLink ? (
-                <>
-                  <Check className="h-3.5 w-3.5 text-emerald-400" />
-                  <span>Link Copied!</span>
-                </>
-              ) : (
-                <>
-                  <Copy className="h-3.5 w-3.5 text-slate-400" />
-                  <span>Share Pass</span>
-                </>
-              )}
-            </button>
-          </div>
 
           {/* Running Late & Leave Queue Actions */}
           <div className="pt-2 border-t border-white/10 space-y-2">
@@ -1187,17 +1095,6 @@ export function QueueTicketCard({
           </div>
         </div>
       )}
-
-      {/* Digital Pass Authenticity & Security Footer */}
-      <div className="relative z-10 pt-4 mt-3 border-t border-dashed border-white/10 flex items-center justify-between text-[10.5px] font-mono text-slate-400">
-        <span className="inline-flex items-center gap-1.5">
-          <ShieldCheck className="h-3.5 w-3.5 text-emerald-400/90" />
-          <span className="tracking-wider uppercase font-bold text-slate-300">Digital Pass Verified</span>
-        </span>
-        <span className="text-slate-500 font-semibold tracking-widest">
-          #{token ? token.slice(0, 8).toUpperCase() : 'LIVE'}
-        </span>
-      </div>
     </section>
   );
 }

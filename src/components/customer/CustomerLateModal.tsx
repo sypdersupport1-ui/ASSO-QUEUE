@@ -252,33 +252,33 @@ export function CustomerLateModal({
                 setActiveTab(messages.length > 0 ? 'chat' : 'delay');
                 setIsOpen(true);
               }}
-              className={`customer-glass-control w-full flex items-center justify-between gap-2 p-3.5 rounded-2xl transition-all cursor-pointer group active:scale-[0.99] ${
+              className={`w-full flex items-center justify-between gap-3 p-3 rounded-2xl transition-all cursor-pointer group active:scale-[0.99] ${
                 hasStaffMsg
-                  ? 'border-2 border-cyan-400 bg-gradient-to-r from-cyan-950/80 via-slate-900 to-cyan-950/60 shadow-[0_0_30px_rgba(59,130,246,0.7)] animate-pulse'
-                  : 'border border-[var(--qf-warning)]/30 bg-[var(--qf-warning)]/10 hover:bg-[var(--qf-warning)]/15 text-[var(--qf-warning)] shadow-sm'
+                  ? 'border-2 border-cyan-400 bg-cyan-950/50 shadow-[0_0_20px_rgba(6,182,212,0.4)] animate-pulse'
+                  : 'border border-white/10 bg-white/[0.03] hover:bg-white/[0.06] text-slate-300'
               }`}
             >
-              <div className="flex items-center gap-2.5">
+              <div className="flex items-center gap-2.5 min-w-0">
                 <div
-                  className={`h-8 w-8 rounded-xl flex items-center justify-center shrink-0 ${
+                  className={`h-7 w-7 rounded-xl flex items-center justify-center shrink-0 ${
                     hasStaffMsg
-                      ? 'bg-cyan-500/25 text-cyan-300 border border-cyan-400/50 shadow-md'
-                      : 'bg-[var(--qf-warning)]/20 text-[var(--qf-warning)]'
+                      ? 'bg-cyan-500/25 text-cyan-300 border border-cyan-400/50'
+                      : 'bg-white/5 text-slate-400'
                   }`}
                 >
                   {hasStaffMsg ? (
-                    <MessageSquare className="h-4 w-4 animate-bounce text-cyan-300" />
+                    <MessageSquare className="h-3.5 w-3.5 animate-bounce text-cyan-300" />
                   ) : messages.length > 0 ? (
-                    <MessageSquare className="h-4 w-4" />
+                    <MessageSquare className="h-3.5 w-3.5" />
                   ) : (
-                    <Clock className="h-4 w-4" />
+                    <Clock className="h-3.5 w-3.5" />
                   )}
                 </div>
-                <div className="text-left">
-                  <span className={`text-xs font-black block ${hasStaffMsg ? 'text-cyan-200' : 'text-white'}`}>
-                    {hasStaffMsg ? '💬 Host Stand Sent a Message!' : messages.length > 0 ? 'Host Stand Messages' : 'Running late? Let the host know'}
+                <div className="text-left min-w-0">
+                  <span className={`text-xs font-bold block truncate ${hasStaffMsg ? 'text-cyan-200' : 'text-white'}`}>
+                    {hasStaffMsg ? 'Host Stand Sent a Message!' : messages.length > 0 ? 'Host Stand Messages' : 'Running late? Let the host know'}
                   </span>
-                  <span className="text-[10px] text-slate-300 block leading-tight">
+                  <span className="text-[10px] text-slate-400 block truncate">
                     {hasStaffMsg
                       ? `"${staffMsgs[staffMsgs.length - 1]?.message || ''}"`
                       : messages.length > 0
@@ -288,10 +288,10 @@ export function CustomerLateModal({
                 </div>
               </div>
               <span
-                className={`text-xs font-black font-mono px-2.5 py-1 rounded-xl shrink-0 flex items-center gap-1 ${
+                className={`text-[11px] font-bold px-2.5 py-1 rounded-xl shrink-0 flex items-center gap-1 ${
                   hasStaffMsg
-                    ? 'bg-cyan-500/30 border border-cyan-400/60 text-cyan-200 shadow-md'
-                    : 'bg-[var(--qf-warning)]/20 border border-[var(--qf-warning)]/30 text-[var(--qf-warning)]'
+                    ? 'bg-cyan-500/30 border border-cyan-400/60 text-cyan-200'
+                    : 'bg-white/5 border border-white/10 text-slate-300 group-hover:text-white'
                 }`}
               >
                 <MessageSquare className="h-3 w-3" />

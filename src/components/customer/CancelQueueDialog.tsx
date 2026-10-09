@@ -92,9 +92,9 @@ export function CancelQueueDialog({ token, restaurantSlug }: CancelQueueDialogPr
         ref={triggerRef}
         type="button"
         onClick={() => setIsOpen(true)}
-        className="customer-glass-control flex min-h-[48px] w-full items-center justify-center gap-2 rounded-2xl border border-[var(--qf-border)] bg-white/[0.03] text-sm font-bold text-slate-400 transition-colors hover:border-[var(--qf-danger)]/30 hover:text-[var(--qf-danger)] cursor-pointer"
+        className="flex min-h-[38px] w-full items-center justify-center gap-1.5 rounded-xl border border-white/5 bg-transparent text-xs font-semibold text-slate-400 transition-colors hover:text-rose-400 hover:bg-rose-500/5 cursor-pointer"
       >
-        <LogOut aria-hidden="true" className="h-4 w-4" />
+        <LogOut aria-hidden="true" className="h-3.5 w-3.5" />
         Leave queue
       </button>
 
